@@ -1,0 +1,54 @@
+# 워크 플로우 이름
+name: React Deploy to S3 (OIDC)
+
+# 언제 실행할지
+on:
+  push:
+    branches: ["master"]
+
+# GitHub Actions가 AWS OIDC 인증을 위해 필요한 권한 설정
+permissions:
+  id-token: write # OIDC 토큰 발급 권한
+  contents: read  # 저장소 코드 읽기 권한
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. GitHub 저장소 코드 체크아웃
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Node.js 환경 세팅
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # 오타 수정: version
+
+      # 3. 의존성 설치
+      - name: Install Dependencies
+        run: npm install
+
+      # 4. 리액트 프로젝트 빌드
+      - name: Build React
+        run: npm run build # 소문자 build 권장
+
+      # 5. AWS 인증 (OIDC 방식)
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} # 오타 수정: secrets 
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 6. 빌드된 결과물을 S3에 배포
+      - name: Deploy to S3
+        run: |
+          aws s3 sync dist s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+      # 7. CloudFront 캐시 무효화
+      - name: Invalidate CloudFront Cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" 

@@ -8,7 +8,11 @@ function PremiumFeaturesPage() {
 
   return (
     <div className="mapingo-dashboard">
-      <MapingoPageSection eyebrow="프리미엄" title="프리미엄 혜택" description="유료 사용자 전용 기능만 따로 모아서 볼 수 있는 화면이에요.">
+      <MapingoPageSection
+        eyebrow="Premium"
+        title="프리미엄 기능"
+        description="프론트 단계에서 AI 채팅, STT, 발음 평가처럼 아직 API가 연결되지 않은 기능의 화면 흐름을 먼저 검증할 수 있도록 구성했습니다."
+      >
         <div className="mapingo-page-actions">
           <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/premium')}>
             프리미엄 메인으로
@@ -21,6 +25,21 @@ function PremiumFeaturesPage() {
           <article key={feature.id} className="mapingo-detail-card">
             <h3>{feature.title}</h3>
             <p>{feature.unlockedCopy}</p>
+            {feature.id === 'stt' ? (
+              <button type="button" className="mapingo-link-button" onClick={() => navigate('/ai/stt')}>
+                STT 화면 보기
+              </button>
+            ) : null}
+            {feature.id === 'pronunciation' ? (
+              <button type="button" className="mapingo-link-button" onClick={() => navigate('/ai/pronunciation')}>
+                발음 평가 보기
+              </button>
+            ) : null}
+            {feature.id === 'face-chat' ? (
+              <button type="button" className="mapingo-link-button" onClick={() => navigate('/ai-chat')}>
+                AI 채팅 보기
+              </button>
+            ) : null}
           </article>
         ))}
       </div>

@@ -1,127 +1,135 @@
 import { useNavigate } from 'react-router-dom';
-import {
-  MapingoActivityList,
-  MapingoChecklist,
-  MapingoInfoGrid,
-  MapingoMetricGrid,
-  MapingoPageSection,
-} from '../../home-support-common/components/MapingoPageBlocks';
+import { MapingoPageSection } from '../../home-support-common/components/MapingoPageBlocks';
+import PingPopCharacterImage from '../../ai-content/components/PingPopCharacterImage';
 import { useMapingoStore } from '../../../store/useMapingoStore';
 import { learningService } from '../../../api/learning/learningService';
+
+const fallbackRouteCopy = {
+  cafe: '카페 주문 표현',
+  subway: '지하철 이동 표현',
+  travel: '여행 필수 표현',
+  convenience: '편의점 표현',
+};
 
 function ProfilePage() {
   const navigate = useNavigate();
   const profileName = useMapingoStore((state) => state.profileName);
   const profileNickname = useMapingoStore((state) => state.profileNickname);
   const subscriptionPlan = useMapingoStore((state) => state.subscriptionPlan);
-  const subscriptionProductId = useMapingoStore((state) => state.subscriptionProductId);
   const subscriptionUpdatedAt = useMapingoStore((state) => state.subscriptionUpdatedAt);
   const currentLevel = useMapingoStore((state) => state.currentLevel);
+  const currentLevelId = useMapingoStore((state) => state.currentLevelId);
   const badgeCount = useMapingoStore((state) => state.badgeCount);
-  const weeklyGoalCompleted = useMapingoStore((state) => state.weeklyGoalCompleted);
+  const recentLearning = useMapingoStore((state) => state.recentLearning);
   const favoriteRouteIds = useMapingoStore((state) => state.favoriteRouteIds);
+  const weeklyGoal = useMapingoStore((state) => state.weeklyGoal);
+  const weeklyGoalCompleted = useMapingoStore((state) => state.weeklyGoalCompleted);
   const badgeCatalog = learningService.fetchBadgeCatalog();
-  const earnedBadges = badgeCatalog.filter((badge) => badge.status === 'earned');
-  const nextBadges = badgeCatalog.filter((badge) => badge.status !== 'earned');
-  const isSubscriptionFresh = Boolean(subscriptionUpdatedAt);
+  const profileLevelNumber =
+    currentLevelId === 'advanced' ? 60 : currentLevelId === 'intermediate' ? 40 : 10;
 
-  const subscriptionLabel =
-    subscriptionPlan === 'Premium'
-      ? subscriptionProductId === 'monthly'
-        ? 'Premium Monthly'
-        : 'Premium Yearly'
-      : 'Free';
-  const subscriptionDescription =
-    subscriptionPlan === 'Premium'
-      ? subscriptionProductId === 'monthly'
-        ? '매달 가볍게 이어가는 프리미엄 코칭 플랜'
-        : '장기 학습에 맞춘 연간 프리미엄 플랜'
-      : '기본 학습 기능을 사용하는 무료 플랜';
+  const earnedBadges = badgeCatalog.filter((badge) => badge.status === 'earned');
+  const topBadge = earnedBadges[0]?.name ?? '문화 회화사';
+  const topBadgeDetail = earnedBadges[0]?.condition ?? 'City Explorer';
+  const latestLearning = recentLearning[0];
+  const favoriteLabels =
+    favoriteRouteIds.length > 0
+      ? favoriteRouteIds.map((id) => fallbackRouteCopy[id] ?? id).join(', ')
+      : '아직 저장한 즐겨찾기 루트가 없어요.';
+  const completionPercent = Math.min(100, Math.max(12, badgeCount * 12 + weeklyGoalCompleted * 4));
+
+  const subscriptionLabel = subscriptionPlan === 'Premium' ? '프리미엄 회원' : '일반 회원';
+  const profileEmail = `${profileName.toLowerCase().replace(/\s+/g, '.')}@mapingo.ai`;
 
   return (
     <div className="mapingo-dashboard">
       <MapingoPageSection
         eyebrow="My Profile"
-        title={`${profileName}님의 학습 흐름과 관리 중인 루트를 한곳에서 확인해보세요`}
-        description={`${profileNickname} 프로필을 기준으로 학습 레벨, 배지, 즐겨찾기 루트와 현재 구독 플랜까지 한눈에 볼 수 있어요.`}
+        title="프로필 정보, 계정 상태, 학습 목표를 한 화면에서 확인해보세요"
+        description="프로필 정보, 계정 상태, 학습 목표, 즐겨찾기와 최근 학습을 한 화면에서 확인할 수 있습니다."
       >
-        <div
-          key={isSubscriptionFresh ? `profile-plan-${subscriptionUpdatedAt}` : 'profile-plan'}
-          className={`mapingo-profile-plan-summary ${isSubscriptionFresh ? 'is-updated' : ''}`}
-        >
-          <MapingoMetricGrid
-            items={[
-              { label: '현재 레벨', value: currentLevel, hint: '현재 학습 단계' },
-              { label: '구독 상태', value: subscriptionLabel, hint: subscriptionDescription },
-              { label: '획득 배지', value: `${badgeCount}개`, hint: `${weeklyGoalCompleted}회 목표 진행` },
-              { label: '즐겨찾기', value: `${favoriteRouteIds.length}개`, hint: '저장한 루트 기준' },
-            ]}
-          />
-          {isSubscriptionFresh ? <span className="mapingo-update-chip">업데이트 완료</span> : null}
-        </div>
-      </MapingoPageSection>
+        <section className="mapingo-profile-layout">
+          <article
+            key={subscriptionUpdatedAt ? `profile-card-${subscriptionUpdatedAt}` : 'profile-card'}
+            className={`mapingo-profile-card ${subscriptionUpdatedAt ? 'is-updated' : ''}`}
+          >
+            <div className="mapingo-profile-card-head">
+              <div className="mapingo-profile-identity">
+                <div className="mapingo-profile-avatar-column">
+                  <div className="mapingo-profile-level-pill">{`Lv.${profileLevelNumber}`}</div>
+                  <div className="mapingo-profile-avatar-frame">
+                    <div className="mapingo-profile-avatar" aria-hidden="true">
+                      <PingPopCharacterImage className="mapingo-profile-avatar-logo" level={profileLevelNumber} />
+                    </div>
+                  </div>
+                </div>
+                <div className="mapingo-profile-identity-copy">
+                  <h2>{profileName}</h2>
+                  <p>{profileEmail}</p>
+                  <span className="mapingo-profile-badge-pill">
+                    {topBadge} : {topBadgeDetail}
+                  </span>
+                  <div className="mapingo-profile-progress">
+                    <div className="mapingo-profile-progress-fill" style={{ width: `${completionPercent}%` }} />
+                  </div>
+                  <small>다음 레벨 배지까지 {Math.max(8, 100 - completionPercent)}% 남았어요</small>
+                </div>
+              </div>
 
-      <MapingoPageSection title="프로필 요약" description="학습 성향과 플랜 상태를 함께 보면서 다음 학습 루트를 고르기 쉽게 정리했어요.">
-        <MapingoInfoGrid
-          items={[
-            {
-              title: '구독 플랜',
-              description: `${subscriptionLabel} 상태예요. ${subscriptionDescription} 흐름으로 홈과 프리미엄 페이지가 연결됩니다.`,
-            },
-            {
-              title: '배지 현황',
-              description: earnedBadges.length > 0 ? `${earnedBadges.map((badge) => badge.name).join(', ')} 배지를 획득했어요.` : '아직 첫 배지를 모으는 단계예요.',
-            },
-            {
-              title: '즐겨찾기 루트',
-              description: `자주 복습할 루트 ${favoriteRouteIds.length}개를 저장해두고 바로 이어서 학습할 수 있어요.`,
-            },
-          ]}
-        />
-        <div className="mapingo-page-actions">
-          <button type="button" className="mapingo-submit-button" onClick={() => navigate('/premium')}>
-            구독 변경하기
-          </button>
-        </div>
-      </MapingoPageSection>
+              <button
+                type="button"
+                className="mapingo-ghost-button"
+                onClick={() => navigate('/settings/account')}
+              >
+                계정 관리
+              </button>
+            </div>
 
-      <section className="mapingo-page-section">
-        <div className="mapingo-page-section-head">
-          <p className="mapingo-eyebrow">Learning</p>
-          <h2>배지와 다음 보상 진행도</h2>
-          <p className="mapingo-page-section-copy">획득한 배지와 앞으로 열릴 보상을 카드로 정리해 현재 학습 흐름을 바로 파악할 수 있게 했어요.</p>
-        </div>
-        <div className="mapingo-badge-grid">
-          {badgeCatalog.map((badge) => (
-            <article key={badge.id} className={`mapingo-badge-card is-${badge.status}`}>
-              <span className="mapingo-badge-status">
-                {badge.status === 'earned' ? '획득' : badge.status === 'progress' ? '진행 중' : '잠금'}
-              </span>
-              <h3>{badge.name}</h3>
-              <p>{badge.condition}</p>
+            <div className="mapingo-profile-info-grid">
+              <article className="mapingo-profile-info-tile">
+                <strong>계정 상태</strong>
+                <p>정상 이용 중 · {subscriptionLabel}</p>
+              </article>
+              <article className="mapingo-profile-info-tile">
+                <strong>학습 레벨</strong>
+                <p>{currentLevel} · {`Lv. ${profileLevelNumber}`}</p>
+              </article>
+              <article className="mapingo-profile-info-tile">
+                <strong>학습 목표</strong>
+                <p>주 {weeklyGoal}회 말하기 연습</p>
+              </article>
+              <article className="mapingo-profile-info-tile">
+                <strong>획득 배지</strong>
+                <p>{topBadge} · {topBadgeDetail}</p>
+              </article>
+            </div>
+          </article>
+
+          <div className="mapingo-profile-side-column">
+            <article className="mapingo-profile-side-card">
+              <h3>최근 학습</h3>
+              <p>
+                {latestLearning
+                  ? `${latestLearning.title} · 마지막 학습 ${latestLearning.meta} · 이어서 학습 가능`
+                  : '아직 최근 학습 기록이 없어요. 첫 학습을 시작해보세요.'}
+              </p>
             </article>
-          ))}
-        </div>
-      </section>
 
-      <div className="mapingo-feature-grid">
-        <MapingoChecklist
-          title="다음 추천 행동"
-          items={[
-            '즐겨찾기 루트 1개 다시 복습하기',
-            nextBadges[0] ? `${nextBadges[0].name} 배지 조건 확인하기` : '새로운 배지 목표 설정하기',
-            subscriptionPlan === 'Premium' ? '프리미엄 피드백 기능으로 말하기 점검하기' : '프리미엄 페이지에서 플랜 비교해보기',
-          ]}
-        />
-        <MapingoActivityList
-          title="최근 프로필 활동"
-          items={[
-            { label: `${subscriptionLabel} 플랜 상태 유지`, meta: isSubscriptionFresh ? '방금 반영됨' : '현재 상태' },
-            { label: '카페 루트 즐겨찾기 저장', meta: '어제' },
-            { label: '스몰토크 미션 완료', meta: '오늘' },
-          ]}
-        />
-      </div>
+            <article className="mapingo-profile-side-card is-linkable" onClick={() => navigate('/community/favorites')} role="button" tabIndex={0} onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                navigate('/community/favorites');
+              }
+            }}>
+              <div className="mapingo-profile-side-head">
+                <h3>즐겨찾기</h3>
+                <span>→</span>
+              </div>
+              <p>{favoriteLabels}</p>
+            </article>
+          </div>
+        </section>
+      </MapingoPageSection>
     </div>
   );
 }

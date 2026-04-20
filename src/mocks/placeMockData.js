@@ -2,6 +2,8 @@ export const routeCatalog = [
   {
     id: 'cafe',
     title: '카페 주문 루트',
+    lat: 37.5665,
+    lng: 126.978,
     category: '일상',
     difficulty: '입문',
     duration: '12분',
@@ -33,6 +35,8 @@ export const routeCatalog = [
   {
     id: 'subway',
     title: '지하철 이동 루트',
+    lat: 37.5655,
+    lng: 126.9766,
     category: '이동',
     difficulty: '보통',
     duration: '15분',
@@ -64,6 +68,8 @@ export const routeCatalog = [
   {
     id: 'travel',
     title: '여행자 루트',
+    lat: 37.5702,
+    lng: 126.9826,
     category: '여행',
     difficulty: '보통',
     duration: '17분',
@@ -95,6 +101,8 @@ export const routeCatalog = [
   {
     id: 'convenience',
     title: '편의점 탐험 루트',
+    lat: 37.5638,
+    lng: 126.9753,
     category: '일상',
     difficulty: '입문',
     duration: '8분',

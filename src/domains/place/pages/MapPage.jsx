@@ -29,6 +29,14 @@ function MapPage() {
   const [learningStage, setLearningStage] = useState('idle');
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [chatLog, setChatLog] = useState([]);
+  const [showLearningPanel, setShowLearningPanel] = useState(() => {
+    try {
+      const stored = localStorage.getItem('mapingo.learningPanelVisible');
+      return stored == null ? true : stored === 'true';
+    } catch (e) {
+      return true;
+    }
+  });
 
   const filteredRoutes = routes.filter((route) => {
     const matchesTab = activeTab === 'all' || route.category === activeTab;
@@ -44,15 +52,12 @@ function MapPage() {
     routes.find((route) => route.id === selectedRouteId) ?? filteredRoutes[0] ?? routes[0];
   const activeStep = selectedRoute.chatSteps[activeStepIndex];
 
-  const mapRoutes = routes.map((route, index) => ({
-    id: route.id,
-    label: index === 0 ? '출발' : index === routes.length - 1 ? '도착' : `정류장 ${index + 1}`,
-    x: index === 0 ? 85 : index === 1 ? 300 : index === 2 ? 520 : 190,
-    y: index === 0 ? 215 : index === 1 ? 150 : index === 2 ? 120 : 250,
-    cardClass: index === 0 ? 'is-left' : index === 1 ? 'is-center' : 'is-right',
-    title: route.title,
-    desc: route.scenario,
-    duration: route.duration,
+  const mapRoutes = routes.map((r) => ({
+    id: r.id,
+    title: r.title,
+    description: r.description || '',
+    lat: r.lat,
+    lng: r.lng,
   }));
 
   const handleSelectRoute = (routeId) => {
@@ -142,7 +147,7 @@ function MapPage() {
           </label>
         </div>
 
-        <div className="mapingo-route-picker-grid">
+         <div className="mapingo-route-picker-grid">
           <div className="mapingo-list-card">
             <div className="mapingo-card-header-row">
               <h3>장소 선택 결과</h3>
@@ -190,12 +195,33 @@ function MapPage() {
             <button type="button" className="mapingo-submit-button" onClick={handleStartLearning}>
               학습(대화) 시작
             </button>
+            <button
+              type="button"
+              className="mapingo-ghost-button"
+              style={{ marginLeft: 12 }}
+              onClick={() => {
+                setShowLearningPanel((s) => {
+                  const next = !s;
+                  try {
+                    localStorage.setItem('mapingo.learningPanelVisible', String(next));
+                  } catch (e) {}
+                  return next;
+                });
+              }}
+            >
+              {showLearningPanel ? '패널 접기' : '패널 펼치기'}
+            </button>
           </div>
         </div>
       </section>
 
-      <section className="mapingo-learning-flow-grid">
-        <RouteMap routes={mapRoutes} activeRouteId={selectedRoute.id} setActiveRouteId={handleSelectRoute} />
+      <section className={`mapingo-learning-flow-grid ${showLearningPanel ? '' : 'is-panel-collapsed'}`}>
+        <RouteMap
+          routes={mapRoutes}
+          activeRouteId={selectedRoute.id}
+          setActiveRouteId={handleSelectRoute}
+          expandMap={!showLearningPanel}
+        />
 
         <section className="mapingo-learning-panel">
           <div className="mapingo-learning-panel-head">

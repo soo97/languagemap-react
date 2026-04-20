@@ -1,5 +1,5 @@
 import NavButton from './NavButton';
-import PingPopLogo from '../../ai-content/components/PingPopLogo';
+import PingPopStarterLogo from '../../ai-content/components/PingPopStarterLogo';
 
 function MapingoHeader({
   palette,
@@ -23,7 +23,7 @@ function MapingoHeader({
       <div className="mapingo-header-inner">
         <button type="button" className="mapingo-brand" onClick={() => onNavigate('home')}>
           <div className="mapingo-brand-logo-shell">
-            <PingPopLogo className="mapingo-brand-logo" />
+            <PingPopStarterLogo className="mapingo-brand-logo" />
           </div>
           <div className="mapingo-brand-copy">
             <p className="mapingo-brand-title" style={{ color: palette.point }}>
@@ -71,6 +71,14 @@ function MapingoHeader({
                 style={{ borderColor: '#CDEFEA', color: palette.point }}
               >
                 프로필
+              </button>
+              <button
+                type="button"
+                className="mapingo-ghost-button"
+                onClick={() => onNavigate('admin')}
+                style={{ borderColor: '#CDEFEA', color: palette.point }}
+              >
+                관리자
               </button>
               <button
                 type="button"

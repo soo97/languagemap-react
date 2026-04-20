@@ -1,0 +1,51 @@
+export const demoFlowSteps = [
+  {
+    id: 'auth',
+    label: '01',
+    title: '로그인 / 회원가입',
+    description: '사용자 진입과 세션 상태를 확인하는 단계',
+    path: '/login',
+  },
+  {
+    id: 'home',
+    label: '02',
+    title: '홈 대시보드',
+    description: '최근 학습, 추천 대화, 목표 요약을 보는 단계',
+    path: '/',
+  },
+  {
+    id: 'place',
+    label: '03',
+    title: '장소 기반 학습',
+    description: '루트 선택부터 AI 대화, 종료 피드백까지 시연',
+    path: '/map',
+  },
+  {
+    id: 'growth',
+    label: '04',
+    title: '성장 / 학습 관리',
+    description: '레벨, 배지, 주간 목표, 성장 리포트 확인',
+    path: '/growth',
+  },
+  {
+    id: 'premium',
+    label: '05',
+    title: '프리미엄 분기',
+    description: '무료 / 유료 기능 차이와 업그레이드 시연',
+    path: '/premium',
+  },
+  {
+    id: 'support',
+    label: '06',
+    title: '고객지원',
+    description: '공지, FAQ, 문의 작성 흐름 확인',
+    path: '/support',
+  },
+  {
+    id: 'community',
+    label: '07',
+    title: '커뮤니티 / 즐겨찾기',
+    description: '후기 공유, 랭킹, 즐겨찾기 시연',
+    path: '/community',
+  },
+];

@@ -36,6 +36,7 @@ import SttPracticePage from './domains/ai-content/pages/SttPracticePage';
 import PronunciationReviewPage from './domains/ai-content/pages/PronunciationReviewPage';
 import ProtectedRoute from './domains/home-support-common/components/ProtectedRoute';
 import GuestRoute from './domains/home-support-common/components/GuestRoute';
+import CoachingPage from './domains/coaching/pages/CoachingPage';
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
       <Route element={<MapingoLayout />}>
         <Route path="/" element={<LandingHomePage />} />
         <Route path="/map" element={<MapPage />} />
+        <Route path="/coaching" element={<CoachingPage />} />
         <Route path="/growth" element={<GrowthPage />} />
         <Route path="/growth/progress" element={<GrowthProgressPage />} />
         <Route path="/growth/goals" element={<GrowthGoalsPage />} />

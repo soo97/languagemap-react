@@ -268,17 +268,7 @@ function MapingoHero({ onPrimaryAction }) {
             </>
           ) : (
             // Google Maps preview
-            <>
               <div ref={mapRef} className="mapingo-google-map" style={{ height: 360 }} />
-              <div className="mapingo-route-cards" style={{ marginTop: 8 }}>
-                {routeStops.map((stop) => (
-                  <article key={stop.id} className={`mapingo-route-card ${stop.cardClassName}`} style={{ minWidth: 160 }}>
-                    <p className="mapingo-route-card-label">{stop.label}</p>
-                    <h3 style={{ marginTop: 6 }}>{stop.title}</h3>
-                  </article>
-                ))}
-              </div>
-            </>
           )}
         </div>
       </aside>

@@ -103,6 +103,7 @@ export const useMapingoStore = create(
       mapActiveTab: 'all',
       mapDifficultyOnly: false,
       selectedRouteId: routeCatalog[0].id,
+      recentMapChatLog: [],
       favoriteRouteIds: initialFavorites,
       communityActiveTab: 'all',
       communitySortBy: 'popular',
@@ -156,6 +157,7 @@ export const useMapingoStore = create(
       setMapActiveTab: (mapActiveTab) => set({ mapActiveTab }),
       setMapDifficultyOnly: (mapDifficultyOnly) => set({ mapDifficultyOnly }),
       setSelectedRouteId: (selectedRouteId) => set({ selectedRouteId }),
+      setRecentMapChatLog: (recentMapChatLog) => set({ recentMapChatLog }),
       toggleFavoriteRoute: (routeId) =>
         set((state) => ({
           favoriteRouteIds: state.favoriteRouteIds.includes(routeId)

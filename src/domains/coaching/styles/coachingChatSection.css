@@ -1,0 +1,539 @@
+.coaching-chat-panel {
+  height: 680px;
+  border: 1px solid #edf2f7;
+  border-radius: 24px;
+  background: #ffffff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.coaching-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #edf2f7;
+  background: #ffffff;
+}
+
+.coaching-chat-title {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.coaching-live-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--mapingo-mint);
+  box-shadow: 0 0 0 5px rgba(31, 184, 173, 0.12);
+}
+
+.coaching-chat-title p {
+  margin: 0;
+  color: #68788a;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.coaching-chat-title h1 {
+  margin: 2px 0 0;
+  color: #12212f;
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.coaching-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #415365;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.coaching-status-pill.is-practice {
+  color: #0f766e;
+  border-color: #bdece5;
+  background: #f5fffc;
+}
+
+.coaching-status-pill.is-completed {
+  color: #155e63;
+  border-color: #bdece5;
+  background: #f5fffc;
+}
+
+.coaching-chat-log {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 22px 22px;
+  background:
+    radial-gradient(circle at 80% 16%, rgba(31, 184, 173, 0.06), transparent 18%),
+    #ffffff;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.coaching-chat-log::-webkit-scrollbar {
+  width: 8px;
+}
+
+.coaching-chat-log::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #d9e4ea;
+}
+
+.coaching-message-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+}
+
+.coaching-message-row.is-user {
+  justify-content: flex-end;
+}
+
+.coaching-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: var(--mapingo-deep);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.coaching-text-bubble,
+.voice-message-bubble {
+  max-width: min(430px, 54%);
+  border-radius: 15px;
+}
+
+.coaching-text-bubble {
+  padding: 9px 12px;
+  border: 1px solid #edf2f7;
+  background: #f8fafc;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.035);
+}
+
+.coaching-message-row.is-user .coaching-text-bubble {
+  border-color: transparent;
+  background: var(--mapingo-mint);
+  color: #ffffff;
+}
+
+.coaching-text-bubble span,
+.voice-message-meta span {
+  display: block;
+  color: #516173;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.coaching-message-row.is-user .coaching-text-bubble span {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.coaching-text-bubble p {
+  margin: 4px 0 0;
+  color: #25384a;
+  line-height: 1.42;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.coaching-message-row.is-user .coaching-text-bubble p {
+  color: #ffffff;
+}
+
+.coaching-mode-selector,
+.coaching-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.coaching-mode-button,
+.coaching-inline-actions button,
+.coaching-chat-action {
+  min-height: 29px;
+  min-height: 24px;
+  padding: 4px 7px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #203446;
+  cursor: pointer;
+  font-size: 0.64rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.025);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.coaching-mode-button span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 5px;
+  background: #eef9f7;
+  color: var(--mapingo-mint);
+  font-size: 0.54rem;
+}
+
+.coaching-mode-button:hover,
+.coaching-mode-button.is-selected,
+.coaching-inline-actions button:hover,
+.coaching-chat-action:hover {
+  border-color: #8dded5;
+  color: var(--mapingo-deep);
+  background: #f6fffd;
+}
+
+.coaching-chat-mascot {
+  position: absolute;
+  top: 28px;
+  right: 64px;
+  width: 120px;
+  height: 104px;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.mascot-face {
+  position: absolute;
+  left: 30px;
+  top: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 58px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #31b7af, #15958f);
+  box-shadow: 0 14px 26px rgba(31, 184, 173, 0.16);
+}
+
+.mascot-face i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.mascot-antenna {
+  position: absolute;
+  left: 58px;
+  top: 12px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #b9efe8;
+  box-shadow: 0 14px 0 #9ce2da;
+}
+
+.mascot-body {
+  position: absolute;
+  left: 18px;
+  top: 56px;
+  width: 82px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(232, 248, 246, 0.94), rgba(255, 255, 255, 0.9));
+  border: 1px solid #e1f3ef;
+}
+
+.coaching-scenario-message {
+  background: #ffffff;
+}
+
+.coaching-message-note {
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid #edf2f7;
+}
+
+.coaching-message-note strong {
+  display: block;
+  color: #12212f;
+  font-size: 0.82rem;
+}
+
+.coaching-message-note p {
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.coaching-key-sentences {
+  margin: 9px 0 0;
+  padding-left: 18px;
+  color: #334155;
+  line-height: 1.55;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.coaching-voice-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding-top: 2px;
+}
+
+.voice-message-bubble {
+  width: min(380px, 58%);
+  padding: 8px 10px;
+}
+
+.voice-message-bubble.is-ai {
+  background: #f8fafc;
+  border: 1px solid #edf2f7;
+}
+
+.voice-message-bubble.is-user {
+  background: var(--mapingo-mint);
+  color: #ffffff;
+}
+
+.voice-message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.voice-message-bubble.is-user .voice-message-meta span,
+.voice-message-bubble.is-user .voice-message-meta small,
+.voice-message-bubble.is-user p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.voice-message-meta small {
+  color: #7a8999;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.voice-message-body {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin-top: 7px;
+}
+
+.voice-play-button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mapingo-deep);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.voice-message-bubble.is-user .voice-play-button {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.voice-wave {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+}
+
+.voice-wave span {
+  width: 4px;
+  border-radius: 999px;
+  background: #1fb8ad;
+}
+
+.voice-message-bubble.is-user .voice-wave span {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.voice-wave span:nth-child(1) {
+  height: 10px;
+}
+
+.voice-wave span:nth-child(2) {
+  height: 22px;
+}
+
+.voice-wave span:nth-child(3) {
+  height: 15px;
+}
+
+.voice-wave span:nth-child(4) {
+  height: 26px;
+}
+
+.voice-wave span:nth-child(5) {
+  height: 13px;
+}
+
+.voice-wave span:nth-child(6) {
+  height: 19px;
+}
+
+.voice-message-bubble p {
+  margin: 7px 0 0;
+  color: #425466;
+  line-height: 1.45;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.coaching-evaluation-message {
+  background: #f8fafc;
+}
+
+.coaching-evaluation-lines {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e7edf3;
+}
+
+.coaching-evaluation-lines strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #12212f;
+  font-size: 0.86rem;
+}
+
+.coaching-evaluation-lines p {
+  margin: 4px 0 0;
+  color: #526173;
+  font-size: 0.88rem;
+}
+
+.coaching-chat-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 50px 50px;
+  gap: 10px;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid #edf2f7;
+  background: #ffffff;
+}
+
+.coaching-chat-composer input {
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: #f4f6f8;
+  color: #1f2f3f;
+  padding: 0 22px;
+  outline: none;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.coaching-chat-composer input::placeholder {
+  color: #98a5b3;
+}
+
+.coaching-mic-button,
+.coaching-send-button {
+  width: 50px;
+  height: 50px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mapingo-mint);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(31, 184, 173, 0.2);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.coaching-mic-button.is-recording {
+  background: #ef4444;
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.12);
+}
+
+.coaching-mic-icon {
+  position: relative;
+  display: inline-block;
+  width: 13px;
+  height: 18px;
+  border: 2px solid #ffffff;
+  border-radius: 9px;
+}
+
+.coaching-mic-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 2px;
+  height: 6px;
+  border-radius: 999px;
+  background: #ffffff;
+  transform: translateX(-50%);
+}
+
+.coaching-mic-icon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 12px;
+  height: 6px;
+  border-bottom: 2px solid #ffffff;
+  border-radius: 0 0 999px 999px;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 900px) {
+  .coaching-chat-panel {
+    height: 650px;
+  }
+
+  .coaching-text-bubble,
+  .voice-message-bubble {
+    max-width: 86%;
+  }
+
+  .coaching-chat-composer {
+    grid-template-columns: minmax(0, 1fr) 46px 46px;
+    padding: 13px;
+  }
+
+  .coaching-mic-button,
+  .coaching-send-button {
+    width: 46px;
+    height: 46px;
+  }
+}

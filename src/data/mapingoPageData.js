@@ -143,6 +143,7 @@ export const pageSections = {
 export const pathToPage = {
   '/': 'home',
   '/map': 'map',
+  '/coaching': 'coaching',
   '/growth': 'growth',
   '/growth/progress': 'growth',
   '/growth/goals': 'growth',
@@ -179,6 +180,7 @@ export const pathToPage = {
 export const pageToPath = {
   home: '/',
   map: '/map',
+  coaching: '/coaching',
   growth: '/growth',
   community: '/community',
   support: '/support',

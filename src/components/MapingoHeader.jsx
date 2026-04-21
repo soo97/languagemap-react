@@ -40,6 +40,9 @@ function MapingoHeader({
           <NavButton active={currentPage === 'map'} onClick={() => onNavigate('map')}>
             지도 학습
           </NavButton>
+          <NavButton active={currentPage === 'coaching'} onClick={() => onNavigate('coaching')}>
+            AI 코칭
+          </NavButton>
           <NavButton active={currentPage === 'growth'} onClick={() => onNavigate('growth')}>
             성장 리포트
           </NavButton>

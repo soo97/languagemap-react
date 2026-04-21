@@ -1,0 +1,458 @@
+.pronunciation-practice-section {
+  padding: 0;
+  border-top: 1px solid #edf2f7;
+  background: #ffffff;
+}
+
+.coaching-feedback-board {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 22px;
+  padding: 24px 26px;
+  border: 1px solid #edf2f7;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.045);
+}
+
+.coaching-feedback-intro {
+  align-self: start;
+  padding: 6px 0;
+}
+
+.coaching-feedback-intro h2 {
+  margin: 7px 0 13px;
+  color: #12212f;
+  font-size: 1.22rem;
+  line-height: 1.25;
+}
+
+.coaching-feedback-intro h2::after {
+  content: " ✨";
+  color: #ffd84d;
+  font-size: 0.9rem;
+}
+
+.coaching-feedback-intro p:last-child {
+  margin: 0;
+  color: #617386;
+  line-height: 1.72;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.coaching-score-hero {
+  position: relative;
+  min-height: 210px;
+  padding: 28px 238px 24px 38px;
+  overflow: hidden;
+  border: 1px solid #dfeaf1;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 86% 24%, rgba(31, 184, 173, 0.12), transparent 18%),
+    radial-gradient(circle at 16% 14%, rgba(129, 140, 248, 0.16), transparent 10%),
+    #fbfffe;
+}
+
+.coaching-score-hero > span {
+  display: block;
+  color: #22364a;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.coaching-score-hero strong {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 8px;
+  color: #10938f;
+  font-size: 4.45rem;
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.coaching-score-hero small {
+  color: #10938f;
+  font-size: 1.32rem;
+  font-weight: 900;
+}
+
+.coaching-score-bar {
+  width: min(250px, 100%);
+  height: 9px;
+  margin-top: 22px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7eef4;
+}
+
+.coaching-score-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22b8ad 0%, #a8d85c 100%);
+}
+
+.coaching-score-hero p {
+  margin: 10px 0 0;
+  color: #6b7b8d;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.score-character {
+  position: absolute;
+  right: 34px;
+  bottom: 18px;
+  width: 148px;
+  height: 148px;
+  border-radius: 50% 50% 44% 44%;
+  background: #ffd84d;
+  box-shadow: inset 0 -12px 0 rgba(255, 176, 37, 0.28);
+}
+
+.score-character-face {
+  position: absolute;
+  left: 36px;
+  top: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 78px;
+  height: 48px;
+  padding: 0 21px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.score-character-face i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #35485a;
+}
+
+.score-character-face::after {
+  content: "";
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  width: 18px;
+  height: 8px;
+  border-bottom: 3px solid #ef8a92;
+  border-radius: 0 0 999px 999px;
+  transform: translateX(-50%);
+}
+
+.score-character-arm {
+  position: absolute;
+  top: 58px;
+  width: 42px;
+  height: 16px;
+  border-radius: 999px;
+  background: #ffd84d;
+}
+
+.score-character-arm.is-left {
+  left: -18px;
+  transform: rotate(30deg);
+}
+
+.score-character-arm.is-right {
+  right: -18px;
+  transform: rotate(-38deg);
+}
+
+.score-spark,
+.score-spark::before,
+.score-spark::after {
+  position: absolute;
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #93d7ef;
+  content: "";
+}
+
+.score-spark-one {
+  right: 232px;
+  top: 40px;
+}
+
+.score-spark-two {
+  right: 112px;
+  top: 28px;
+  background: #ffe184;
+}
+
+.score-spark::before {
+  left: 36px;
+  top: 44px;
+  background: #a7e0d9;
+}
+
+.score-spark::after {
+  left: 74px;
+  top: 86px;
+  background: #b7d7ff;
+}
+
+.coaching-feedback-cards {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 0;
+}
+
+.coaching-ai-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border: 1px solid #d9f2ee;
+  border-radius: 14px;
+  background: #f0fffb;
+}
+
+.pronunciation-list-title {
+  margin-top: 22px;
+  margin-bottom: 0;
+  padding: 16px 0 10px;
+  border-top: 1px solid #edf2f7;
+}
+
+.pronunciation-list-title h2 {
+  margin: 5px 0 0;
+  color: #12212f;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.coaching-ai-tip span {
+  display: block;
+  color: var(--mapingo-deep);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.coaching-ai-tip p {
+  margin: 5px 0 0;
+  color: #5f7184;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.coaching-ai-tip button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mapingo-mint);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.coaching-feedback-mini {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #e6edf3;
+  background: #ffffff;
+}
+
+.coaching-feedback-mini div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.coaching-feedback-mini h3 {
+  margin: 0;
+  color: #22364a;
+  font-size: 0.92rem;
+}
+
+.coaching-feedback-mini span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.coaching-feedback-mini p {
+  margin: 10px 0 12px;
+  color: #667789;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.coaching-feedback-mini.is-green span {
+  background: #eafaf0;
+  color: #16a34a;
+}
+
+.coaching-feedback-mini.is-blue span {
+  background: #eef6ff;
+  color: #3384dd;
+}
+
+.coaching-feedback-mini.is-orange span {
+  background: #fff3e7;
+  color: #f97316;
+}
+
+.feedback-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.feedback-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dbe5ec;
+}
+
+.is-green .feedback-dots i.is-filled {
+  background: #78d98a;
+}
+
+.is-blue .feedback-dots i.is-filled {
+  background: #72b7ff;
+}
+
+.is-orange .feedback-dots i.is-filled {
+  background: #ffb15f;
+}
+
+.pronunciation-card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0;
+  border-top: 1px solid #edf2f7;
+}
+
+.pronunciation-sentence-card {
+  position: relative;
+  padding: 18px 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.pronunciation-score-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pronunciation-score-line span {
+  color: #6b7a8a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.pronunciation-score-line strong {
+  color: var(--mapingo-deep);
+  font-size: 0.92rem;
+}
+
+.pronunciation-sentence {
+  max-width: 680px;
+  margin: 10px 0 8px;
+  color: #12212f;
+  line-height: 1.7;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.is-error-word {
+  padding: 2px 5px;
+  border-radius: 8px;
+  background: #fff3e7;
+  color: #b45309;
+}
+
+.pronunciation-error-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.pronunciation-error-list span {
+  padding: 5px 6px 5px 9px;
+  border-radius: 999px;
+  background: #fffaf3;
+  border: 1px solid #fde3bd;
+  color: #a15c11;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.pronunciation-word-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pronunciation-word-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff3e7;
+  color: #a15c11;
+  cursor: pointer;
+  font-size: 0.78rem;
+  line-height: 1;
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+.pronunciation-word-chip button:hover,
+.pronunciation-word-chip button.is-playing {
+  background: #fed7aa;
+  transform: translateY(-1px);
+}
+
+.pronunciation-feedback {
+  max-width: 680px;
+  margin: 0 0 12px;
+  color: #64748b;
+  line-height: 1.55;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .coaching-feedback-board {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    gap: 18px;
+  }
+
+  .coaching-score-hero {
+    padding-right: 34px;
+    padding-bottom: 160px;
+  }
+
+  .score-character {
+    right: 28px;
+  }
+
+  .coaching-feedback-cards {
+    grid-template-columns: 1fr;
+  }
+}

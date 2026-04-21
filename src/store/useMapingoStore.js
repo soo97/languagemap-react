@@ -78,7 +78,7 @@ const initialSession = {
   keepSignedIn: false,
 };
 
-const initialFavorites = ['cafe', 'travel'];
+const initialFavorites = ['seoul-cityhall-cafe', 'paris-louvre-ticket'];
 
 export const useMapingoStore = create(
   persist(

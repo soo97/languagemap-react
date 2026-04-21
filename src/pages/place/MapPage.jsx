@@ -51,6 +51,7 @@ function MapPage() {
   const selectedPlaceId = useMapingoStore((state) => state.selectedRouteId);
   const setActiveCapitalId = useMapingoStore((state) => state.setMapActiveTab);
   const setSelectedPlaceId = useMapingoStore((state) => state.setSelectedRouteId);
+  const setRecentMapChatLog = useMapingoStore((state) => state.setRecentMapChatLog);
   const [panelVisible, setPanelVisible] = useState(false);
   const [panelMode, setPanelMode] = useState('guide');
   const [chatLog, setChatLog] = useState([]);
@@ -93,6 +94,7 @@ function MapPage() {
   const resetChatState = () => {
     setChatLog([]);
     setChatInput('');
+    setRecentMapChatLog([]);
   };
 
   const handleCapitalChange = (capitalId) => {
@@ -130,7 +132,7 @@ function MapPage() {
     setPanelVisible(true);
     setPanelMode('chat');
     setChatInput('');
-    setChatLog([
+    const initialLog = [
       {
         role: 'ai',
         speaker: selectedPlace.chatSteps[0]?.speaker ?? 'AI Coach',
@@ -138,7 +140,10 @@ function MapPage() {
           selectedPlace.chatSteps[0]?.prompt ??
           `Welcome to ${selectedPlace.title}. Start talking to me as if you are really there.`,
       },
-    ]);
+    ];
+
+    setChatLog(initialLog);
+    setRecentMapChatLog(initialLog);
   };
 
   const handleSendMessage = () => {
@@ -164,7 +169,10 @@ function MapPage() {
       text: buildAiReply(selectedPlace, trimmed, chatLog.filter((message) => message.role === 'user').length),
     };
 
-    setChatLog((current) => [...current, userMessage, aiMessage]);
+    const nextLog = [...chatLog, userMessage, aiMessage];
+
+    setChatLog(nextLog);
+    setRecentMapChatLog(nextLog);
     setChatInput('');
   };
 

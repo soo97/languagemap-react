@@ -1,41 +1,43 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import MapingoLayout from './domains/home-support-common/layout/MapingoLayout';
-import LandingHomePage from './domains/home-support-common/pages/LandingHomePage';
-import MapPage from './domains/place/pages/MapPage';
-import GrowthPage from './domains/history-analysis/pages/GrowthPage';
-import GrowthProgressPage from './domains/history-analysis/pages/GrowthProgressPage';
-import GrowthGoalsPage from './domains/history-analysis/pages/GrowthGoalsPage';
-import GrowthInsightsPage from './domains/history-analysis/pages/GrowthInsightsPage';
-import CommunityPage from './domains/learning-social-favorite/pages/CommunityPage';
-import CommunityFriendsPage from './domains/learning-social-favorite/pages/CommunityFriendsPage';
-import CommunityRankingPage from './domains/learning-social-favorite/pages/CommunityRankingPage';
-import CommunityFavoritesPage from './domains/learning-social-favorite/pages/CommunityFavoritesPage';
-import SupportPage from './domains/home-support-common/pages/SupportPage';
-import SupportNoticesPage from './domains/home-support-common/pages/SupportNoticesPage';
-import SupportFaqPage from './domains/home-support-common/pages/SupportFaqPage';
-import SupportInquiryPage from './domains/home-support-common/pages/SupportInquiryPage';
-import PremiumPage from './domains/user-subscription/pages/PremiumPage';
-import PremiumPlansPage from './domains/user-subscription/pages/PremiumPlansPage';
-import PremiumFeaturesPage from './domains/user-subscription/pages/PremiumFeaturesPage';
-import PremiumStatusPage from './domains/user-subscription/pages/PremiumStatusPage';
-import PremiumCheckoutPage from './domains/user-subscription/pages/PremiumCheckoutPage';
-import SettingsPage from './domains/home-support-common/pages/SettingsPage';
-import SettingsLearningPage from './domains/home-support-common/pages/SettingsLearningPage';
-import SettingsDisplayPage from './domains/home-support-common/pages/SettingsDisplayPage';
-import SettingsAccountPage from './domains/home-support-common/pages/SettingsAccountPage';
-import AccountDeletePage from './domains/user-subscription/pages/AccountDeletePage';
-import AdminPage from './domains/admin/pages/AdminPage';
-import AdminMembersPage from './domains/admin/pages/AdminMembersPage';
-import AdminNoticesPage from './domains/admin/pages/AdminNoticesPage';
-import AdminContentPage from './domains/admin/pages/AdminContentPage';
-import SignupPage from './domains/user-subscription/pages/SignupPage';
-import ProfilePage from './domains/user-subscription/pages/ProfilePage';
-import LoginPage from './domains/user-subscription/pages/LoginPage';
-import AiChatPage from './domains/ai-content/pages/AiChatPage';
-import SttPracticePage from './domains/ai-content/pages/SttPracticePage';
-import PronunciationReviewPage from './domains/ai-content/pages/PronunciationReviewPage';
-import ProtectedRoute from './domains/home-support-common/components/ProtectedRoute';
-import GuestRoute from './domains/home-support-common/components/GuestRoute';
+import MapingoLayout from './components/MapingoLayout';
+import LandingHomePage from './pages/home-support-common/LandingHomePage';
+import MapPage from './pages/place/MapPage';
+import GrowthPage from './pages/history-analysis/GrowthPage';
+import GrowthProgressPage from './pages/history-analysis/GrowthProgressPage';
+import GrowthGoalsPage from './pages/history-analysis/GrowthGoalsPage';
+import GrowthInsightsPage from './pages/history-analysis/GrowthInsightsPage';
+import CommunityPage from './pages/learning-social-favorite/CommunityPage';
+import CommunityFriendsPage from './pages/learning-social-favorite/CommunityFriendsPage';
+import CommunityRankingPage from './pages/learning-social-favorite/CommunityRankingPage';
+import CommunityFavoritesPage from './pages/learning-social-favorite/CommunityFavoritesPage';
+import SupportPage from './pages/home-support-common/SupportPage';
+import SupportNoticesPage from './pages/home-support-common/SupportNoticesPage';
+import SupportNoticeDetailPage from './pages/home-support-common/SupportNoticeDetailPage';
+import SupportFaqPage from './pages/home-support-common/SupportFaqPage';
+import SupportInquiryPage from './pages/home-support-common/SupportInquiryPage';
+import PremiumPage from './pages/primium/PremiumPage';
+import PremiumPlansPage from './pages/primium/PremiumPlansPage';
+import PremiumFeaturesPage from './pages/primium/PremiumFeaturesPage';
+import PremiumStatusPage from './pages/primium/PremiumStatusPage';
+import PremiumCheckoutPage from './pages/primium/PremiumCheckoutPage';
+import SettingsPage from './pages/home-support-common/SettingsPage';
+import SettingsLearningPage from './pages/home-support-common/SettingsLearningPage';
+import SettingsDisplayPage from './pages/home-support-common/SettingsDisplayPage';
+import SettingsAccountPage from './pages/home-support-common/SettingsAccountPage';
+import AccountDeletePage from './pages/user/AccountDeletePage';
+import AdminPage from './pages/admin/AdminPage';
+import AdminMembersPage from './pages/admin/AdminMembersPage';
+import AdminNoticesPage from './pages/admin/AdminNoticesPage';
+import AdminContentPage from './pages/admin/AdminContentPage';
+import SignupPage from './pages/user/SignupPage';
+import ProfilePage from './pages/user/ProfilePage';
+import LoginPage from './pages/user/LoginPage';
+import AiChatPage from './pages/ai-content/AiChatPage';
+import SttPracticePage from './pages/ai-content/SttPracticePage';
+import PronunciationReviewPage from './pages/ai-content/PronunciationReviewPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import GuestRoute from './components/GuestRoute';
+
 
 function App() {
   return (
@@ -53,6 +55,7 @@ function App() {
         <Route path="/community/favorites" element={<CommunityFavoritesPage />} />
         <Route path="/support" element={<SupportPage />} />
         <Route path="/support/notices" element={<SupportNoticesPage />} />
+        <Route path="/support/notices/:noticeId" element={<SupportNoticeDetailPage />} />
         <Route path="/support/faq" element={<SupportFaqPage />} />
         <Route path="/support/inquiry" element={<SupportInquiryPage />} />
         <Route path="/premium" element={<PremiumPage />} />

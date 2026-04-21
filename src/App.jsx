@@ -11,10 +11,6 @@ import CommunityFriendsPage from './pages/learning-social-favorite/CommunityFrie
 import CommunityRankingPage from './pages/learning-social-favorite/CommunityRankingPage';
 import CommunityFavoritesPage from './pages/learning-social-favorite/CommunityFavoritesPage';
 import SupportPage from './pages/home-support-common/SupportPage';
-import SupportNoticesPage from './pages/home-support-common/SupportNoticesPage';
-import SupportNoticeDetailPage from './pages/home-support-common/SupportNoticeDetailPage';
-import SupportFaqPage from './pages/home-support-common/SupportFaqPage';
-import SupportInquiryPage from './pages/home-support-common/SupportInquiryPage';
 import PremiumPage from './pages/primium/PremiumPage';
 import PremiumPlansPage from './pages/primium/PremiumPlansPage';
 import PremiumFeaturesPage from './pages/primium/PremiumFeaturesPage';
@@ -54,10 +50,6 @@ function App() {
         <Route path="/community/ranking" element={<CommunityRankingPage />} />
         <Route path="/community/favorites" element={<CommunityFavoritesPage />} />
         <Route path="/support" element={<SupportPage />} />
-        <Route path="/support/notices" element={<SupportNoticesPage />} />
-        <Route path="/support/notices/:noticeId" element={<SupportNoticeDetailPage />} />
-        <Route path="/support/faq" element={<SupportFaqPage />} />
-        <Route path="/support/inquiry" element={<SupportInquiryPage />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/premium/plans" element={<PremiumPlansPage />} />
         <Route path="/premium/features" element={<PremiumFeaturesPage />} />

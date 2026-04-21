@@ -13,6 +13,8 @@ const userDirectory = {
     email: 'learner@mapingo.ai',
     levelLabel: 'Lv.40',
     levelNumber: 40,
+    accountStatus: '정상 이용 중 · 일반 회원',
+    levelTitle: 'Intermediate',
     goalText: '주 5회 말하기 연습',
     badgeText: '꾸준한 학습 배지',
   },
@@ -22,6 +24,8 @@ const userDirectory = {
     email: 'mina@mapingo.ai',
     levelLabel: 'Lv.20',
     levelNumber: 20,
+    accountStatus: '정상 이용 중 · 일반 회원',
+    levelTitle: 'Beginner',
     goalText: '주 3회 발음 리뷰',
     badgeText: '첫 학습 배지',
   },
@@ -31,6 +35,8 @@ const userDirectory = {
     email: 'joon@mapingo.ai',
     levelLabel: 'Lv.30',
     levelNumber: 30,
+    accountStatus: '정상 이용 중 · 일반 회원',
+    levelTitle: 'Intermediate',
     goalText: '주 4회 상황 회화',
     badgeText: '주간 목표 달성 배지',
   },
@@ -40,6 +46,8 @@ const userDirectory = {
     email: 'sora@mapingo.ai',
     levelLabel: 'Lv.10',
     levelNumber: 10,
+    accountStatus: '정상 이용 중 · 일반 회원',
+    levelTitle: 'Starter',
     goalText: '주 2회 시작 루틴 유지',
     badgeText: '첫 학습 배지',
   },
@@ -49,10 +57,52 @@ const userDirectory = {
     email: 'alex@mapingo.ai',
     levelLabel: 'Lv.50',
     levelNumber: 50,
+    accountStatus: '제한된 상태 · 검토 중',
+    levelTitle: 'Advanced',
     goalText: '주 6회 자유 말하기',
     badgeText: '발음 집중 배지',
   },
+  6: {
+    userId: 6,
+    name: 'Yuna',
+    email: 'yuna@mapingo.ai',
+    levelLabel: 'Lv.24',
+    levelNumber: 24,
+    accountStatus: '정상 이용 중 · 일반 회원',
+    levelTitle: 'Beginner',
+    goalText: '여행 표현 매일 10분',
+    badgeText: '여행 회화 배지',
+  },
+  7: {
+    userId: 7,
+    name: 'Kevin',
+    email: 'kevin@mapingo.ai',
+    levelLabel: 'Lv.37',
+    levelNumber: 37,
+    accountStatus: '정상 이용 중 · 일반 회원',
+    levelTitle: 'Intermediate',
+    goalText: '출근 전 회화 루틴',
+    badgeText: '아침 루틴 배지',
+  },
 };
+
+const recommendedFriendSeeds = [
+  {
+    userId: 6,
+    matchLabel: '92% 잘 맞아요',
+    reason: '여행 표현 루틴이 비슷해요.',
+  },
+  {
+    userId: 7,
+    matchLabel: '88% 잘 맞아요',
+    reason: '아침 회화 연습 시간대가 겹쳐요.',
+  },
+  {
+    userId: 2,
+    matchLabel: '84% 잘 맞아요',
+    reason: '발음 리뷰와 회화 연습 패턴이 비슷해요.',
+  },
+];
 
 const initialFriendshipRows = [
   {
@@ -108,7 +158,7 @@ const initialUserReportRows = [
     status: 'RESOLVED',
     created_at: '2026-04-12 15:40:00',
     processed_at: '2026-04-13 10:00:00',
-    admin_memo: '경고 조치 후 대화 기능 제한을 안내했습니다.',
+    admin_memo: '경고 조치 후 기능 사용 제한을 안내했습니다.',
   },
 ];
 
@@ -134,6 +184,13 @@ function getStatusTone(status) {
   return 'muted';
 }
 
+function getLevelTone(levelNumber) {
+  if (levelNumber >= 40) return 'violet';
+  if (levelNumber >= 30) return 'sky';
+  if (levelNumber >= 20) return 'mint';
+  return 'lime';
+}
+
 function StatusPill({ status }) {
   return (
     <span className={`community-friends-status-pill is-${getStatusTone(status)}`}>
@@ -142,22 +199,95 @@ function StatusPill({ status }) {
   );
 }
 
-function FriendProfileCard({ relation, currentUserId, onAccept, onReject, onDelete }) {
+function FriendProfileCard({
+  relation,
+  currentUserId,
+  onAccept,
+  onReject,
+  onDelete,
+  compact = false,
+}) {
   const otherUserId =
     relation.requester_id === currentUserId
       ? relation.addressee_id
       : relation.requester_id;
   const user = userDirectory[otherUserId];
-  const isIncomingPending =
-    relation.status === 'PENDING' && relation.addressee_id === currentUserId;
   const isAccepted = relation.status === 'ACCEPTED';
+  const levelTone = getLevelTone(user.levelNumber);
+
+  if (compact) {
+    return (
+      <article className="community-friends-profile-card is-compact">
+        <div className="community-friends-compact-main">
+          <div className="community-friends-avatar-column">
+            <div className={`community-friends-level-pill is-${levelTone}`}>
+              {user.levelLabel}
+            </div>
+            <div className="community-friends-avatar-frame is-compact">
+              <div className="mapingo-profile-avatar mapingo-friend-avatar" aria-hidden="true">
+                <PingPopCharacterImage
+                  className="mapingo-profile-avatar-logo"
+                  level={user.levelNumber}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="community-friends-compact-copy">
+            <div className="community-friends-title-row">
+              <h4>{user.name}</h4>
+              <StatusPill status={relation.status} />
+            </div>
+            <p>{user.email}</p>
+            <span className={`community-friends-badge-pill is-${levelTone}`}>
+              {user.badgeText}
+            </span>
+            <small>{user.goalText}</small>
+          </div>
+        </div>
+
+        {relation.status === 'PENDING' ? (
+          <div className="community-friends-compact-actions">
+            <button
+              type="button"
+              className="mapingo-submit-button"
+              onClick={() => onAccept(relation.friendship_id)}
+            >
+              수락
+            </button>
+            <button
+              type="button"
+              className="mapingo-ghost-button"
+              onClick={() => onReject(relation.friendship_id)}
+            >
+              거절
+            </button>
+          </div>
+        ) : null}
+
+        {isAccepted ? (
+          <div className="community-friends-compact-actions">
+            <button
+              type="button"
+              className="mapingo-ghost-button"
+              onClick={() => onDelete(relation.friendship_id)}
+            >
+              친구 삭제
+            </button>
+          </div>
+        ) : null}
+      </article>
+    );
+  }
 
   return (
-    <article className="community-friends-profile-card">
+    <article className="community-friends-profile-card is-featured">
       <div className="community-friends-profile-head">
         <div className="community-friends-identity">
           <div className="community-friends-avatar-column">
-            <div className="community-friends-level-pill">{user.levelLabel}</div>
+            <div className={`community-friends-level-pill is-${levelTone}`}>
+              {user.levelLabel}
+            </div>
             <div className="community-friends-avatar-frame">
               <div className="mapingo-profile-avatar mapingo-friend-avatar" aria-hidden="true">
                 <PingPopCharacterImage
@@ -169,35 +299,17 @@ function FriendProfileCard({ relation, currentUserId, onAccept, onReject, onDele
           </div>
 
           <div className="community-friends-copy">
-            <div className="community-friends-title-row">
-              <h3>{user.name}</h3>
-              <StatusPill status={relation.status} />
-            </div>
+            <h3>{user.name}</h3>
             <p>{user.email}</p>
-            <small>{user.goalText}</small>
+            <span className={`community-friends-badge-pill is-${levelTone}`}>
+              {user.badgeText}
+            </span>
+            <small>다음 학습 배지까지 꾸준히 이어가고 있어요.</small>
           </div>
         </div>
 
         <div className="community-friends-actions">
-          {isIncomingPending ? (
-            <>
-              <button
-                type="button"
-                className="mapingo-submit-button"
-                onClick={() => onAccept(relation.friendship_id)}
-              >
-                수락
-              </button>
-              <button
-                type="button"
-                className="mapingo-ghost-button"
-                onClick={() => onReject(relation.friendship_id)}
-              >
-                거절
-              </button>
-            </>
-          ) : null}
-
+          <StatusPill status={relation.status} />
           {isAccepted ? (
             <button
               type="button"
@@ -212,21 +324,64 @@ function FriendProfileCard({ relation, currentUserId, onAccept, onReject, onDele
 
       <div className="community-friends-info-grid">
         <article className="community-friends-info-tile">
+          <strong>계정 상태</strong>
+          <p>{user.accountStatus}</p>
+        </article>
+        <article className="community-friends-info-tile">
           <strong>학습 레벨</strong>
-          <p>{user.levelLabel}</p>
+          <p>
+            {user.levelTitle} · {user.levelLabel}
+          </p>
         </article>
         <article className="community-friends-info-tile">
-          <strong>대표 배지</strong>
-          <p>{user.badgeText}</p>
+          <strong>학습 목표</strong>
+          <p>{user.goalText}</p>
         </article>
         <article className="community-friends-info-tile">
-          <strong>요청일</strong>
-          <p>{formatDate(relation.requested_at)}</p>
+          <strong>연결 정보</strong>
+          <p>{`요청일 ${formatDate(relation.requested_at)}`}</p>
         </article>
-        <article className="community-friends-info-tile">
-          <strong>응답일</strong>
-          <p>{formatDate(relation.responded_at)}</p>
-        </article>
+      </div>
+    </article>
+  );
+}
+
+function RecommendedFriendCard({ user, recommendation, onAdd }) {
+  const levelTone = getLevelTone(user.levelNumber);
+
+  return (
+    <article className="community-friends-recommend-card">
+      <div className="community-friends-recommend-head">
+        <div className="community-friends-recommend-profile">
+          <div className="community-friends-avatar-frame is-small">
+            <div className="mapingo-profile-avatar mapingo-friend-avatar" aria-hidden="true">
+              <PingPopCharacterImage
+                className="mapingo-profile-avatar-logo"
+                level={user.levelNumber}
+              />
+            </div>
+          </div>
+
+          <div className="community-friends-copy is-recommend">
+            <div className="community-friends-title-row">
+              <h4>{user.name}</h4>
+              <span className="community-friends-match-pill">{recommendation.matchLabel}</span>
+            </div>
+            <p>{user.goalText}</p>
+            <span className={`community-friends-badge-pill is-${levelTone}`}>
+              {user.badgeText}
+            </span>
+            <small>{recommendation.reason}</small>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="mapingo-submit-button"
+          onClick={() => onAdd(user.userId)}
+        >
+          친구 추가
+        </button>
       </div>
     </article>
   );
@@ -302,6 +457,48 @@ function CommunityFriendsPage() {
     (user) => user.userId !== currentUserId,
   );
 
+  const hasExistingRelation = (targetUserId) =>
+    friendshipRows.some(
+      (row) =>
+        (row.requester_id === currentUserId && row.addressee_id === targetUserId) ||
+        (row.requester_id === targetUserId && row.addressee_id === currentUserId),
+    );
+
+  const recommendedFriends = useMemo(
+    () =>
+      recommendedFriendSeeds.filter(
+        (item) => !hasExistingRelation(item.userId) && userDirectory[item.userId],
+      ),
+    [friendshipRows],
+  );
+
+  const sendFriendRequest = (targetUserId) => {
+    const targetUser = userDirectory[targetUserId];
+
+    if (!targetUser) {
+      setFeedbackMessage('요청할 사용자를 찾지 못했어요.');
+      return;
+    }
+
+    if (hasExistingRelation(targetUserId)) {
+      setFeedbackMessage('이미 친구 요청을 보냈거나 연결된 사용자예요.');
+      return;
+    }
+
+    setFriendshipRows((current) => [
+      {
+        friendship_id: current.length + 1,
+        requester_id: currentUserId,
+        addressee_id: targetUserId,
+        status: 'PENDING',
+        requested_at: `${TODAY} 09:00:00`,
+        responded_at: null,
+      },
+      ...current,
+    ]);
+    setFeedbackMessage(`${targetUser.name}님에게 친구 요청을 보냈어요.`);
+  };
+
   const handleInvite = () => {
     const normalizedQuery = inviteQuery.trim().toLowerCase();
     const targetUser = availableUsers.find(
@@ -320,30 +517,8 @@ function CommunityFriendsPage() {
       return;
     }
 
-    const alreadyExists = friendshipRows.some(
-      (row) =>
-        (row.requester_id === currentUserId && row.addressee_id === targetUser.userId) ||
-        (row.requester_id === targetUser.userId && row.addressee_id === currentUserId),
-    );
-
-    if (alreadyExists) {
-      setFeedbackMessage('이미 친구 요청을 보냈거나 연결된 사용자예요.');
-      return;
-    }
-
-    setFriendshipRows((current) => [
-      {
-        friendship_id: current.length + 1,
-        requester_id: currentUserId,
-        addressee_id: targetUser.userId,
-        status: 'PENDING',
-        requested_at: `${TODAY} 09:00:00`,
-        responded_at: null,
-      },
-      ...current,
-    ]);
+    sendFriendRequest(targetUser.userId);
     setInviteQuery('');
-    setFeedbackMessage('친구 요청을 보냈어요.');
   };
 
   const handleAccept = (friendshipId) => {
@@ -358,6 +533,7 @@ function CommunityFriendsPage() {
           : row,
       ),
     );
+    setFeedbackMessage('친구 요청을 수락했어요.');
   };
 
   const handleReject = (friendshipId) => {
@@ -372,12 +548,14 @@ function CommunityFriendsPage() {
           : row,
       ),
     );
+    setFeedbackMessage('친구 요청을 거절했어요.');
   };
 
   const handleDelete = (friendshipId) => {
     setFriendshipRows((current) =>
       current.filter((row) => row.friendship_id !== friendshipId),
     );
+    setFeedbackMessage('친구 목록에서 삭제했어요.');
   };
 
   const handleSubmitReport = () => {
@@ -407,8 +585,8 @@ function CommunityFriendsPage() {
     <div className="mapingo-dashboard">
       <MapingoPageSection
         eyebrow="친구 관리"
-        title="친구 요청 · 목록 · 신고 관리"
-        description="친구 관계 상태를 확인하고, 필요한 경우 사용자 신고까지 한 화면에서 처리할 수 있어요."
+        title="친구 요청, 목록, 신고까지 한 번에 관리해보세요"
+        description="친구 연결 상태를 빠르게 확인하고, 검색이나 추천 친구를 통해 새 연결도 바로 만들 수 있어요."
       >
         <div className="mapingo-page-actions">
           <button
@@ -427,9 +605,7 @@ function CommunityFriendsPage() {
             <div className="mapingo-list-card">
               <div className="mapingo-card-header-row">
                 <h3>친구 목록</h3>
-                <span className="mapingo-muted-copy">
-                  현재 연결된 친구 {acceptedFriends.length}명
-                </span>
+                <span className="mapingo-muted-copy">현재 연결된 친구 {acceptedFriends.length}명</span>
               </div>
 
               {acceptedFriends.length === 0 ? (
@@ -473,6 +649,7 @@ function CommunityFriendsPage() {
                         onAccept={handleAccept}
                         onReject={handleReject}
                         onDelete={handleDelete}
+                        compact
                       />
                     ))}
                   </div>
@@ -481,13 +658,13 @@ function CommunityFriendsPage() {
 
               <div className="mapingo-list-card">
                 <div className="mapingo-card-header-row">
-                  <h3>차단 · 거절 이력</h3>
+                  <h3>차단 및 거절 이력</h3>
                   <span className="mapingo-muted-copy">최근 관계 변경 내역</span>
                 </div>
 
                 {archivedRelations.length === 0 ? (
                   <div className="community-friends-empty-card">
-                    보관된 이력이 없어요.
+                    보관 중인 이력이 없어요.
                   </div>
                 ) : (
                   <div className="community-friends-card-list">
@@ -499,6 +676,7 @@ function CommunityFriendsPage() {
                         onAccept={handleAccept}
                         onReject={handleReject}
                         onDelete={handleDelete}
+                        compact
                       />
                     ))}
                   </div>
@@ -509,9 +687,7 @@ function CommunityFriendsPage() {
             <div className="mapingo-list-card">
               <div className="mapingo-card-header-row">
                 <h3>신고 이력</h3>
-                <span className="mapingo-muted-copy">
-                  접수된 신고 {userReportRows.length}건
-                </span>
+                <span className="mapingo-muted-copy">접수된 신고 {userReportRows.length}건</span>
               </div>
 
               {userReportRows.length === 0 ? (
@@ -530,8 +706,30 @@ function CommunityFriendsPage() {
 
           <aside className="community-friends-side">
             <div className="mapingo-form-card community-friends-panel">
-              <h3>친구 요청 보내기</h3>
-              <p>닉네임이나 이메일로 친구를 찾아 요청할 수 있어요.</p>
+              <h3>추천 친구</h3>
+              <p>학습 패턴이 비슷한 사용자를 바로 친구로 추가해보세요.</p>
+
+              <div className="community-friends-recommend-list">
+                {recommendedFriends.length === 0 ? (
+                  <div className="community-friends-empty-card">
+                    지금 보여줄 추천 친구가 없어요.
+                  </div>
+                ) : (
+                  recommendedFriends.map((item) => (
+                    <RecommendedFriendCard
+                      key={item.userId}
+                      recommendation={item}
+                      user={userDirectory[item.userId]}
+                      onAdd={sendFriendRequest}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="mapingo-form-card community-friends-panel">
+              <h3>검색으로 친구 추가</h3>
+              <p>닉네임이나 이메일로 사용자를 찾아 직접 친구 요청을 보낼 수 있어요.</p>
               <input
                 className="mapingo-input"
                 value={inviteQuery}
@@ -549,7 +747,7 @@ function CommunityFriendsPage() {
 
             <div className="mapingo-form-card community-friends-panel">
               <h3>사용자 신고</h3>
-              <p>문제가 있는 사용자를 선택하고 사유를 남겨주세요.</p>
+              <p>문제가 있는 사용자를 선택하고 신고 사유를 남겨주세요.</p>
 
               <select
                 className="mapingo-select"

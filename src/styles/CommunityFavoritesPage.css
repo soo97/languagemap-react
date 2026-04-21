@@ -216,6 +216,19 @@
   color: #11766f;
 }
 
+.community-favorites-more-button {
+  align-self: flex-start;
+  margin-top: 12px;
+  padding: 11px 16px;
+  border: 1px solid #c9e8e1;
+  border-radius: 12px;
+  background: #f7fcfb;
+  color: #0f6f68;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .community-favorites-select-button.is-disabled {
   border-color: #e2e8f0;
   color: #94a3b8;

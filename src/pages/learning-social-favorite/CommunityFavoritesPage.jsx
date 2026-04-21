@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { MapingoPageSection } from '../../components/MapingoPageBlocks';
 import { placeService } from '../../api/placeService';
 import '../../styles/CommunityFavoritesPage.css';
 
 const MAX_ACTIVE_GOALS = 3;
+const INITIAL_AVAILABLE_GOAL_COUNT = 2;
+const GOAL_PAGE_SIZE = 2;
 const TODAY = '2026-04-21';
 
 const learningProfileRow = {
@@ -18,7 +20,7 @@ const badgeRows = [
   {
     badge_id: 1,
     badge_name: '첫 학습 배지',
-    description: '처음 학습을 완료하면 받는 시작 배지예요.',
+    description: '처음 학습을 완료하면 받을 수 있는 시작 배지예요.',
     condition_type: 'STUDY_COUNT',
     condition_value: 1,
     image_url: '/assets/characters/FirstLearning_Badge.png',
@@ -79,8 +81,6 @@ const goalMasterRows = [
     period_type: 'WEEKLY',
     is_active: true,
     display_order: 1,
-    created_at: '2026-04-01 09:00:00',
-    updated_at: '2026-04-01 09:00:00',
   },
   {
     goal_master_id: 2,
@@ -92,8 +92,6 @@ const goalMasterRows = [
     period_type: 'WEEKLY',
     is_active: true,
     display_order: 2,
-    created_at: '2026-04-01 09:00:00',
-    updated_at: '2026-04-01 09:00:00',
   },
   {
     goal_master_id: 3,
@@ -105,8 +103,6 @@ const goalMasterRows = [
     period_type: 'WEEKLY',
     is_active: true,
     display_order: 3,
-    created_at: '2026-04-01 09:00:00',
-    updated_at: '2026-04-01 09:00:00',
   },
   {
     goal_master_id: 4,
@@ -118,8 +114,28 @@ const goalMasterRows = [
     period_type: 'WEEKLY',
     is_active: true,
     display_order: 4,
-    created_at: '2026-04-01 09:00:00',
-    updated_at: '2026-04-01 09:00:00',
+  },
+  {
+    goal_master_id: 5,
+    badge_id: 3,
+    goal_type: 'STUDY_COUNT',
+    goal_title: '연속 3일 학습 유지',
+    goal_description: '학습을 끊기지 않게 이어가는 루틴형 목표예요.',
+    target_value: 3,
+    period_type: 'DAILY',
+    is_active: true,
+    display_order: 5,
+  },
+  {
+    goal_master_id: 6,
+    badge_id: 2,
+    goal_type: 'SPEAKING_COUNT',
+    goal_title: '자유 말하기 5문장 기록',
+    goal_description: '오늘의 표현을 직접 문장으로 말해보는 도전이에요.',
+    target_value: 5,
+    period_type: 'WEEKLY',
+    is_active: true,
+    display_order: 6,
   },
 ];
 
@@ -133,8 +149,6 @@ const initialUserGoalRows = [
     start_date: '2026-04-21',
     end_date: '2026-04-27',
     completed_at: null,
-    created_at: '2026-04-21 09:00:00',
-    updated_at: '2026-04-21 09:00:00',
   },
   {
     user_goal_id: 2,
@@ -145,11 +159,19 @@ const initialUserGoalRows = [
     start_date: '2026-04-21',
     end_date: '2026-04-27',
     completed_at: null,
-    created_at: '2026-04-21 09:05:00',
-    updated_at: '2026-04-21 09:05:00',
   },
   {
     user_goal_id: 3,
+    user_id: 1,
+    goal_master_id: 5,
+    current_value: 2,
+    status: 'ACTIVE',
+    start_date: '2026-04-21',
+    end_date: '2026-04-21',
+    completed_at: null,
+  },
+  {
+    user_goal_id: 4,
     user_id: 1,
     goal_master_id: 3,
     current_value: 3,
@@ -157,8 +179,6 @@ const initialUserGoalRows = [
     start_date: '2026-04-14',
     end_date: '2026-04-20',
     completed_at: '2026-04-19 20:20:00',
-    created_at: '2026-04-14 08:00:00',
-    updated_at: '2026-04-19 20:20:00',
   },
 ];
 
@@ -221,6 +241,7 @@ function getGoalTypeLabel(goalType) {
   if (goalType === 'SPEAKING_COUNT') return '말하기 횟수';
   if (goalType === 'STUDY_TIME') return '학습 시간';
   if (goalType === 'PRONUNCIATION_SCORE') return '발음 점수';
+  if (goalType === 'WEEKLY_GOAL') return '주간 목표';
   return goalType;
 }
 
@@ -323,8 +344,20 @@ function GoalCard({ goal, onCancel }) {
           <div className="community-favorites-goal-title-row">
             <h4>{goal.goal_title}</h4>
             <StatusBadge
-              label={goal.status === 'COMPLETED' ? '완료' : goal.status === 'ACTIVE' ? '진행 중' : '종료'}
-              tone={goal.status === 'COMPLETED' ? 'success' : goal.status === 'ACTIVE' ? 'info' : 'muted'}
+              label={
+                goal.status === 'COMPLETED'
+                  ? '완료'
+                  : goal.status === 'ACTIVE'
+                    ? '진행 중'
+                    : '종료'
+              }
+              tone={
+                goal.status === 'COMPLETED'
+                  ? 'success'
+                  : goal.status === 'ACTIVE'
+                    ? 'info'
+                    : 'muted'
+              }
             />
           </div>
           <p className="community-favorites-goal-description">
@@ -393,7 +426,7 @@ function GoalMasterCard({ goal, disabled, onAdd }) {
         onClick={() => onAdd(goal.goal_master_id)}
         disabled={disabled}
       >
-        {disabled ? '선택 불가' : '목표 추가'}
+        {disabled ? '추가 불가' : '목표 추가'}
       </button>
     </article>
   );
@@ -424,7 +457,7 @@ function FavoriteCard({ title, description, metaChips, subCopy, onRemove }) {
           className="community-favorites-danger-button"
           onClick={onRemove}
         >
-          즐겨찾기 삭제
+          즐겨찾기 해제
         </button>
       </div>
     </article>
@@ -439,6 +472,9 @@ export default function CommunityFavoritesPage() {
     initialFavoriteScenarioRows,
   );
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [visibleAvailableGoalCount, setVisibleAvailableGoalCount] = useState(
+    INITIAL_AVAILABLE_GOAL_COUNT,
+  );
 
   const badgeCards = useMemo(
     () =>
@@ -465,7 +501,8 @@ export default function CommunityFavoritesPage() {
           ...goalMasterRows.find(
             (goalMaster) => goalMaster.goal_master_id === goal.goal_master_id,
           ),
-        })),
+        }))
+        .slice(0, MAX_ACTIVE_GOALS),
     [userGoalRows],
   );
 
@@ -496,6 +533,14 @@ export default function CommunityFavoritesPage() {
     [activeGoals],
   );
 
+  const visibleAvailableGoalMasters = useMemo(
+    () => availableGoalMasters.slice(0, visibleAvailableGoalCount),
+    [availableGoalMasters, visibleAvailableGoalCount],
+  );
+
+  const hasMoreAvailableGoals =
+    visibleAvailableGoalCount < availableGoalMasters.length;
+
   const favoritePlaces = useMemo(
     () =>
       favoritePlaceRows
@@ -522,7 +567,7 @@ export default function CommunityFavoritesPage() {
 
   const handleAddGoal = (goalMasterId) => {
     if (activeGoals.length >= MAX_ACTIVE_GOALS) {
-      setFeedbackMessage('활성 목표는 최대 3개까지만 유지할 수 있어요.');
+      setFeedbackMessage('진행 중 목표는 최대 3개까지만 유지할 수 있어요.');
       return;
     }
 
@@ -530,9 +575,7 @@ export default function CommunityFavoritesPage() {
       (goal) => goal.goal_master_id === goalMasterId,
     );
 
-    if (!selectedGoal) {
-      return;
-    }
+    if (!selectedGoal) return;
 
     setUserGoalRows((current) => [
       {
@@ -544,8 +587,6 @@ export default function CommunityFavoritesPage() {
         start_date: TODAY,
         end_date: calculateGoalEndDate(selectedGoal.period_type),
         completed_at: null,
-        created_at: `${TODAY} 09:00:00`,
-        updated_at: `${TODAY} 09:00:00`,
       },
       ...current,
     ]);
@@ -560,12 +601,15 @@ export default function CommunityFavoritesPage() {
               ...goal,
               status: 'CANCELED',
               end_date: TODAY,
-              updated_at: `${TODAY} 18:00:00`,
             }
           : goal,
       ),
     );
     setFeedbackMessage('');
+  };
+
+  const handleShowMoreGoals = () => {
+    setVisibleAvailableGoalCount((current) => current + GOAL_PAGE_SIZE);
   };
 
   const handleRemoveFavoritePlace = (favoritePlaceId) => {
@@ -586,8 +630,8 @@ export default function CommunityFavoritesPage() {
     <div className="mapingo-dashboard">
       <MapingoPageSection
         eyebrow="커뮤니티"
-        title="목표 · 배지 · 즐겨찾기"
-        description="학습 현황, 진행 중인 목표, 획득 배지와 저장한 항목을 한 화면에서 확인할 수 있어요."
+        title="목표, 배지, 즐겨찾기를 한 번에 관리해보세요"
+        description="학습 현황, 진행 중인 목표, 획득한 배지와 저장한 항목들을 한 화면에서 확인할 수 있어요."
       />
 
       <section className="mapingo-page-section">
@@ -625,14 +669,14 @@ export default function CommunityFavoritesPage() {
       <section className="mapingo-page-section">
         <div className="mapingo-list-card">
           <div className="mapingo-card-header-row">
-            <h3>내 학습 목표</h3>
+            <h3>학습 목표</h3>
             <span className="mapingo-muted-copy">
               진행 중 {activeGoals.length} / {MAX_ACTIVE_GOALS}
             </span>
           </div>
 
           <p className="community-favorites-section-copy">
-            원하는 목표를 골라서 최대 3개까지 동시에 관리할 수 있어요.
+            원하는 목표를 골라서 최대 3개까지만 동시에 관리할 수 있어요.
           </p>
 
           <div className="community-favorites-goal-layout">
@@ -662,7 +706,7 @@ export default function CommunityFavoritesPage() {
             <div className="community-favorites-column">
               <div className="community-favorites-subsection-head">
                 <h4>추가 가능한 목표</h4>
-                <span>새로 시작할 수 있는 목표</span>
+                <span>나중에 페이징하기 쉽게 일부만 먼저 보여줘요</span>
               </div>
 
               {availableGoalMasters.length === 0 ? (
@@ -670,16 +714,28 @@ export default function CommunityFavoritesPage() {
                   지금 추가 가능한 목표가 없어요.
                 </div>
               ) : (
-                <div className="mapingo-selectable-list">
-                  {availableGoalMasters.map((goal) => (
-                    <GoalMasterCard
-                      key={goal.goal_master_id}
-                      goal={goal}
-                      disabled={activeGoals.length >= MAX_ACTIVE_GOALS}
-                      onAdd={handleAddGoal}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="mapingo-selectable-list">
+                    {visibleAvailableGoalMasters.map((goal) => (
+                      <GoalMasterCard
+                        key={goal.goal_master_id}
+                        goal={goal}
+                        disabled={activeGoals.length >= MAX_ACTIVE_GOALS}
+                        onAdd={handleAddGoal}
+                      />
+                    ))}
+                  </div>
+
+                  {hasMoreAvailableGoals ? (
+                    <button
+                      type="button"
+                      className="community-favorites-more-button"
+                      onClick={handleShowMoreGoals}
+                    >
+                      목표 더보기
+                    </button>
+                  ) : null}
+                </>
               )}
 
               <p
@@ -738,7 +794,7 @@ export default function CommunityFavoritesPage() {
           <div className="mapingo-list-card">
             <div className="mapingo-card-header-row">
               <h3>즐겨찾기 장소</h3>
-              <span className="mapingo-muted-copy">저장해둔 장소 모아보기</span>
+              <span className="mapingo-muted-copy">자주 가는 장소 모아보기</span>
             </div>
 
             <div className="community-favorites-route-list">

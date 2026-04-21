@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DemoFlowCompact from '../../components/DemoFlowCompact';
 import '../../styles/CommunityPage.css';
@@ -5,97 +6,179 @@ import '../../styles/CommunityPage.css';
 const communityEntryCards = [
   {
     id: 'friends',
+    accent: '연결 관리',
     title: '친구 관리',
     description:
-      '친구 요청을 보내고, 받은 요청을 정리하고, 필요한 상황에서는 신고까지 이어서 처리해요.',
-    accent: '연결 관리',
-    stat: '요청 2건',
-    detail: '친구 추가 · 요청 확인 · 신고 접수',
+      '친구 요청을 확인하고 새 친구를 추가하면서 함께 공부할 학습 메이트를 정리해보세요.',
     path: '/community/friends',
   },
   {
     id: 'ranking',
-    title: '점수 비교 · 랭킹',
-    description:
-      '친구와 학습 흐름을 나란히 보고, 전체 사용자 사이에서 내 위치를 빠르게 확인해요.',
     accent: '순위 확인',
-    stat: '상위 12%',
-    detail: '친구 비교 · 전체 랭킹',
+    title: '점수 비교와 랭킹',
+    description:
+      '친구들과 학습 기록을 비교하고, 전체 사용자 안에서 내 위치를 빠르게 확인할 수 있어요.',
     path: '/community/ranking',
   },
   {
     id: 'favorites',
-    title: '목표 · 배지 · 즐겨찾기',
-    description:
-      '진행 중인 목표와 획득한 배지, 저장해둔 장소와 시나리오를 한 번에 묶어서 정리해요.',
     accent: '학습 보관함',
-    stat: '목표 2개',
-    detail: '목표 관리 · 배지 현황 · 저장 항목',
+    title: '목표와 배지, 즐겨찾기',
+    description:
+      '진행 중인 목표와 획득한 배지, 자주 보는 학습 루트를 한 번에 모아 관리해보세요.',
     path: '/community/favorites',
   },
 ];
 
-const quickStats = [
+const starterMessages = [
+  '오늘 영어 회화 루틴 같이 할 사람?',
+  '여행 표현 연습할 분 있나요?',
+  '방금 배운 문장 같이 복습해요.',
+];
+
+const initialMessages = [
   {
-    label: '이번 주 참여',
-    value: '7일 연속',
-    copy: '대화 연습과 목표 체크가 꾸준히 이어지고 있어요.',
+    id: 1,
+    role: 'mate',
+    author: 'Mina',
+    text: '오늘 출근 전에 10분 회화 연습 같이 하실 분?',
+    time: '방금',
   },
   {
-    label: '커뮤니티 포인트',
-    value: '+128',
-    copy: '친구 비교와 랭킹 확인으로 동기부여 흐름이 유지되고 있어요.',
+    id: 2,
+    role: 'mate',
+    author: 'Daniel',
+    text: '저는 여행 영어 표현 복습 중이에요. 같이 해도 좋아요.',
+    time: '1분 전',
   },
 ];
 
+function buildCommunityReply(message) {
+  if (message.includes('회화')) {
+    return {
+      author: 'Mina',
+      text: '좋아요. 오늘은 자기소개랑 아침 루틴 표현부터 같이 해봐요.',
+    };
+  }
+
+  if (message.includes('여행')) {
+    return {
+      author: 'Daniel',
+      text: '좋아요. 공항 체크인부터 카페 주문까지 차례로 연습해봐요.',
+    };
+  }
+
+  if (message.includes('복습')) {
+    return {
+      author: 'Sora',
+      text: '복습방 열어둘게요. 오늘 배운 문장 한 줄씩 남겨봐요.',
+    };
+  }
+
+  return {
+    author: 'Community Bot',
+    text: '좋아요. 같은 주제로 연습 중인 사람들에게 바로 보여줄게요.',
+  };
+}
+
 function CommunityPage() {
   const navigate = useNavigate();
+  const [chatInput, setChatInput] = useState('');
+  const [messages, setMessages] = useState(initialMessages);
+
+  const liveStatus = useMemo(() => {
+    const mateCount = messages.filter((message) => message.role === 'mate').length;
+    return `${mateCount + 10}명 참여 중`;
+  }, [messages]);
+
+  const sendMessage = (nextMessage) => {
+    const trimmed = nextMessage.trim();
+
+    if (!trimmed) return;
+
+    const reply = buildCommunityReply(trimmed);
+
+    setMessages((current) => [
+      ...current,
+      {
+        id: current.length + 1,
+        role: 'user',
+        author: '나',
+        text: trimmed,
+        time: '지금',
+      },
+      {
+        id: current.length + 2,
+        role: 'mate',
+        author: reply.author,
+        text: reply.text,
+        time: '방금',
+      },
+    ]);
+    setChatInput('');
+  };
 
   return (
     <div className="mapingo-dashboard">
       <section className="community-landing">
-        <div className="community-landing-hero">
-          <div className="community-landing-copy">
-            <p className="mapingo-eyebrow">커뮤니티</p>
-            <h1>혼자 끝내지 않고, 같이 이어가는 학습 루틴</h1>
-            <p className="community-landing-description">
-              친구와 흐름을 비교하고, 목표를 관리하고, 내가 쌓아온 기록을 한곳에서 자연스럽게 이어가보세요.
-            </p>
-
-            <div className="community-landing-stat-row">
-              {quickStats.map((stat) => (
-                <article key={stat.label} className="community-landing-stat">
-                  <p>{stat.label}</p>
-                  <strong>{stat.value}</strong>
-                  <span>{stat.copy}</span>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="community-landing-panel">
-            <div className="community-landing-highlight">
-              <span>오늘의 흐름</span>
-              <strong>목표 확인 → 친구 요청 확인 → 랭킹 보기</strong>
-              <p>지금 필요한 순서대로 바로 들어갈 수 있게 정리했어요.</p>
-            </div>
-
-            <div className="community-landing-mini-grid">
-              <div className="community-landing-mini-card">
-                <p>새 친구 요청</p>
-                <strong>2명</strong>
+        <div className="community-landing-hero is-chat-only">
+          <div className="community-landing-panel is-full">
+            <div className="community-landing-highlight is-chat">
+              <div className="community-live-chat-head">
+                <div>
+                  <span>실시간 채팅</span>
+                  <strong>같이 공부하는 사람들과 지금 바로 대화해보세요</strong>
+                </div>
+                <em>{liveStatus}</em>
               </div>
-              <div className="community-landing-mini-card">
-                <p>진행 중 목표</p>
-                <strong>2개</strong>
+
+              <div className="community-live-chat-log">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`community-live-chat-row is-${message.role}`}
+                  >
+                    <article
+                      className={`community-live-chat-bubble is-${message.role}`}
+                    >
+                      <div className="community-live-chat-meta">
+                        <span>{message.author}</span>
+                        <small>{message.time}</small>
+                      </div>
+                      <p>{message.text}</p>
+                    </article>
+                  </div>
+                ))}
               </div>
-              <div className="community-landing-mini-card">
-                <p>획득 배지</p>
-                <strong>2개</strong>
+
+              <div className="community-live-chat-suggestions">
+                {starterMessages.map((message) => (
+                  <button
+                    key={message}
+                    type="button"
+                    className="community-live-chat-chip"
+                    onClick={() => sendMessage(message)}
+                  >
+                    {message}
+                  </button>
+                ))}
               </div>
-              <div className="community-landing-mini-card">
-                <p>랭킹 변화</p>
-                <strong>▲ 3</strong>
+
+              <div className="community-live-chat-composer">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(event) => setChatInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      sendMessage(chatInput);
+                    }
+                  }}
+                  placeholder="같이 연습할 주제나 한마디를 보내보세요"
+                />
+                <button type="button" onClick={() => sendMessage(chatInput)}>
+                  보내기
+                </button>
               </div>
             </div>
           </div>
@@ -117,11 +200,6 @@ function CommunityPage() {
               <div className="community-entry-card-body">
                 <h3>{card.title}</h3>
                 <p>{card.description}</p>
-              </div>
-
-              <div className="community-entry-card-bottom">
-                <strong>{card.stat}</strong>
-                <span>{card.detail}</span>
               </div>
             </button>
           ))}

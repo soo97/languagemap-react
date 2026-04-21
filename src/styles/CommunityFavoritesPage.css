@@ -1,3 +1,9 @@
+html{
+  /* 스크롤바 너비 고정 */
+  overflow-y: scroll; 
+  scrollbar-gutter: stable;
+}
+
 .community-favorites-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -7,7 +7,7 @@ import '../../styles/SupportPage.css';
 const TABS = [
   { id: 'notices', label: '공지사항' },
   { id: 'faq', label: 'FAQ' },
-  { id: 'inquiry', label: '문의하기' },
+  { id: 'inquiry', label: '1:1 문의하기' },
 ];
 
 const NOTICE_FILTERS = ['전체', '업데이트', '점검', '이벤트'];
@@ -180,7 +180,6 @@ function SupportPage() {
   return (
     <div className="mapingo-dashboard">
       <section className="mapingo-domain-entry">
-        <p className="mapingo-eyebrow">고객지원</p>
         <h1>고객지원</h1>
         <p className="mapingo-domain-entry-copy">Mapingo는 여러분들의 이야기를 귀기울여 듣습니다.</p>
 
@@ -206,9 +205,7 @@ function SupportPage() {
 
       {/* 탭 콘텐츠 */}
       <section className="mapingo-page-section">
-        <h2 className="mapingo-support-section-title">
-          {TABS.find((t) => t.id === activeTab)?.label}
-        </h2>
+        
 
         {activeTab === 'notices' && (
           <NoticesTab onNoticeClick={(id) => navigate(`/support/notices/${id}`)} />

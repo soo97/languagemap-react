@@ -13,12 +13,6 @@ const settingsCards = [
     description: '언어와 표시 순서를 정리하는 화면이에요.',
     path: '/settings/display',
   },
-  {
-    id: 'account',
-    title: '계정 연결',
-    description: '프로필과 연계해서 계정 관련 흐름을 확인해요.',
-    path: '/settings/account',
-  },
 ];
 
 function SettingsPage() {

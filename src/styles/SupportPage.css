@@ -1,0 +1,65 @@
+/* ===================================
+   SupportPage 탭 전환 스타일
+   =================================== */
+
+/* 활성 탭 카드 강조 */
+.mapingo-domain-entry-card--active {
+  border-color: #1d9e75 !important;
+  background: #f0f7f5 !important;
+}
+
+.mapingo-domain-entry-card--active h3 {
+  color: #0f6e56;
+}
+
+/* 섹션 소제목 */
+.mapingo-support-section-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 1rem;
+  padding: 0;
+}
+
+/* 탭 콘텐츠 공통 */
+.mapingo-support-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 필터 칩 행 */
+.mapingo-support-filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mapingo-filter-chip {
+  font-size: 12px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: 0.5px solid var(--color-border-secondary);
+  background: white;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.mapingo-filter-chip--active {
+  background: #e1f5ee;
+  color: #0f6e56;
+  border-color: #5dcaa5;
+  font-weight: 500;
+}
+
+/* 문의 인라인 폼 */
+.mapingo-inquiry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 1.25rem;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  background: var(--color-background-secondary);
+  margin-bottom: 8px;
+}

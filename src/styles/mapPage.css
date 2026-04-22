@@ -31,7 +31,7 @@ body.map-domain-scroll-lock {
 }
 
 .map-domain-panel {
-  border-radius: 24px;
+  border-radius: clamp(20px, 2.4dvh, 24px);
   border: 1px solid rgba(206, 238, 232, 0.95);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 18px 34px rgba(15, 23, 42, 0.05);
@@ -42,13 +42,13 @@ body.map-domain-scroll-lock {
 .map-domain-panel-inner,
 .map-domain-panel-empty {
   height: 100%;
-  padding: 24px 22px;
+  padding: clamp(16px, 2.2dvh, 24px) clamp(14px, 2vw, 22px);
 }
 
 .map-domain-panel-inner {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: clamp(10px, 1.7dvh, 18px);
   min-height: 0;
 }
 
@@ -68,7 +68,7 @@ body.map-domain-scroll-lock {
 .map-domain-panel-top h2 {
   margin: 0;
   color: #124f54;
-  font-size: 1.7rem;
+  font-size: clamp(1.2rem, 3.2dvh, 1.7rem);
   line-height: 1.08;
   letter-spacing: -0.04em;
 }
@@ -78,7 +78,11 @@ body.map-domain-scroll-lock {
 .map-domain-panel-address {
   margin: 0;
   color: #607487;
-  line-height: 1.72;
+  line-height: clamp(1.42, 1.5dvh, 1.72);
+}
+
+.map-domain-panel-section p {
+  font-size: clamp(0.82rem, 1.5dvh, 0.94rem);
 }
 
 .map-domain-panel-kicker {
@@ -98,18 +102,18 @@ body.map-domain-scroll-lock {
 }
 
 .map-domain-panel-address {
-  margin-top: 10px;
-  font-size: 0.93rem;
+  margin-top: clamp(4px, 0.9dvh, 10px);
+  font-size: clamp(0.82rem, 1.45dvh, 0.93rem);
 }
 
 .map-domain-close-button {
-  width: 42px;
-  height: 42px;
+  width: clamp(38px, 4.5dvh, 42px);
+  height: clamp(38px, 4.5dvh, 42px);
   border: 0;
   border-radius: 999px;
   background: #effaf7;
   color: #124f54;
-  font-size: 1.35rem;
+  font-size: clamp(1.1rem, 2.2dvh, 1.35rem);
   cursor: pointer;
 }
 
@@ -134,17 +138,17 @@ body.map-domain-scroll-lock {
 .map-domain-level-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: clamp(6px, 0.8dvh, 8px);
 }
 
 .map-domain-level-button {
-  min-height: 38px;
-  padding: 0 14px;
+  min-height: clamp(32px, 3.9dvh, 38px);
+  padding: 0 clamp(10px, 1.4vw, 14px);
   border: 1px solid #cfeee7;
   border-radius: 999px;
   background: #ffffff;
   color: #155e63;
-  font-size: 0.84rem;
+  font-size: clamp(0.74rem, 1.45dvh, 0.84rem);
   font-weight: 800;
   cursor: pointer;
 }
@@ -158,13 +162,13 @@ body.map-domain-scroll-lock {
 
 .map-domain-panel-section {
   display: grid;
-  gap: 8px;
+  gap: clamp(4px, 0.8dvh, 8px);
 }
 
 .map-domain-panel-section h3 {
   margin: 0;
   color: #124f54;
-  font-size: 1rem;
+  font-size: clamp(0.88rem, 1.75dvh, 1rem);
 }
 
 .map-domain-tip-card {
@@ -176,12 +180,12 @@ body.map-domain-scroll-lock {
 
 .map-domain-panel-actions {
   display: flex;
-  gap: 10px;
+  gap: clamp(8px, 1dvh, 10px);
   margin-top: auto;
 }
 
 .map-domain-detail-actions {
-  padding-top: 8px;
+  padding-top: clamp(2px, 0.8dvh, 8px);
 }
 
 .map-domain-detail-actions .map-domain-learn-button {
@@ -190,8 +194,8 @@ body.map-domain-scroll-lock {
 
 .map-domain-learn-button,
 .map-domain-secondary-button {
-  min-height: 52px;
-  border-radius: 18px;
+  min-height: clamp(42px, 5.4dvh, 52px);
+  border-radius: clamp(16px, 2dvh, 18px);
   font-weight: 800;
   cursor: pointer;
 }
@@ -382,11 +386,11 @@ body.map-domain-scroll-lock {
 
 .map-domain-left-overlay {
   position: absolute;
-  top: 88px;
+  top: clamp(72px, 9dvh, 88px);
   left: 18px;
-  bottom: 12px;
+  bottom: clamp(10px, 1.2dvh, 16px);
   z-index: 2;
-  width: min(100%, 380px);
+  width: min(100%, clamp(360px, 28vw, 380px));
   pointer-events: none;
 }
 

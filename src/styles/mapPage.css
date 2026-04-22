@@ -36,6 +36,7 @@ body.map-domain-scroll-lock {
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 18px 34px rgba(15, 23, 42, 0.05);
   overflow: hidden;
+  min-height: 0;
 }
 
 .map-domain-panel-inner,
@@ -48,6 +49,7 @@ body.map-domain-scroll-lock {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-height: 0;
 }
 
 .map-domain-panel-chat {
@@ -380,9 +382,9 @@ body.map-domain-scroll-lock {
 
 .map-domain-left-overlay {
   position: absolute;
-  top: 104px;
+  top: 88px;
   left: 18px;
-  bottom: 18px;
+  bottom: 12px;
   z-index: 2;
   width: min(100%, 380px);
   pointer-events: none;
@@ -391,6 +393,7 @@ body.map-domain-scroll-lock {
 .map-domain-panel-overlay {
   height: 100%;
   pointer-events: auto;
+  min-height: 0;
 }
 
 .map-domain-panel-guide {

@@ -16,7 +16,6 @@ import PremiumPlansPage from './pages/primium/PremiumPlansPage';
 import PremiumCheckoutPage from './pages/primium/PremiumCheckoutPage';
 import SettingsPage from './pages/home-support-common/SettingsPage';
 import SettingsLearningPage from './pages/home-support-common/SettingsLearningPage';
-import SettingsDisplayPage from './pages/home-support-common/SettingsDisplayPage';
 import SettingsAccountPage from './pages/home-support-common/SettingsAccountPage';
 import AccountDeletePage from './pages/user/AccountDeletePage';
 import AdminPage from './pages/admin/AdminPage';
@@ -56,7 +55,6 @@ function App() {
         <Route path="/premium/checkout" element={<PremiumCheckoutPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/learning" element={<SettingsLearningPage />} />
-        <Route path="/settings/display" element={<SettingsDisplayPage />} />
         <Route path="/settings/account" element={<SettingsAccountPage />} />
         <Route path="/settings/account/delete" element={<AccountDeletePage />} />
         <Route path="/admin" element={<AdminPage />} />

@@ -115,7 +115,9 @@ export const useMapingoStore = create(
       showEnglishFirst: false,
       weeklyGoal: '5',
       studyTime: '20:00',
-      language: 'KO',
+      language: 'en',
+      theme: 'light',
+      notification: 'all',
 
       setSession: (session) =>
         set(() => ({
@@ -209,6 +211,8 @@ export const useMapingoStore = create(
       setWeeklyGoal: (weeklyGoal) => set({ weeklyGoal }),
       setStudyTime: (studyTime) => set({ studyTime }),
       setLanguage: (language) => set({ language }),
+      setTheme: (theme) => set({ theme }),
+      setNotification: (notification) => set({ notification }),
     }),
     {
       name: 'mapingo-ui-store',

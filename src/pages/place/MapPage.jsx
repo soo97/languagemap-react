@@ -25,15 +25,15 @@ function buildAiReply(place, userInput, turn) {
   }
 
   if (turn === 0) {
-    return place.chatSteps[0]?.prompt ?? `Welcome to ${place.title}. How can I help you today?`;
-  }
-
-  if (turn === 1) {
     return place.chatSteps[1]?.prompt ?? 'Sounds good. Can you tell me a bit more?';
   }
 
-  if (turn === 2) {
+  if (turn === 1) {
     return place.chatSteps[2]?.prompt ?? 'Great. Is there anything else you would like to ask?';
+  }
+
+  if (turn === 2) {
+    return `Nice work. That sounded natural for the ${place.title} situation. Let me wrap up with quick feedback.`;
   }
 
   if (turn > 4) {
@@ -41,6 +41,13 @@ function buildAiReply(place, userInput, turn) {
   }
 
   return `That sounds natural for ${place.category}. Try adding one more sentence to make the conversation richer.`;
+}
+
+function buildEvaluationMessage(place) {
+  const firstStrength = place.feedback?.strengths?.[0] ?? '핵심 표현을 자연스럽게 연결했어요.';
+  const firstImprovement = place.feedback?.improvements?.[0] ?? '한 문장만 더 덧붙이면 대화가 더 풍부해져요.';
+
+  return `${place.title} 상황에서 주문 흐름은 좋았어요. 강점은 ${firstStrength} 개선 포인트는 ${firstImprovement} 이번에는 어떤 방향으로 더 깊게 연습하고 싶으세요?`;
 }
 
 function MapPage() {
@@ -56,6 +63,7 @@ function MapPage() {
   const [panelMode, setPanelMode] = useState('guide');
   const [chatLog, setChatLog] = useState([]);
   const [chatInput, setChatInput] = useState('');
+  const [chatCompleted, setChatCompleted] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState('Starter');
 
   useEffect(() => {
@@ -94,6 +102,7 @@ function MapPage() {
   const resetChatState = () => {
     setChatLog([]);
     setChatInput('');
+    setChatCompleted(false);
     setRecentMapChatLog([]);
   };
 
@@ -147,7 +156,7 @@ function MapPage() {
   };
 
   const handleSendMessage = () => {
-    if (!selectedPlace) {
+    if (!selectedPlace || chatCompleted) {
       return;
     }
 
@@ -163,13 +172,24 @@ function MapPage() {
       text: trimmed,
     };
 
+    const userTurnCount = chatLog.filter((message) => message.role === 'user').length;
     const aiMessage = {
       role: 'ai',
-      speaker: selectedPlace.chatSteps[Math.min(chatLog.length, selectedPlace.chatSteps.length - 1)]?.speaker ?? 'AI Coach',
-      text: buildAiReply(selectedPlace, trimmed, chatLog.filter((message) => message.role === 'user').length),
+      speaker: selectedPlace.chatSteps[Math.min(userTurnCount + 1, selectedPlace.chatSteps.length - 1)]?.speaker ?? 'AI Coach',
+      text: buildAiReply(selectedPlace, trimmed, userTurnCount),
     };
 
     const nextLog = [...chatLog, userMessage, aiMessage];
+
+    if (userTurnCount + 1 >= selectedPlace.chatSteps.length) {
+      nextLog.push({
+        role: 'ai',
+        speaker: 'AI Coach',
+        text: buildEvaluationMessage(selectedPlace),
+        kind: 'evaluation',
+      });
+      setChatCompleted(true);
+    }
 
     setChatLog(nextLog);
     setRecentMapChatLog(nextLog);
@@ -195,6 +215,7 @@ function MapPage() {
           panelMode={panelMode}
           chatLog={chatLog}
           chatInput={chatInput}
+          chatCompleted={chatCompleted}
           selectedLevel={selectedLevel}
           onChatInputChange={setChatInput}
           onSelectLevel={setSelectedLevel}
@@ -204,6 +225,7 @@ function MapPage() {
           onClosePanel={() => handleSelectPlace(null)}
           onStartLearning={handleStartLearning}
           onBackToDetail={handleBackToDetail}
+          onOpenCoaching={() => navigate('/coaching')}
           onOpenPremium={() => navigate('/premium')}
         />
       </section>

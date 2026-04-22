@@ -510,6 +510,31 @@ body.map-domain-scroll-lock {
   font-size: 0.95rem;
 }
 
+.map-domain-follow-up-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.map-domain-follow-up-button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #d5e7f2;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0%, #f5fbff 100%);
+  color: #155e63;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.82);
+}
+
+.map-domain-follow-up-button:hover {
+  border-color: #19b4a9;
+  background: #edfdfa;
+}
+
 .map-domain-chat-typing {
   display: inline-flex;
   align-items: center;
@@ -565,6 +590,18 @@ body.map-domain-scroll-lock {
   font-size: 1.1rem;
   cursor: pointer;
   box-shadow: 0 16px 28px rgba(16, 147, 143, 0.22);
+}
+
+.map-domain-chat-input:disabled {
+  background: #eef5f6;
+  color: #6b7d8d;
+  cursor: not-allowed;
+}
+
+.map-domain-chat-send:disabled {
+  background: linear-gradient(180deg, #b9c7cb, #a5b4b8);
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .map-domain-right-overlay {

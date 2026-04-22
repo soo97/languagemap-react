@@ -36,6 +36,7 @@ function RouteMap({
   panelMode,
   chatLog,
   chatInput,
+  chatCompleted,
   selectedLevel,
   onChatInputChange,
   onSelectLevel,
@@ -45,6 +46,7 @@ function RouteMap({
   onClosePanel,
   onStartLearning,
   onBackToDetail,
+  onOpenCoaching,
   onOpenPremium,
 }) {
   const mapElementRef = useRef(null);
@@ -248,15 +250,28 @@ function RouteMap({
                               <strong className="map-domain-message-speaker">{message.speaker}</strong>
                             ) : null}
                             <p>{message.text}</p>
+                            {message.kind === 'evaluation' ? (
+                              <div className="map-domain-follow-up-actions">
+                                <button
+                                  type="button"
+                                  className="map-domain-follow-up-button"
+                                  onClick={onOpenCoaching}
+                                >
+                                  더 알아보기
+                                </button>
+                              </div>
+                            ) : null}
                           </div>
                         </article>
                       ))}
 
-                      <div className="map-domain-chat-typing" aria-hidden="true">
-                        <span />
-                        <span />
-                        <span />
-                      </div>
+                      {!chatCompleted ? (
+                        <div className="map-domain-chat-typing" aria-hidden="true">
+                          <span />
+                          <span />
+                          <span />
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
@@ -264,15 +279,22 @@ function RouteMap({
                     <input
                       className="map-domain-chat-input"
                       value={chatInput}
+                      disabled={chatCompleted}
                       onChange={(event) => onChatInputChange(event.target.value)}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter') {
                           onSendMessage();
                         }
                       }}
-                      placeholder="Type your message..."
+                      placeholder={chatCompleted ? '아래 더 알아보기 버튼으로 이어서 연습할 수 있어요.' : 'Type your message...'}
                     />
-                    <button type="button" className="map-domain-chat-send" onClick={onSendMessage} aria-label="Send">
+                    <button
+                      type="button"
+                      className="map-domain-chat-send"
+                      onClick={onSendMessage}
+                      aria-label="Send"
+                      disabled={chatCompleted}
+                    >
                       ➤
                     </button>
                   </div>

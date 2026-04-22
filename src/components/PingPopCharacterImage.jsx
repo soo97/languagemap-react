@@ -1,14 +1,17 @@
 const getCharacterImagePath = (level) => {
-  if (level >= 60) return '/assets/characters/pingpop-badge-lv60.png';
-  if (level >= 50) return '/assets/characters/pingpop-badge-lv50.png';
-  if (level >= 40) return '/assets/characters/pingpop-badge-lv40.png';
-  if (level >= 30) return '/assets/characters/pingpop-badge-lv30.png';
-  if (level >= 20) return '/assets/characters/pingpop-badge-lv20.png';
-  return '/assets/characters/pingpop-badge-lv10.png';
+  if (level >= 60) return '/assets/characters/pingpop-badge-lv60.png?v=9';
+  if (level >= 50) return '/assets/characters/pingpop-badge-lv50.png?v=9';
+  if (level >= 40) return '/assets/characters/pingpop-badge-lv40.png?v=9';
+  if (level >= 30) return '/assets/characters/pingpop-badge-lv30.png?v=9';
+  if (level >= 20) return '/assets/characters/pingpop-badge-lv20.png?v=9';
+  return '/assets/characters/pingpop-badge-lv10.png?v=9';
 };
 
 function PingPopCharacterImage({ className = '', alt = 'PingPop character', level = 10 }) {
-  return <img src={getCharacterImagePath(level)} alt={alt} className={className} />;
+  const levelClassName = level >= 30 && level < 40 ? 'is-level-30' : '';
+  const imageClassName = [className, levelClassName].filter(Boolean).join(' ');
+
+  return <img src={getCharacterImagePath(level)} alt={alt} className={imageClassName} />;
 }
 
 export default PingPopCharacterImage;

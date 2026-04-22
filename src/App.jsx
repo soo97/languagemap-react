@@ -13,8 +13,6 @@ import CommunityFavoritesPage from './pages/learning-social-favorite/CommunityFa
 import SupportPage from './pages/home-support-common/SupportPage';
 import PremiumPage from './pages/primium/PremiumPage';
 import PremiumPlansPage from './pages/primium/PremiumPlansPage';
-import PremiumFeaturesPage from './pages/primium/PremiumFeaturesPage';
-import PremiumStatusPage from './pages/primium/PremiumStatusPage';
 import PremiumCheckoutPage from './pages/primium/PremiumCheckoutPage';
 import SettingsPage from './pages/home-support-common/SettingsPage';
 import SettingsLearningPage from './pages/home-support-common/SettingsLearningPage';
@@ -53,8 +51,8 @@ function App() {
         <Route path="/support" element={<SupportPage />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/premium/plans" element={<PremiumPlansPage />} />
-        <Route path="/premium/features" element={<PremiumFeaturesPage />} />
-        <Route path="/premium/status" element={<PremiumStatusPage />} />
+        <Route path="/premium/features" element={<Navigate to="/premium/plans" replace />} />
+        <Route path="/premium/status" element={<Navigate to="/premium/plans" replace />} />
         <Route path="/premium/checkout" element={<PremiumCheckoutPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/learning" element={<SettingsLearningPage />} />

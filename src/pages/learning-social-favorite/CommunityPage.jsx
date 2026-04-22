@@ -23,9 +23,9 @@ const communityEntryCards = [
   {
     id: 'favorites',
     accent: '학습 보관함',
-    title: '목표와 배지, 즐겨찾기',
+    title: '목표와 즐겨찾기',
     description:
-      '진행 중인 목표와 획득한 배지, 자주 보는 학습 루트를 한 번에 모아 관리해보세요.',
+      '진행 중인 목표와 자주 보는 학습 루트를 한 번에 모아 관리해보세요.',
     path: '/community/favorites',
   },
 ];

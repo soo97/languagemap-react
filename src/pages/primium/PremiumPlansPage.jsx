@@ -19,14 +19,11 @@ function PremiumPlansPage() {
   return (
     <div className="mapingo-dashboard">
       <section className="mapingo-premium-hero">
-        <div className="mapingo-page-actions">
-          <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/premium')}>
-            프리미엄 메인으로
-          </button>
-        </div>
         <p className="mapingo-premium-eyebrow">Premium</p>
-        <h1>구독 플랜 선택</h1>
-        <p className="mapingo-premium-hero-copy">월간/연간 플랜을 비교한 뒤 결제 처리 화면으로 이어지는 프론트 흐름을 확인할 수 있습니다.</p>
+        <h1>구독 플랜</h1>
+        <p className="mapingo-premium-hero-copy">
+          월간/연간 플랜, 가격, 간단한 혜택 요약만 한 화면에서 확인할 수 있습니다.
+        </p>
         {toastMessage ? (
           <div className="mapingo-premium-toast" role="status" aria-live="polite">
             <strong>다음 단계</strong>
@@ -51,9 +48,9 @@ function PremiumPlansPage() {
               <p className="mapingo-premium-plan-description">{product.description}</p>
               <p className="mapingo-premium-plan-price">{product.price}</p>
               <ul className="mapingo-premium-plan-points">
-                <li>AI 채팅과 프리미엄 기능 화면 접근</li>
-                <li>STT · 발음 평가 결과 프로토타입 확인</li>
-                <li>구독 상태와 결제 처리 흐름 검증</li>
+                <li>광고 없이 학습에만 집중할 수 있어요</li>
+                <li>프리미엄 전용 콘텐츠와 추가 혜택이 제공돼요</li>
+                <li>우선 고객 지원으로 더 빠르게 도움받을 수 있어요</li>
               </ul>
               <button
                 type="button"

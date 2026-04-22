@@ -630,41 +630,9 @@ export default function CommunityFavoritesPage() {
     <div className="mapingo-dashboard">
       <MapingoPageSection
         eyebrow="커뮤니티"
-        title="목표, 배지, 즐겨찾기를 한 번에 관리해보세요"
-        description="학습 현황, 진행 중인 목표, 획득한 배지와 저장한 항목들을 한 화면에서 확인할 수 있어요."
+        title="목표와 즐겨찾기를 한 번에 관리해보세요"
+        description="학습 현황, 진행 중인 목표와 저장한 항목들을 한 화면에서 확인할 수 있어요."
       />
-
-      <section className="mapingo-page-section">
-        <div className="mapingo-list-card">
-          <div className="mapingo-card-header-row">
-            <h3>학습 프로필</h3>
-            <span className="mapingo-muted-copy">현재 학습 상태 요약</span>
-          </div>
-
-          <div className="community-favorites-stat-grid">
-            <ProfileStatCard
-              label="현재 레벨"
-              value={`Lv. ${learningProfileRow.level}`}
-              hint="다음 레벨까지 80 EXP 남았어요"
-            />
-            <ProfileStatCard
-              label="누적 경험치"
-              value={`${learningProfileRow.exp} EXP`}
-              hint="학습 완료와 발음 리뷰로 누적돼요"
-            />
-            <ProfileStatCard
-              label="총 학습 횟수"
-              value={`${learningProfileRow.total_study_count}회`}
-              hint="지금까지 완료한 학습 횟수예요"
-            />
-            <ProfileStatCard
-              label="획득 배지"
-              value={`${userBadgeRows.length}개`}
-              hint="지금까지 모은 배지 개수예요"
-            />
-          </div>
-        </div>
-      </section>
 
       <section className="mapingo-page-section">
         <div className="mapingo-list-card">

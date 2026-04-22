@@ -1694,6 +1694,30 @@
   gap: 18px;
 }
 
+.mapingo-goals-panel {
+  align-items: center;
+}
+
+.mapingo-goals-layout {
+  width: 100%;
+  grid-template-columns: minmax(0, 760px);
+  justify-content: center;
+}
+
+.mapingo-goals-layout .mapingo-form-card {
+  padding: 22px 20px;
+}
+
+.mapingo-goals-layout .mapingo-card-header-row {
+  align-items: flex-start;
+}
+
+.mapingo-goals-layout .mapingo-muted-copy {
+  max-width: 240px;
+  text-align: right;
+  line-height: 1.5;
+}
+
 .mapingo-learning-flow-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
@@ -2597,36 +2621,43 @@
 }
 
 .mapingo-profile-avatar {
-  width: 92px;
-  height: 92px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-  padding: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #d8eeea;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #f3fbf9 100%);
+  overflow: hidden;
 }
 
 .mapingo-profile-avatar-logo {
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
   display: block;
+  justify-self: center;
+  align-self: center;
   object-fit: contain;
   object-position: center center;
 }
 
 .mapingo-profile-avatar-column {
   display: grid;
-  justify-items: start;
+  justify-items: center;
   align-content: start;
   gap: 10px;
 }
 
 .mapingo-profile-avatar-frame {
-  width: 132px;
-  height: 120px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
 }
 
 .mapingo-profile-identity-copy {
@@ -2706,6 +2737,30 @@
   line-height: 1.6;
 }
 
+.mapingo-profile-info-label {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.mapingo-profile-info-value {
+  display: block;
+  margin-top: 8px;
+  color: #0f5c60;
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.mapingo-profile-info-hint {
+  margin: 12px 0 0;
+  color: #5f7477;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
 .mapingo-profile-side-column {
   display: grid;
   gap: 18px;
@@ -2753,6 +2808,74 @@
   color: #6b7d90;
   font-size: 1.3rem;
   font-weight: 700;
+}
+
+.mapingo-profile-badge-status-card {
+  display: grid;
+  gap: 18px;
+  cursor: default;
+}
+
+.mapingo-profile-badge-status-list {
+  display: grid;
+  gap: 12px;
+}
+
+.mapingo-profile-badge-status-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #d8eeea;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.mapingo-profile-badge-status-copy {
+  min-width: 0;
+}
+
+.mapingo-profile-badge-status-copy strong {
+  display: block;
+  color: #0f5c60;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.mapingo-profile-badge-status-copy p {
+  margin: 6px 0 0;
+  color: #5f7084;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.mapingo-profile-badge-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mapingo-profile-badge-status-pill.is-success {
+  background: #eafbf6;
+  color: #0f8a60;
+}
+
+.mapingo-profile-badge-status-pill.is-info {
+  background: #eef6ff;
+  color: #2f6bdb;
+}
+
+.mapingo-profile-badge-status-pill.is-muted {
+  background: #f3f5f7;
+  color: #6b7280;
 }
 
 .mapingo-friend-layout {
@@ -2927,8 +3050,8 @@
 .mapingo-premium-hero {
   display: grid;
   justify-items: center;
-  gap: 12px;
-  padding: 54px 24px 12px;
+  gap: 10px;
+  padding: 48px 24px 20px;
   text-align: center;
 }
 
@@ -2958,16 +3081,17 @@
 .mapingo-premium-hero h1 {
   margin: 0;
   color: var(--mapingo-deep);
-  font-size: clamp(2.1rem, 4vw, 3.2rem);
-  line-height: 1.08;
+  font-size: clamp(2.2rem, 4vw, 3.35rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
 }
 
 .mapingo-premium-hero-copy {
   margin: 0;
-  max-width: 780px;
+  max-width: 700px;
   color: #5f7084;
-  font-size: 1.02rem;
-  line-height: 1.75;
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .mapingo-premium-hero-note {
@@ -3008,9 +3132,11 @@
 
 .mapingo-premium-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.28fr) minmax(280px, 0.76fr) minmax(280px, 0.76fr);
-  gap: 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
   align-items: stretch;
+  width: min(100%, 1150px);
+  margin: 0 auto;
 }
 
 .mapingo-premium-benefit-panel,
@@ -3066,8 +3192,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 440px;
-  padding: 30px 28px;
+  min-height: 490px;
+  padding: 34px 28px 28px;
   border: 1px solid #c9f0ec;
   background: rgba(255, 255, 255, 0.96);
   cursor: pointer;
@@ -3113,7 +3239,7 @@
   align-items: center;
   align-self: flex-start;
   min-height: 34px;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
   padding: 0 14px;
   border-radius: 999px;
   background: #fff5ce;
@@ -3125,28 +3251,30 @@
 .mapingo-premium-plan-label {
   margin: 0;
   color: #1ab6ac;
-  font-size: 1rem;
+  font-size: 0.96rem;
   font-weight: 800;
 }
 
 .mapingo-premium-plan-card h2 {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   color: var(--mapingo-deep);
-  font-size: clamp(2rem, 3vw, 3rem);
-  line-height: 1.04;
+  font-size: clamp(2.4rem, 3.2vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
 }
 
 .mapingo-premium-plan-description {
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   color: #708195;
-  font-size: 1rem;
-  line-height: 1.7;
+  font-size: 1.02rem;
+  line-height: 1.72;
+  max-width: 36ch;
 }
 
 .mapingo-premium-plan-price {
-  margin: 30px 0 0;
+  margin: 34px 0 0;
   color: var(--mapingo-deep);
-  font-size: clamp(2rem, 3vw, 3.05rem);
+  font-size: clamp(2.5rem, 3.5vw, 4rem);
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -3161,18 +3289,18 @@
 
 .mapingo-premium-plan-points {
   display: grid;
-  gap: 12px;
-  margin: 28px 0 0;
+  gap: 14px;
+  margin: 28px 0 28px;
   padding: 0;
   list-style: none;
 }
 
 .mapingo-premium-plan-points li {
   position: relative;
-  padding-left: 16px;
+  padding-left: 20px;
   color: #475569;
   font-size: 0.98rem;
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 .mapingo-premium-plan-points li::before {
@@ -3184,11 +3312,35 @@
   font-weight: 900;
 }
 
+/* Features summary grid used on unified premium plans page */
+.mapingo-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.mapingo-premium-features {
+  margin-top: 28px;
+}
+
+.mapingo-premium-features h2 {
+  margin: 0 0 8px 0;
+  color: var(--mapingo-deep);
+  font-size: 1.6rem;
+}
+
+.mapingo-premium-features p {
+  margin: 0 0 16px 0;
+  color: #5f7084;
+}
+
 .mapingo-premium-plan-button {
-  min-height: 54px;
+  width: 100%;
+  min-height: 56px;
   margin-top: auto;
   border: 0;
-  border-radius: 18px;
+  border-radius: 20px;
   font-size: 1rem;
   font-weight: 800;
   cursor: pointer;
@@ -3244,6 +3396,11 @@
   .mapingo-header-inner {
     flex-wrap: wrap;
     padding: 15px 0 16px;
+  }
+
+  .mapingo-premium-layout {
+    grid-template-columns: 1fr;
+    width: min(100%, 760px);
   }
 
   .mapingo-nav {

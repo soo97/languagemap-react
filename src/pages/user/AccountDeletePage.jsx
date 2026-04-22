@@ -63,7 +63,7 @@ function AccountDeletePage() {
               <button type="button" className="mapingo-submit-button" onClick={handleDelete}>
                 탈퇴 진행
               </button>
-              <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/premium/status')}>
+              <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/premium/plans')}>
                 결제 상태 확인
               </button>
             </div>

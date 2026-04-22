@@ -14,7 +14,7 @@ function SttPracticePage() {
         description="실제 음성 인식 API 대신, 녹음 시작 · 변환 중 · 변환 결과 단계를 프론트 프로토타입으로 검증하는 화면입니다."
       >
         <div className="mapingo-page-actions">
-          <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/premium/features')}>
+          <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/premium/plans')}>
             프리미엄 기능으로
           </button>
         </div>

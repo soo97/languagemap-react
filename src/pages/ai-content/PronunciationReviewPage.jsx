@@ -14,7 +14,7 @@ function PronunciationReviewPage() {
         description="실제 평가 API가 연결되기 전 단계에서 점수, 강점, 개선 포인트 화면을 프론트로 먼저 검증하는 페이지입니다."
       >
         <div className="mapingo-page-actions">
-          <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/premium/features')}>
+          <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/premium/plans')}>
             프리미엄 기능으로
           </button>
         </div>

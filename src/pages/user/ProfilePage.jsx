@@ -4,49 +4,48 @@ import PingPopCharacterImage from '../../components/PingPopCharacterImage';
 import { useMapingoStore } from '../../store/useMapingoStore';
 import { learningService } from '../../api/learningService';
 
-const fallbackRouteCopy = {
-  cafe: '카페 주문 표현',
-  subway: '지하철 이동 표현',
-  travel: '여행 필수 표현',
-  convenience: '편의점 표현',
-};
+function getBadgeTone(status) {
+  if (status === 'earned') return 'success';
+  if (status === 'progress') return 'info';
+  return 'muted';
+}
+
+function getBadgeStatusLabel(status) {
+  if (status === 'earned') return '\uD68D\uB4DD \uC644\uB8CC';
+  if (status === 'progress') return '\uC9C4\uD589 \uC911';
+  return '\uBBF8\uD68D\uB4DD';
+}
 
 function ProfilePage() {
   const navigate = useNavigate();
   const profileName = useMapingoStore((state) => state.profileName);
-  const profileNickname = useMapingoStore((state) => state.profileNickname);
-  const subscriptionPlan = useMapingoStore((state) => state.subscriptionPlan);
   const subscriptionUpdatedAt = useMapingoStore((state) => state.subscriptionUpdatedAt);
-  const currentLevel = useMapingoStore((state) => state.currentLevel);
   const currentLevelId = useMapingoStore((state) => state.currentLevelId);
+  const weeklyLearnCount = useMapingoStore((state) => state.weeklyLearnCount);
   const badgeCount = useMapingoStore((state) => state.badgeCount);
   const recentLearning = useMapingoStore((state) => state.recentLearning);
-  const favoriteRouteIds = useMapingoStore((state) => state.favoriteRouteIds);
-  const weeklyGoal = useMapingoStore((state) => state.weeklyGoal);
   const weeklyGoalCompleted = useMapingoStore((state) => state.weeklyGoalCompleted);
   const badgeCatalog = learningService.fetchBadgeCatalog();
   const profileLevelNumber =
     currentLevelId === 'advanced' ? 60 : currentLevelId === 'intermediate' ? 40 : 10;
 
   const earnedBadges = badgeCatalog.filter((badge) => badge.status === 'earned');
-  const topBadge = earnedBadges[0]?.name ?? '문화 회화사';
-  const topBadgeDetail = earnedBadges[0]?.condition ?? 'City Explorer';
+  const topBadge = earnedBadges[0]?.name ?? '\uCCAB \uAC78\uC74C \uBC30\uC9C0';
+  const topBadgeDetail = earnedBadges[0]?.condition ?? '\uD559\uC2B5 3\uD68C \uC644\uB8CC';
   const latestLearning = recentLearning[0];
-  const favoriteLabels =
-    favoriteRouteIds.length > 0
-      ? favoriteRouteIds.map((id) => fallbackRouteCopy[id] ?? id).join(', ')
-      : '아직 저장한 즐겨찾기 루트가 없어요.';
+  const badgePreviewList = badgeCatalog.slice(0, 4);
   const completionPercent = Math.min(100, Math.max(12, badgeCount * 12 + weeklyGoalCompleted * 4));
-
-  const subscriptionLabel = subscriptionPlan === 'Premium' ? '프리미엄 회원' : '일반 회원';
+  const cumulativeExperience = profileLevelNumber * 10 + badgeCount * 4;
+  const totalStudyCount = recentLearning.length + weeklyLearnCount + weeklyGoalCompleted;
+  const nextLevelRemaining = Math.max(0, (profileLevelNumber + 10) * 10 - cumulativeExperience);
   const profileEmail = `${profileName.toLowerCase().replace(/\s+/g, '.')}@mapingo.ai`;
 
   return (
     <div className="mapingo-dashboard">
       <MapingoPageSection
         eyebrow="My Profile"
-        title="프로필 정보, 계정 상태, 학습 목표를 한 화면에서 확인해보세요"
-        description="프로필 정보, 계정 상태, 학습 목표, 즐겨찾기와 최근 학습을 한 화면에서 확인할 수 있습니다."
+        title={'\uD504\uB85C\uD544 \uC815\uBCF4, \uACC4\uC815 \uC0C1\uD0DC, \uD559\uC2B5 \uBAA9\uD45C\uB97C \uD55C \uD654\uBA74\uC5D0\uC11C \uD655\uC778\uD574\uBCF4\uC138\uC694'}
+        description={'\uD504\uB85C\uD544 \uC815\uBCF4, \uACC4\uC815 \uC0C1\uD0DC, \uD559\uC2B5 \uBAA9\uD45C, \uBC30\uC9C0 \uD604\uD669\uACFC \uCD5C\uADFC \uD559\uC2B5\uC744 \uD55C \uD654\uBA74\uC5D0\uC11C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.'}
       >
         <section className="mapingo-profile-layout">
           <article
@@ -59,7 +58,10 @@ function ProfilePage() {
                   <div className="mapingo-profile-level-pill">{`Lv.${profileLevelNumber}`}</div>
                   <div className="mapingo-profile-avatar-frame">
                     <div className="mapingo-profile-avatar" aria-hidden="true">
-                      <PingPopCharacterImage className="mapingo-profile-avatar-logo" level={profileLevelNumber} />
+                      <PingPopCharacterImage
+                        className="mapingo-profile-avatar-logo"
+                        level={profileLevelNumber}
+                      />
                     </div>
                   </div>
                 </div>
@@ -70,9 +72,14 @@ function ProfilePage() {
                     {topBadge} : {topBadgeDetail}
                   </span>
                   <div className="mapingo-profile-progress">
-                    <div className="mapingo-profile-progress-fill" style={{ width: `${completionPercent}%` }} />
+                    <div
+                      className="mapingo-profile-progress-fill"
+                      style={{ width: `${completionPercent}%` }}
+                    />
                   </div>
-                  <small>다음 레벨 배지까지 {Math.max(8, 100 - completionPercent)}% 남았어요</small>
+                  <small>
+                    {`\uB2E4\uC74C \uB808\uBCA8 \uBC30\uC9C0\uAE4C\uC9C0 ${Math.max(8, 100 - completionPercent)}% \uB0A8\uC558\uC5B4\uC694`}
+                  </small>
                 </div>
               </div>
 
@@ -81,51 +88,74 @@ function ProfilePage() {
                 className="mapingo-ghost-button"
                 onClick={() => navigate('/settings/account')}
               >
-                계정 관리
+                {'\uACC4\uC815 \uAD00\uB9AC'}
               </button>
             </div>
 
             <div className="mapingo-profile-info-grid">
               <article className="mapingo-profile-info-tile">
-                <strong>계정 상태</strong>
-                <p>정상 이용 중 · {subscriptionLabel}</p>
+                <p className="mapingo-profile-info-label">{'\uD604\uC7AC \uB808\uBCA8'}</p>
+                <strong className="mapingo-profile-info-value">{`Lv. ${profileLevelNumber}`}</strong>
+                <p className="mapingo-profile-info-hint">
+                  {`\uB2E4\uC74C \uB808\uBCA8\uAE4C\uC9C0 ${nextLevelRemaining} EXP \uB0A8\uC558\uC5B4\uC694`}
+                </p>
               </article>
               <article className="mapingo-profile-info-tile">
-                <strong>학습 레벨</strong>
-                <p>{currentLevel} · {`Lv. ${profileLevelNumber}`}</p>
+                <p className="mapingo-profile-info-label">{'\uB204\uC801 \uACBD\uD5D8\uCE58'}</p>
+                <strong className="mapingo-profile-info-value">{`${cumulativeExperience} EXP`}</strong>
+                <p className="mapingo-profile-info-hint">
+                  {'\uD559\uC2B5 \uC644\uB8CC\uC640 \uBC1C\uC74C \uB9AC\uBDF0\uB85C \uB204\uC801\uB418\uC5B4\uC694'}
+                </p>
               </article>
               <article className="mapingo-profile-info-tile">
-                <strong>학습 목표</strong>
-                <p>주 {weeklyGoal}회 말하기 연습</p>
+                <p className="mapingo-profile-info-label">{'\uCD1D \uD559\uC2B5 \uD69F\uC218'}</p>
+                <strong className="mapingo-profile-info-value">{`${totalStudyCount}\uD68C`}</strong>
+                <p className="mapingo-profile-info-hint">
+                  {'\uC9C0\uAE08\uAE4C\uC9C0 \uC644\uB8CC\uD55C \uD559\uC2B5 \uD69F\uC218\uC608\uC694'}
+                </p>
               </article>
               <article className="mapingo-profile-info-tile">
-                <strong>획득 배지</strong>
-                <p>{topBadge} · {topBadgeDetail}</p>
+                <p className="mapingo-profile-info-label">{'\uD68D\uB4DD \uBC30\uC9C0'}</p>
+                <strong className="mapingo-profile-info-value">{`${badgeCount}\uAC1C`}</strong>
+                <p className="mapingo-profile-info-hint">
+                  {'\uC9C0\uAE08\uAE4C\uC9C0 \uBAA8\uC740 \uBC30\uC9C0 \uAC1C\uC218\uC608\uC694'}
+                </p>
               </article>
             </div>
           </article>
 
           <div className="mapingo-profile-side-column">
             <article className="mapingo-profile-side-card">
-              <h3>최근 학습</h3>
+              <h3>{'\uCD5C\uADFC \uD559\uC2B5'}</h3>
               <p>
                 {latestLearning
-                  ? `${latestLearning.title} · 마지막 학습 ${latestLearning.meta} · 이어서 학습 가능`
-                  : '아직 최근 학습 기록이 없어요. 첫 학습을 시작해보세요.'}
+                  ? `${latestLearning.title} · ${'\uB9C8\uC9C0\uB9C9 \uD559\uC2B5'} ${latestLearning.meta} · ${'\uC774\uC5B4\uC11C \uD559\uC2B5 \uAC00\uB2A5'}`
+                  : '\uC544\uC9C1 \uCD5C\uADFC \uD559\uC2B5 \uAE30\uB85D\uC774 \uC5C6\uC5B4\uC694. \uCCAB \uD559\uC2B5\uC744 \uC2DC\uC791\uD574\uBCF4\uC138\uC694.'}
               </p>
             </article>
 
-            <article className="mapingo-profile-side-card is-linkable" onClick={() => navigate('/community/favorites')} role="button" tabIndex={0} onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                navigate('/community/favorites');
-              }
-            }}>
+            <article className="mapingo-profile-side-card mapingo-profile-badge-status-card">
               <div className="mapingo-profile-side-head">
-                <h3>즐겨찾기</h3>
-                <span>→</span>
+                <h3>{'\uBC30\uC9C0 \uD604\uD669'}</h3>
               </div>
-              <p>{favoriteLabels}</p>
+
+              <div className="mapingo-profile-badge-status-list">
+                {badgePreviewList.map((badge) => (
+                  <div key={badge.id} className="mapingo-profile-badge-status-item">
+                    <div className="mapingo-profile-badge-status-copy">
+                      <strong>{badge.name}</strong>
+                      <p>{badge.condition}</p>
+                    </div>
+                    <span
+                      className={`mapingo-profile-badge-status-pill is-${getBadgeTone(
+                        badge.status,
+                      )}`}
+                    >
+                      {getBadgeStatusLabel(badge.status)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </article>
           </div>
         </section>

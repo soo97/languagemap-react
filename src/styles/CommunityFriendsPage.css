@@ -81,48 +81,74 @@
 .community-friends-avatar-column {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   flex-shrink: 0;
 }
 
 .community-friends-avatar-frame {
-  width: 118px;
-  height: 108px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  overflow: hidden;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
 }
 
 .community-friends-avatar-frame.is-compact {
-  width: 76px;
-  height: 76px;
+  width: 72px;
+  height: 72px;
 }
 
 .community-friends-avatar-frame.is-small {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
 }
 
 .community-friends-avatar-frame .mapingo-profile-avatar {
-  width: 88px;
-  height: 88px;
-  padding: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  justify-self: center;
+  align-self: center;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .community-friends-avatar-frame.is-compact .mapingo-profile-avatar,
 .community-friends-avatar-frame.is-small .mapingo-profile-avatar {
-  width: 64px;
-  height: 64px;
+  padding: 5px;
 }
 
 .community-friends-avatar-frame .mapingo-profile-avatar-logo {
-  width: 100%;
-  height: 100%;
+  width: 88%;
+  height: 88%;
+  max-width: none;
+  max-height: none;
   display: block;
+  margin: 0;
+  justify-self: center;
+  align-self: center;
   object-fit: contain;
+  object-position: center center;
+}
+
+.community-friends-avatar-frame.is-compact .mapingo-profile-avatar-logo,
+.community-friends-avatar-frame.is-small .mapingo-profile-avatar-logo {
+  width: 86%;
+  height: 86%;
+}
+
+.community-friends-avatar-frame .mapingo-profile-avatar-logo.is-level-30 {
+  width: 72%;
+  height: 72%;
+}
+
+.community-friends-avatar-frame.is-compact .mapingo-profile-avatar-logo.is-level-30,
+.community-friends-avatar-frame.is-small .mapingo-profile-avatar-logo.is-level-30 {
+  width: 70%;
+  height: 70%;
 }
 
 .community-friends-copy {
@@ -208,6 +234,8 @@
   background: #ecf8f5;
   color: #0f7c75;
   font-size: 0.78rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .community-friends-actions {

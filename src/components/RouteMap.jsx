@@ -52,6 +52,7 @@ function RouteMap({
   const mapElementRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
+  const chatLogRef = useRef(null);
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
   const visiblePlaces = useMemo(() => {
@@ -163,6 +164,23 @@ function RouteMap({
     };
   }, [activeCapital, apiKey, onSelectPlace, selectedPlaceId, visiblePlaces]);
 
+  useEffect(() => {
+    if (panelMode !== 'chat') {
+      return;
+    }
+
+    const chatLogElement = chatLogRef.current;
+
+    if (!chatLogElement) {
+      return;
+    }
+
+    chatLogElement.scrollTo({
+      top: chatLogElement.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [chatCompleted, chatLog.length, panelMode]);
+
   return (
     <section className="map-domain-map-panel">
       <div className="map-domain-map-frame">
@@ -206,7 +224,7 @@ function RouteMap({
           </div>
         </div>
 
-        <div className="map-domain-left-overlay">
+        <div className={`map-domain-left-overlay ${panelMode === 'chat' ? 'is-chat-centered' : ''}`}>
           {panelVisible && selectedPlace ? (
             <div className="map-domain-panel map-domain-panel-overlay">
               {panelMode === 'chat' ? (
@@ -236,7 +254,7 @@ function RouteMap({
                   </div>
 
                   <div className="map-domain-chat-surface">
-                    <div className="map-domain-live-chat-log map-domain-reference-log">
+                    <div className="map-domain-live-chat-log map-domain-reference-log" ref={chatLogRef}>
                       {chatLog.map((message, index) => (
                         <article key={`${message.role}-${index}`} className={`map-domain-message-row is-${message.role}`}>
                           {message.role === 'ai' ? (

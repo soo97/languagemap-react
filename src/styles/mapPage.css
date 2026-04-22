@@ -392,6 +392,19 @@ body.map-domain-scroll-lock {
   z-index: 2;
   width: min(100%, clamp(360px, 28vw, 380px));
   pointer-events: none;
+  transition:
+    left 220ms ease,
+    right 220ms ease,
+    width 220ms ease,
+    transform 220ms ease,
+    opacity 180ms ease;
+}
+
+.map-domain-left-overlay.is-chat-centered {
+  left: 50%;
+  right: auto;
+  width: min(100%, clamp(420px, 42vw, 560px));
+  transform: translateX(-50%);
 }
 
 .map-domain-panel-overlay {
@@ -763,6 +776,13 @@ body.map-domain-scroll-lock {
     max-height: 48%;
   }
 
+  .map-domain-left-overlay.is-chat-centered {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    transform: none;
+  }
+
   .map-domain-panel-overlay {
     height: auto;
     max-height: 100%;
@@ -823,6 +843,13 @@ body.map-domain-scroll-lock {
   .map-domain-left-overlay {
     top: auto;
     max-height: 54%;
+  }
+
+  .map-domain-left-overlay.is-chat-centered {
+    right: 14px;
+    left: 14px;
+    width: auto;
+    transform: none;
   }
 
   .map-domain-floating-summary {

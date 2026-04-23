@@ -79,6 +79,22 @@ const initialSession = {
 };
 
 const initialFavorites = ['seoul-cityhall-cafe', 'paris-louvre-ticket'];
+const defaultBadgeProgress = {
+  totalStudyCount: 18,
+  totalStudyMinutes: 145,
+  dailyStudyMaxCount: 5,
+  weeklyActiveDays: 5,
+  pronunciationPracticeCount: 10,
+  pronunciationScore80PlusCount: 10,
+  pronunciationScore90PlusCount: 3,
+  pronunciationScore95PlusCount: 1,
+  goalsCreatedCount: 3,
+  goalsCompletedCount: 1,
+  goalMaintainedDays: 3,
+  weeklyGoalAchievedCount: 1,
+  pronunciationImprovement: 20,
+  returnedAfterBreak: true,
+};
 
 export const useMapingoStore = create(
   persist(
@@ -118,6 +134,7 @@ export const useMapingoStore = create(
       language: 'en',
       theme: 'light',
       notification: 'all',
+      badgeProgress: defaultBadgeProgress,
 
       setSession: (session) =>
         set(() => ({
@@ -213,6 +230,13 @@ export const useMapingoStore = create(
       setLanguage: (language) => set({ language }),
       setTheme: (theme) => set({ theme }),
       setNotification: (notification) => set({ notification }),
+      setBadgeProgress: (badgeProgress) =>
+        set((state) => ({
+          badgeProgress: {
+            ...state.badgeProgress,
+            ...badgeProgress,
+          },
+        })),
     }),
     {
       name: 'mapingo-ui-store',

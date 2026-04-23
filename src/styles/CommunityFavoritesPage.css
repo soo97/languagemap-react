@@ -297,10 +297,6 @@ html{
   margin-top: 14px;
 }
 
-.mapingo-page-section:has(.community-favorites-badge-grid) {
-  display: none;
-}
-
 .community-favorites-badge-card {
   display: flex;
   align-items: flex-start;
@@ -325,7 +321,7 @@ html{
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 }
 

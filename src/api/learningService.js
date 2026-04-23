@@ -1,5 +1,10 @@
 import {
-  badgeCatalog,
+  buildBadgeProgressFromStore,
+  defaultBadgeProgress,
+  resolveBadgeCatalog,
+  resolveLearningSummary,
+} from '../data/badgeSystem';
+import {
   growthHighlights,
   learningActivities,
   learningChecklist,
@@ -8,8 +13,15 @@ import {
   learningSummary,
 } from '../mocks/learningMockData';
 
-function fetchLearningSummary() {
-  return learningSummary;
+function fetchLearningSummary(progress = null) {
+  if (!progress) {
+    return learningSummary;
+  }
+
+  return resolveLearningSummary({
+    ...defaultBadgeProgress,
+    ...progress,
+  });
 }
 
 function fetchGrowthHighlights() {
@@ -24,8 +36,11 @@ function fetchLearningActivities() {
   return learningActivities;
 }
 
-function fetchBadgeCatalog() {
-  return badgeCatalog;
+function fetchBadgeCatalog(progress = null) {
+  return resolveBadgeCatalog({
+    ...defaultBadgeProgress,
+    ...progress,
+  });
 }
 
 function fetchLearningLevelOptions() {
@@ -37,6 +52,7 @@ function fetchLearningGoalSuggestions() {
 }
 
 export const learningService = {
+  buildBadgeProgressFromStore,
   fetchLearningSummary,
   fetchGrowthHighlights,
   fetchLearningChecklist,
@@ -45,3 +61,4 @@ export const learningService = {
   fetchLearningLevelOptions,
   fetchLearningGoalSuggestions,
 };
+

@@ -4,7 +4,6 @@ import LandingHomePage from './pages/home-support-common/LandingHomePage';
 import MapPage from './pages/place/MapPage';
 import GrowthPage from './pages/history-analysis/GrowthPage';
 import GrowthProgressPage from './pages/history-analysis/GrowthProgressPage';
-import GrowthGoalsPage from './pages/history-analysis/GrowthGoalsPage';
 import GrowthInsightsPage from './pages/history-analysis/GrowthInsightsPage';
 import CommunityPage from './pages/learning-social-favorite/CommunityPage';
 import CommunityFriendsPage from './pages/learning-social-favorite/CommunityFriendsPage';
@@ -41,7 +40,7 @@ function App() {
         <Route path="/coaching" element={<CoachingPage />} />
         <Route path="/growth" element={<GrowthPage />} />
         <Route path="/growth/progress" element={<GrowthProgressPage />} />
-        <Route path="/growth/goals" element={<GrowthGoalsPage />} />
+        <Route path="/growth/goals" element={<Navigate to="/growth/insights" replace />} />
         <Route path="/growth/insights" element={<GrowthInsightsPage />} />
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/community/friends" element={<CommunityFriendsPage />} />

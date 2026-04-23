@@ -146,7 +146,6 @@ export const pathToPage = {
   '/coaching': 'coaching',
   '/growth': 'growth',
   '/growth/progress': 'growth',
-  '/growth/goals': 'growth',
   '/growth/insights': 'growth',
   '/community': 'community',
   '/community/friends': 'community',

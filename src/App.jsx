@@ -56,10 +56,6 @@ function App() {
         <Route path="/settings/learning" element={<SettingsLearningPage />} />
         <Route path="/settings/account" element={<SettingsAccountPage />} />
         <Route path="/settings/account/delete" element={<AccountDeletePage />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/admin/members" element={<AdminMembersPage />} />
-        <Route path="/admin/notices" element={<AdminNoticesPage />} />
-        <Route path="/admin/content" element={<AdminContentPage />} />
         <Route path="/ai-chat" element={<AiChatPage />} />
         <Route path="/ai/stt" element={<SttPracticePage />} />
         <Route path="/ai/pronunciation" element={<PronunciationReviewPage />} />
@@ -69,6 +65,12 @@ function App() {
         </Route>
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+        <Route element={<ProtectedRoute requireAdmin />}>
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/members" element={<AdminMembersPage />} />
+          <Route path="/admin/notices" element={<AdminNoticesPage />} />
+          <Route path="/admin/content" element={<AdminContentPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

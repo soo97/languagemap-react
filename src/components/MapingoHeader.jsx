@@ -6,6 +6,7 @@ function MapingoHeader({
   currentPage,
   onNavigate,
   isLoggedIn,
+  isAdmin,
   onLogout,
   profileName,
   subscriptionPlan,
@@ -75,14 +76,16 @@ function MapingoHeader({
               >
                 프로필
               </button>
-              <button
-                type="button"
-                className="mapingo-ghost-button"
-                onClick={() => onNavigate('admin')}
-                style={{ borderColor: '#CDEFEA', color: palette.point }}
-              >
-                관리자
-              </button>
+              {isAdmin ? (
+                <button
+                  type="button"
+                  className="mapingo-ghost-button"
+                  onClick={() => onNavigate('admin')}
+                  style={{ borderColor: '#CDEFEA', color: palette.point }}
+                >
+                  관리자
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="mapingo-primary-button"

@@ -23,6 +23,12 @@ function createSessionPayload(overrides = {}) {
   };
 }
 
+function resolveUserRole(email = '') {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const adminEmails = ['admin@mapingo.ai', 'manager@mapingo.ai'];
+  return adminEmails.includes(normalizedEmail) ? 'admin' : 'user';
+}
+
 async function loginWithEmail({ email, password, rememberMe }) {
   await wait();
 
@@ -32,10 +38,16 @@ async function loginWithEmail({ email, password, rememberMe }) {
     throw error;
   }
 
+  const role = resolveUserRole(email);
+
   return createSessionPayload({
     user: {
       ...createSessionPayload().user,
       email,
+      role,
+      name: role === 'admin' ? 'Mapingo Admin' : 'Mapingo Learner',
+      nickname: role === 'admin' ? 'Operations Desk' : 'Route Runner',
+      subscriptionPlan: role === 'admin' ? 'Premium' : 'Free',
     },
     keepSignedIn: Boolean(rememberMe),
   });
@@ -56,6 +68,7 @@ async function signupWithEmail({ email, password, name, nickname }) {
       email,
       name,
       nickname: nickname || name,
+      role: 'user',
     },
   });
 }

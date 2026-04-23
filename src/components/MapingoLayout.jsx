@@ -15,6 +15,7 @@ function MapingoLayout() {
   const profileName = useMapingoStore((state) => state.profileName);
   const subscriptionPlan = useMapingoStore((state) => state.subscriptionPlan);
   const subscriptionProductId = useMapingoStore((state) => state.subscriptionProductId);
+  const isAdmin = useMapingoStore((state) => (state.session?.user?.role ?? 'user') === 'admin');
   const currentPage = useMemo(() => pathToPage[location.pathname] ?? 'home', [location.pathname]);
 
   const navigateToPage = (page) => {
@@ -61,6 +62,7 @@ function MapingoLayout() {
         currentPage={currentPage}
         onNavigate={navigateToPage}
         isLoggedIn={isAuthenticated}
+        isAdmin={isAdmin}
         profileName={profileName}
         subscriptionPlan={subscriptionPlan}
         subscriptionProductId={subscriptionProductId}

@@ -616,7 +616,7 @@ export default function CommunityFavoritesPage() {
                     key={place.favorite_place_id}
                     title={place.title}
                     description={place.description}
-                    metaChips={[place.category, place.difficulty, place.duration]}
+                    metaChips={[place.category, place.difficulty]}
                     subCopy={`등록일 ${formatDate(place.created_at)}`}
                     onRemove={() => handleRemoveFavoritePlace(place.favorite_place_id)}
                   />

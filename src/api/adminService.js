@@ -10,6 +10,7 @@ import {
   adminScenarioLevelOptions,
   adminScenarioSeeds,
 } from '../mocks/adminMockData';
+import { adminCommunityConfigSeeds, adminCommunityPageList } from '../mocks/adminCommunityMockData';
 
 function fetchAdminMembers() {
   return adminMemberList;
@@ -51,6 +52,14 @@ function fetchAdminScenarioCategoryOptions() {
   return adminScenarioCategoryOptions;
 }
 
+function fetchAdminCommunityPages() {
+  return adminCommunityPageList;
+}
+
+function fetchAdminCommunityConfigs() {
+  return adminCommunityConfigSeeds;
+}
+
 export const adminService = {
   fetchAdminMembers,
   fetchAdminNotices,
@@ -62,4 +71,6 @@ export const adminService = {
   fetchAdminPlaceSearchTypes,
   fetchAdminScenarioLevelOptions,
   fetchAdminScenarioCategoryOptions,
+  fetchAdminCommunityPages,
+  fetchAdminCommunityConfigs,
 };

@@ -97,6 +97,18 @@ function formatCardText(text) {
   return (text ?? '').replace(/,\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
 }
 
+function includesKeyword(values, keyword) {
+  const normalizedKeyword = keyword.trim().toLowerCase();
+
+  if (!normalizedKeyword) {
+    return true;
+  }
+
+  return values
+    .filter(Boolean)
+    .some((value) => String(value).toLowerCase().includes(normalizedKeyword));
+}
+
 function AdminContentPage() {
   const navigate = useNavigate();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -126,6 +138,8 @@ function AdminContentPage() {
   const [selectedGooglePlaceId, setSelectedGooglePlaceId] = useState('');
   const [mapStatus, setMapStatus] = useState(apiKey ? '지도 준비 중...' : 'Google Maps API 키가 없어서 검색 지도를 불러올 수 없습니다.');
   const [activePanel, setActivePanel] = useState('place');
+  const [activeResultType, setActiveResultType] = useState('place');
+  const [resultSearchQuery, setResultSearchQuery] = useState('');
 
   const mapElementRef = useRef(null);
   const mapRef = useRef(null);
@@ -138,6 +152,50 @@ function AdminContentPage() {
   );
 
   const contentItems = useMemo(() => buildContentItems(places, scenarios, missions), [missions, places, scenarios]);
+  const filteredPlaces = useMemo(
+    () =>
+      places.filter((place) =>
+        includesKeyword(
+          [
+            place.placeName,
+            place.placeAddress,
+            place.placeDescription,
+            place.googlePlaceId,
+            place.regionName,
+            place.scenarioTitle,
+          ],
+          resultSearchQuery,
+        ),
+      ),
+    [places, resultSearchQuery],
+  );
+  const filteredScenarios = useMemo(
+    () =>
+      scenarios.filter((scenario) =>
+        includesKeyword(
+          [
+            scenario.scenarioDescription,
+            scenario.prompt,
+            scenario.level,
+            scenario.category,
+            scenario.status,
+            scenario.id,
+          ],
+          resultSearchQuery,
+        ),
+      ),
+    [resultSearchQuery, scenarios],
+  );
+  const filteredMissions = useMemo(
+    () =>
+      missions.filter((mission) =>
+        includesKeyword(
+          [mission.missionTitle, mission.missionDescription, mission.scenarioTitle, mission.scenarioId],
+          resultSearchQuery,
+        ),
+      ),
+    [missions, resultSearchQuery],
+  );
 
   useEffect(() => {
     if (!apiKey || !selectedRegion) {
@@ -350,6 +408,7 @@ function AdminContentPage() {
     });
     setSelectedGooglePlaceId('');
     setActivePanel('place');
+    setActiveResultType('place');
     setMapStatus('장소가 생성되었습니다. 다른 장소를 등록하려면 다시 검색해 주세요.');
   };
 
@@ -378,6 +437,7 @@ function AdminContentPage() {
       scenarioId: currentForm.scenarioId || String(nextScenario.id),
     }));
     setActivePanel('scenario');
+    setActiveResultType('scenario');
   };
 
   const handleCreateMission = (event) => {
@@ -403,6 +463,7 @@ function AdminContentPage() {
       scenarioId: String(scenarios[0]?.id ?? ''),
     });
     setActivePanel('mission');
+    setActiveResultType('mission');
   };
 
   return (
@@ -745,14 +806,50 @@ function AdminContentPage() {
               <span className="mapingo-inline-badge">{contentItems.length}개</span>
             </div>
 
+            <div className="admin-content-result-controls">
+              <div className="admin-content-tab-row">
+                <button
+                  type="button"
+                  className={`admin-content-tab ${activeResultType === 'place' ? 'is-active' : ''}`}
+                  onClick={() => setActiveResultType('place')}
+                >
+                  장소
+                </button>
+                <button
+                  type="button"
+                  className={`admin-content-tab ${activeResultType === 'scenario' ? 'is-active' : ''}`}
+                  onClick={() => setActiveResultType('scenario')}
+                >
+                  시나리오
+                </button>
+                <button
+                  type="button"
+                  className={`admin-content-tab ${activeResultType === 'mission' ? 'is-active' : ''}`}
+                  onClick={() => setActiveResultType('mission')}
+                >
+                  미션
+                </button>
+              </div>
+
+              <label className="mapingo-field admin-content-result-search">
+                <span className="mapingo-field-label">결과 검색</span>
+                <input
+                  className="mapingo-input"
+                  value={resultSearchQuery}
+                  onChange={(event) => setResultSearchQuery(event.target.value)}
+                  placeholder="이름, 주소, 설명, 카테고리 검색"
+                />
+              </label>
+            </div>
+
             <div className="admin-entity-stack">
-              <section className="admin-entity-section">
+              <section className={`admin-entity-section ${activeResultType === 'place' ? '' : 'admin-result-section-hidden'}`}>
                 <div className="admin-entity-head">
                   <strong>장소</strong>
-                  <span>{places.length}개</span>
+                  <span>{filteredPlaces.length}개</span>
                 </div>
                 <div className="mapingo-selectable-list">
-                  {places.map((place) => (
+                  {filteredPlaces.map((place) => (
                     <article key={place.id} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
                         <div>
@@ -778,16 +875,17 @@ function AdminContentPage() {
                       </div>
                     </article>
                   ))}
+                  {!filteredPlaces.length ? <p className="admin-content-empty-state">검색 결과에 맞는 장소가 없습니다.</p> : null}
                 </div>
               </section>
 
-              <section className="admin-entity-section">
+              <section className={`admin-entity-section ${activeResultType === 'scenario' ? '' : 'admin-result-section-hidden'}`}>
                 <div className="admin-entity-head">
                   <strong>시나리오</strong>
-                  <span>{scenarios.length}개</span>
+                  <span>{filteredScenarios.length}개</span>
                 </div>
                 <div className="mapingo-selectable-list">
-                  {scenarios.map((scenario) => (
+                  {filteredScenarios.map((scenario) => (
                     <article key={scenario.id} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
                         <div>
@@ -806,16 +904,17 @@ function AdminContentPage() {
                       </div>
                     </article>
                   ))}
+                  {!filteredScenarios.length ? <p className="admin-content-empty-state">검색 결과에 맞는 시나리오가 없습니다.</p> : null}
                 </div>
               </section>
 
-              <section className="admin-entity-section">
+              <section className={`admin-entity-section ${activeResultType === 'mission' ? '' : 'admin-result-section-hidden'}`}>
                 <div className="admin-entity-head">
                   <strong>미션</strong>
-                  <span>{missions.length}개</span>
+                  <span>{filteredMissions.length}개</span>
                 </div>
                 <div className="mapingo-selectable-list">
-                  {missions.map((mission) => (
+                  {filteredMissions.map((mission) => (
                     <article key={mission.id} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
                         <div>
@@ -830,6 +929,7 @@ function AdminContentPage() {
                       </div>
                     </article>
                   ))}
+                  {!filteredMissions.length ? <p className="admin-content-empty-state">검색 결과에 맞는 미션이 없습니다.</p> : null}
                 </div>
               </section>
             </div>

@@ -21,6 +21,7 @@ import AdminPage from './pages/admin/AdminPage';
 import AdminMembersPage from './pages/admin/AdminMembersPage';
 import AdminNoticesPage from './pages/admin/AdminNoticesPage';
 import AdminContentPage from './pages/admin/AdminContentPage';
+import AdminCommunityPage from './pages/admin/AdminCommunityPage';
 import SignupPage from './pages/user/SignupPage';
 import ProfilePage from './pages/user/ProfilePage';
 import LoginPage from './pages/user/LoginPage';
@@ -71,6 +72,7 @@ function App() {
           <Route path="/admin/members" element={<AdminMembersPage />} />
           <Route path="/admin/notices" element={<AdminNoticesPage />} />
           <Route path="/admin/content" element={<AdminContentPage />} />
+          <Route path="/admin/community" element={<AdminCommunityPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

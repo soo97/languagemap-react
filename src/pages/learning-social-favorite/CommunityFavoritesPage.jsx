@@ -1,8 +1,6 @@
 ﻿import { useMemo, useState } from 'react';
 import { MapingoPageSection } from '../../components/MapingoPageBlocks';
-import { learningService } from '../../api/learningService';
 import { placeService } from '../../api/placeService';
-import { useMapingoStore } from '../../store/useMapingoStore';
 import '../../styles/CommunityFavoritesPage.css';
 
 const MAX_ACTIVE_GOALS = 3;
@@ -216,39 +214,6 @@ function StatusBadge({ label, tone = 'neutral' }) {
   return <span className={`community-favorites-status-badge is-${tone}`}>{label}</span>;
 }
 
-function ResolvedBadgeCard({ badge }) {
-  const statusLabel =
-    badge.status === 'earned' ? '획득 완료' : badge.status === 'progress' ? '진행 중' : '미획득';
-  const statusTone =
-    badge.status === 'earned' ? 'success' : badge.status === 'progress' ? 'info' : 'muted';
-
-  return (
-    <article
-      className={`community-favorites-badge-card ${
-        badge.status === 'earned' ? 'is-earned' : 'is-locked'
-      }`}
-    >
-      <div className="community-favorites-badge-media">
-        <img src={badge.imageUrl} alt={badge.name} className="community-favorites-badge-image" />
-      </div>
-      <div className="community-favorites-badge-content">
-        <div className="community-favorites-badge-head">
-          <h4>{badge.name}</h4>
-          <StatusBadge label={statusLabel} tone={statusTone} />
-        </div>
-        <p>{badge.description}</p>
-        <div className="community-favorites-chip-row">
-          <span className="community-favorites-chip is-goal">
-            {badge.currentValue} / {badge.targetValue}
-          </span>
-          <span className="community-favorites-chip is-progress">{badge.condition}</span>
-        </div>
-        <small>{`달성률 ${badge.progressPercent}%`}</small>
-      </div>
-    </article>
-  );
-}
-
 function GoalCard({ goal, onCancel }) {
   const progressPercent = Math.min(100, Math.round((goal.current_value / goal.target_value) * 100));
 
@@ -350,27 +315,6 @@ export default function CommunityFavoritesPage() {
   const [favoriteScenarioRows, setFavoriteScenarioRows] = useState(initialFavoriteScenarioRows);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [visibleAvailableGoalCount, setVisibleAvailableGoalCount] = useState(INITIAL_AVAILABLE_GOAL_COUNT);
-  const recentLearning = useMapingoStore((state) => state.recentLearning);
-  const weeklyLearnCount = useMapingoStore((state) => state.weeklyLearnCount);
-  const weeklyGoalCompleted = useMapingoStore((state) => state.weeklyGoalCompleted);
-  const weeklyGoal = useMapingoStore((state) => state.weeklyGoal);
-  const learningStreak = useMapingoStore((state) => state.streakDays);
-  const storedBadgeProgress = useMapingoStore((state) => state.badgeProgress);
-
-  const badgeProgress = useMemo(
-    () =>
-      learningService.buildBadgeProgressFromStore({
-        recentLearning,
-        weeklyLearnCount,
-        weeklyGoalCompleted,
-        weeklyGoal,
-        learningStreak,
-        badgeProgress: storedBadgeProgress,
-      }),
-    [recentLearning, weeklyLearnCount, weeklyGoalCompleted, weeklyGoal, learningStreak, storedBadgeProgress],
-  );
-
-  const badgeCards = useMemo(() => learningService.fetchBadgeCatalog(badgeProgress), [badgeProgress]);
 
   const activeGoals = useMemo(
     () =>
@@ -580,21 +524,6 @@ export default function CommunityFavoritesPage() {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      </section>
-
-      <section className="mapingo-page-section">
-        <div className="mapingo-list-card">
-          <div className="mapingo-card-header-row">
-            <h3>배지 현황</h3>
-            <span className="mapingo-muted-copy">획득 현황 한눈에 보기</span>
-          </div>
-
-          <div className="community-favorites-badge-grid">
-            {badgeCards.map((badge) => (
-              <ResolvedBadgeCard key={badge.id} badge={badge} />
-            ))}
           </div>
         </div>
       </section>

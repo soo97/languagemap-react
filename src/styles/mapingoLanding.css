@@ -3179,6 +3179,31 @@
   margin-bottom: 6px;
 }
 
+.admin-content-result-controls {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-content-result-search {
+  margin-top: 0;
+}
+
+.admin-entity-section.admin-result-section-hidden {
+  display: none;
+}
+
+.admin-content-empty-state {
+  margin: 0;
+  padding: 18px 16px;
+  border: 1px dashed #cfe7e2;
+  border-radius: 18px;
+  background: #fbfefe;
+  color: #64748b;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .admin-content-layout > .mapingo-form-card,
 .admin-content-layout > .mapingo-list-card {
   height: fit-content;
@@ -3479,6 +3504,193 @@
   justify-content: center;
 }
 
+.admin-community-layout {
+  grid-template-columns: minmax(320px, 0.92fr) minmax(0, 1.08fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.admin-community-page-tabs {
+  margin-top: 16px;
+}
+
+.admin-community-page-list {
+  margin-top: 16px;
+  gap: 14px;
+  max-height: 760px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin-community-page-card {
+  padding: 18px;
+}
+
+.admin-community-page-card .admin-content-description {
+  margin: 12px 0 0;
+  min-height: 48px;
+}
+
+.admin-community-page-card .admin-content-tags {
+  margin-top: 14px;
+}
+
+.admin-community-meta-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.admin-community-meta-grid p {
+  display: grid;
+  gap: 8px;
+  min-height: 88px;
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid #dceceb;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff, #f8fcfb);
+  color: #587082;
+  line-height: 1.58;
+}
+
+.admin-community-meta-grid strong {
+  color: var(--mapingo-deep);
+  line-height: 1.28;
+}
+
+.admin-community-config-stack {
+  margin-top: 18px;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.admin-community-config-form {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-community-config-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-community-toolbar,
+.admin-community-preview {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid #dceceb;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff, #f9fdfc);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.04);
+}
+
+.admin-community-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-community-toolbar-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-community-toolbar-copy strong,
+.admin-community-preview-head h3 {
+  color: var(--mapingo-deep);
+  line-height: 1.3;
+}
+
+.admin-community-toolbar-copy p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.58;
+}
+
+.admin-community-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-community-save-note {
+  margin: 14px 0 0;
+  color: #0f766e;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.admin-community-preview-head {
+  align-items: flex-start;
+}
+
+.admin-community-preview-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.admin-community-preview-card {
+  padding: 18px;
+  border: 1px solid #dceceb;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff, #f9fdfc);
+}
+
+.admin-community-preview-card p {
+  margin: 10px 0 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.admin-community-preview-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-community-preview-meta strong {
+  color: var(--mapingo-deep);
+  line-height: 1.38;
+}
+
+.admin-community-preview-meta span {
+  color: #64748b;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-community-section-head {
+  align-items: flex-start;
+}
+
+.admin-community-order-label {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.admin-community-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-community-section-actions .mapingo-ghost-button {
+  min-height: 38px;
+  padding: 8px 14px;
+}
+
+.admin-community-config-stack .admin-entity-section {
+  border-radius: 24px;
+}
+
 @media (max-width: 720px) {
   .admin-content-card .mapingo-admin-item-head {
     grid-template-columns: 1fr;
@@ -3492,6 +3704,21 @@
 
   .admin-entity-section .admin-content-description {
     min-height: 0;
+  }
+
+  .admin-community-meta-grid,
+  .admin-community-config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-community-toolbar,
+  .admin-community-preview-meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-community-section-actions {
+    justify-content: flex-start;
   }
 }
 
@@ -3571,12 +3798,19 @@
 .admin-overview-grid {
   width: 100%;
   margin-top: 12px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .admin-overview-card {
   border-color: #d5ebe6;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 252, 250, 0.96));
   box-shadow: 0 10px 24px rgba(15, 118, 110, 0.04);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .admin-overview-card .mapingo-stat-value {
@@ -3597,27 +3831,39 @@
 
 .admin-dashboard-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  grid-template-columns: 1fr;
   gap: 18px;
-  width: min(1080px, 100%);
+  width: 100%;
   margin-top: 18px;
+  align-items: start;
 }
 
 .admin-entry-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   margin-top: 0;
 }
 
+.admin-entry-grid-wide {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .admin-entry-card {
-  min-height: 176px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+  text-align: left;
 }
 
 .admin-quick-panel {
-  padding: 24px 22px;
+  padding: 22px;
   border: 1px solid #cdeee8;
-  border-radius: 28px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.96);
   text-align: left;
+  align-self: start;
 }
 
 .admin-quick-kicker {

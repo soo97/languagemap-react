@@ -78,6 +78,19 @@ const initialSession = {
   keepSignedIn: false,
 };
 
+function resolveSessionRole(session) {
+  const email = String(session?.user?.email ?? '')
+    .trim()
+    .toLowerCase();
+  const explicitRole = session?.user?.role;
+
+  if (explicitRole === 'admin') {
+    return 'admin';
+  }
+
+  return ['admin@mapingo.ai', 'manager@mapingo.ai'].includes(email) ? 'admin' : 'user';
+}
+
 const initialFavorites = ['seoul-cityhall-cafe', 'paris-louvre-ticket'];
 const defaultBadgeProgress = {
   totalStudyCount: 18,
@@ -137,15 +150,28 @@ export const useMapingoStore = create(
       badgeProgress: defaultBadgeProgress,
 
       setSession: (session) =>
-        set(() => ({
-          session,
-          isAuthenticated: Boolean(session?.user),
-          profileName: session?.user?.name ?? 'Mapingo Learner',
-          profileNickname: session?.user?.nickname ?? 'Route Runner',
-          subscriptionPlan: session?.user?.subscriptionPlan ?? 'Free',
-          subscriptionProductId: session?.user?.subscriptionProductId ?? 'yearly',
-          subscriptionUpdatedAt: session?.user?.subscriptionUpdatedAt ?? 0,
-        })),
+        set(() => {
+          const resolvedRole = resolveSessionRole(session);
+          const normalizedSession = session?.user
+            ? {
+                ...session,
+                user: {
+                  ...session.user,
+                  role: resolvedRole,
+                },
+              }
+            : initialSession;
+
+          return {
+            session: normalizedSession,
+            isAuthenticated: Boolean(normalizedSession?.user),
+            profileName: normalizedSession?.user?.name ?? 'Mapingo Learner',
+            profileNickname: normalizedSession?.user?.nickname ?? 'Route Runner',
+            subscriptionPlan: normalizedSession?.user?.subscriptionPlan ?? 'Free',
+            subscriptionProductId: normalizedSession?.user?.subscriptionProductId ?? 'yearly',
+            subscriptionUpdatedAt: normalizedSession?.user?.subscriptionUpdatedAt ?? 0,
+          };
+        }),
       clearSession: () =>
         set(() => ({
           session: initialSession,

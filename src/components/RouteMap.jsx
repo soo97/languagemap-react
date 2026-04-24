@@ -47,7 +47,6 @@ function RouteMap({
   onStartLearning,
   onBackToDetail,
   onOpenCoaching,
-  onOpenPremium,
 }) {
   const mapElementRef = useRef(null);
   const mapInstanceRef = useRef(null);

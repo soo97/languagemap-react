@@ -1,6 +1,39 @@
 import { useState, useRef, useEffect } from 'react';
 import PingPopStarterLogo from './PingPopStarterLogo';
 
+const MAP_WIDTH = 480;
+const MAP_HEIGHT = 360;
+
+const ROUTE_STOPS = [
+  {
+    id: 'start',
+    label: 'START',
+    title: '카페 주문 표현',
+    point: { x: 74, y: 176 },
+    cardClassName: 'mapingo-home-stop-start',
+    nodeClassName: 'mapingo-home-node-start',
+    colorClassName: 'is-start',
+  },
+  {
+    id: 'middle',
+    label: 'STOP 02',
+    title: '길 묻기 표현',
+    point: { x: 232, y: 126 },
+    cardClassName: 'mapingo-home-stop-middle',
+    nodeClassName: 'mapingo-home-node-middle',
+    colorClassName: 'is-middle',
+  },
+  {
+    id: 'goal',
+    label: 'GOAL',
+    title: '스몰토크 표현',
+    point: { x: 426, y: 100 },
+    cardClassName: 'mapingo-home-stop-goal',
+    nodeClassName: 'mapingo-home-node-goal',
+    colorClassName: 'is-goal',
+  },
+];
+
 function loadGoogleMaps(apiKey) {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') return reject(new Error('no-window'));
@@ -25,41 +58,9 @@ function loadGoogleMaps(apiKey) {
 }
 
 function MapingoHero({ onPrimaryAction }) {
-  const mapWidth = 480;
-  const mapHeight = 360;
-  const routeStops = [
-    {
-      id: 'start',
-      label: 'START',
-      title: '카페 주문 표현',
-      point: { x: 74, y: 176 },
-      cardClassName: 'mapingo-home-stop-start',
-      nodeClassName: 'mapingo-home-node-start',
-      colorClassName: 'is-start',
-    },
-    {
-      id: 'middle',
-      label: 'STOP 02',
-      title: '길 묻기 표현',
-      point: { x: 232, y: 126 },
-      cardClassName: 'mapingo-home-stop-middle',
-      nodeClassName: 'mapingo-home-node-middle',
-      colorClassName: 'is-middle',
-    },
-    {
-      id: 'goal',
-      label: 'GOAL',
-      title: '스몰토크 표현',
-      point: { x: 426, y: 100 },
-      cardClassName: 'mapingo-home-stop-goal',
-      nodeClassName: 'mapingo-home-node-goal',
-      colorClassName: 'is-goal',
-    },
-  ];
-
   const [activeStopId, setActiveStopId] = useState('goal');
-  const activeStop = routeStops.find((stop) => stop.id === activeStopId) ?? routeStops[routeStops.length - 1];
-  const [startStop, middleStop, goalStop] = routeStops;
+  const activeStop = ROUTE_STOPS.find((stop) => stop.id === activeStopId) ?? ROUTE_STOPS[ROUTE_STOPS.length - 1];
+  const [startStop, middleStop, goalStop] = ROUTE_STOPS;
   const mapRef = useRef(null);
   const [mapsLoaded, setMapsLoaded] = useState(false);
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -73,8 +74,9 @@ function MapingoHero({ onPrimaryAction }) {
 
     loadGoogleMaps(apiKey)
       .then((maps) => {
-        if (!mounted) return;
-        const center = { lat: 37.5665, lng: 126.978 }; // Seoul
+        if (!mounted || !mapRef.current) return;
+
+        const center = { lat: 37.5665, lng: 126.978 };
         map = new maps.Map(mapRef.current, {
           center,
           zoom: 13,
@@ -83,13 +85,14 @@ function MapingoHero({ onPrimaryAction }) {
 
         const infoWindow = new maps.InfoWindow();
 
-        routeStops.forEach((stop, i) => {
+        ROUTE_STOPS.forEach((stop, index) => {
           const position = {
-            lat: center.lat + (i - routeStops.length / 2) * 0.006,
-            lng: center.lng + (i - routeStops.length / 2) * 0.008,
+            lat: center.lat + (index - ROUTE_STOPS.length / 2) * 0.006,
+            lng: center.lng + (index - ROUTE_STOPS.length / 2) * 0.008,
           };
 
-          const color = i === 0 ? '#155e63' : i === routeStops.length - 1 ? '#f3b41b' : '#1fb8ad';
+          const color =
+            index === 0 ? '#155e63' : index === ROUTE_STOPS.length - 1 ? '#f3b41b' : '#1fb8ad';
 
           const marker = new maps.Marker({
             position,
@@ -118,6 +121,7 @@ function MapingoHero({ onPrimaryAction }) {
             infoWindow.setContent(`<strong>${stop.title}</strong>`);
             infoWindow.open({ anchor: marker, map });
           });
+
           marker.addListener('mouseout', () => {
             infoWindow.close();
           });
@@ -131,7 +135,7 @@ function MapingoHero({ onPrimaryAction }) {
 
     return () => {
       mounted = false;
-      markers.forEach((m) => m.setMap(null));
+      markers.forEach((marker) => marker.setMap(null));
       markers = [];
       map = null;
     };
@@ -141,12 +145,12 @@ function MapingoHero({ onPrimaryAction }) {
 
   const featureCards = [
     {
-      title: '회원가입 후 학습 기록 저장',
-      text: '최근 학습, 즐겨찾기, 목표와 배지는 회원가입 이후 개인화되어 저장됩니다.',
+      title: '학습 기록 저장',
+      text: '최근 학습 기록과 진행 흐름을 한눈에 확인할 수 있어요.',
     },
     {
       title: 'AI 추천 대화',
-      text: '회원가입 후 오늘의 추천 시나리오를 바로 시작할 수 있습니다.',
+      text: '상황에 맞는 추천 시나리오로 바로 연습을 시작할 수 있어요.',
     },
   ];
 
@@ -165,9 +169,6 @@ function MapingoHero({ onPrimaryAction }) {
         <div className="mapingo-hero-actions">
           <button type="button" className="mapingo-home-primary" onClick={onPrimaryAction}>
             무료로 시작하기
-
-                    {/* caption removed to restore original button layout */}
-
           </button>
         </div>
 
@@ -195,80 +196,78 @@ function MapingoHero({ onPrimaryAction }) {
 
         <div className="mapingo-home-map-card">
           {!apiKey || !mapsLoaded ? (
-            // fallback: original static SVG when Google Maps not available
             <>
-                    <div
-                      ref={mapRef}
-                      className={`mapingo-google-map ${!apiKey || !mapsLoaded ? 'placeholder' : ''}`}
-                      style={{ height: 360 }}
-                    />
+              <div
+                ref={mapRef}
+                className={`mapingo-google-map ${!apiKey || !mapsLoaded ? 'placeholder' : ''}`}
+                style={{ height: 360 }}
+              />
 
-                    <div className="mapingo-home-map-grid" aria-hidden="true">
-                      <span />
-                      <span />
-                      <span />
-                      <span />
-                    </div>
+              <div className="mapingo-home-map-grid" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
 
-                    <svg
-                      className="mapingo-home-route-line"
-                      viewBox={`0 0 ${mapWidth} ${mapHeight}`}
-                      preserveAspectRatio="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d={`
-                          M ${startStop.point.x} ${startStop.point.y}
-                          C 128 148, 182 124, ${middleStop.point.x} ${middleStop.point.y}
-                          S 350 186, ${goalStop.point.x} ${goalStop.point.y}
-                        `}
-                        fill="none"
-                        stroke="#1fb8ad"
-                        strokeWidth="5.5"
-                        strokeLinecap="round"
-                        strokeDasharray="9 11"
-                      />
-                    </svg>
+              <svg
+                className="mapingo-home-route-line"
+                viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path
+                  d={`
+                    M ${startStop.point.x} ${startStop.point.y}
+                    C 128 148, 182 124, ${middleStop.point.x} ${middleStop.point.y}
+                    S 350 186, ${goalStop.point.x} ${goalStop.point.y}
+                  `}
+                  fill="none"
+                  stroke="#1fb8ad"
+                  strokeWidth="5.5"
+                  strokeLinecap="round"
+                  strokeDasharray="9 11"
+                />
+              </svg>
 
-                    {routeStops.map((stop) => (
-                      <article key={stop.id} className={`mapingo-home-stop-card ${stop.cardClassName}`}>
-                        <span>{stop.label}</span>
-                        <strong>{stop.title}</strong>
-                      </article>
-                    ))}
+              {ROUTE_STOPS.map((stop) => (
+                <article key={stop.id} className={`mapingo-home-stop-card ${stop.cardClassName}`}>
+                  <span>{stop.label}</span>
+                  <strong>{stop.title}</strong>
+                </article>
+              ))}
 
-                    {routeStops.map((stop) => (
-                      <button
-                        key={`${stop.id}-node`}
-                        type="button"
-                        className={`mapingo-home-route-node ${stop.nodeClassName} ${stop.colorClassName} ${
-                          activeStopId === stop.id ? 'is-active' : ''
-                        }`}
-                        onClick={() => setActiveStopId(stop.id)}
-                        aria-label={`${stop.title} 위치로 이동`}
-                        style={{
-                          left: toPercent(stop.point.x, mapWidth),
-                          top: toPercent(stop.point.y, mapHeight),
-                        }}
-                      />
-                    ))}
+              {ROUTE_STOPS.map((stop) => (
+                <button
+                  key={`${stop.id}-node`}
+                  type="button"
+                  className={`mapingo-home-route-node ${stop.nodeClassName} ${stop.colorClassName} ${
+                    activeStopId === stop.id ? 'is-active' : ''
+                  }`}
+                  onClick={() => setActiveStopId(stop.id)}
+                  aria-label={`${stop.title} 위치로 이동`}
+                  style={{
+                    left: toPercent(stop.point.x, MAP_WIDTH),
+                    top: toPercent(stop.point.y, MAP_HEIGHT),
+                  }}
+                />
+              ))}
 
-                    <div
-                      className="mapingo-home-goal-pin"
-                      style={{
-                        left: toPercent(activeStop.point.x, mapWidth),
-                        top: toPercent(activeStop.point.y, mapHeight),
-                      }}
-                    >
-                      <div className="mapingo-home-goal-logo">
-                        <PingPopStarterLogo className="mapingo-home-goal-logo-svg" />
-                      </div>
-                      <span className="mapingo-home-goal-core" />
-                    </div>
+              <div
+                className="mapingo-home-goal-pin"
+                style={{
+                  left: toPercent(activeStop.point.x, MAP_WIDTH),
+                  top: toPercent(activeStop.point.y, MAP_HEIGHT),
+                }}
+              >
+                <div className="mapingo-home-goal-logo">
+                  <PingPopStarterLogo className="mapingo-home-goal-logo-svg" />
+                </div>
+                <span className="mapingo-home-goal-core" />
+              </div>
             </>
           ) : (
-            // Google Maps preview
-              <div ref={mapRef} className="mapingo-google-map" style={{ height: 360 }} />
+            <div ref={mapRef} className="mapingo-google-map" style={{ height: 360 }} />
           )}
         </div>
       </aside>

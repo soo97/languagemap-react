@@ -1,111 +1,416 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapingoPageSection } from '../../components/MapingoPageBlocks';
 import { adminService } from '../../api/adminService';
 
-const statusOrder = ['초안', '검토 중', '운영 중'];
-
-const emptyForm = {
-  title: '',
-  type: '장소',
-  difficulty: '입문',
-  status: '초안',
-  description: '',
-  tags: '',
+const EMPTY_PLACE_FORM = {
+  googlePlaceId: '',
+  placeName: '',
+  placeAddress: '',
+  latitude: '',
+  longitude: '',
+  placeDescription: '',
+  scenarioId: '',
+  regionId: '',
 };
 
-function AdminContentPage() {
-  const navigate = useNavigate();
-  const [items, setItems] = useState(() => adminService.fetchAdminContent());
-  const [mode, setMode] = useState('idle');
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(emptyForm);
+const EMPTY_SCENARIO_FORM = {
+  prompt: '',
+  scenarioDescription: '',
+  level: '입문',
+  category: '주문',
+  completeExp: '120',
+};
 
-  const editingItem = useMemo(() => items.find((item) => item.id === editingId) ?? null, [editingId, items]);
-  const isCreating = mode === 'create';
-  const isEditing = mode === 'edit' && editingItem;
-  const isFormActive = isCreating || isEditing;
+const EMPTY_MISSION_FORM = {
+  missionTitle: '',
+  missionDescription: '',
+  scenarioId: '',
+};
 
-  const handleCycleStatus = (contentId) => {
-    setItems((currentItems) =>
-      currentItems.map((item) => {
-        if (item.id !== contentId) return item;
-
-        const currentIndex = statusOrder.indexOf(item.status);
-        const nextIndex = (currentIndex + 1) % statusOrder.length;
-        return { ...item, status: statusOrder[nextIndex], updatedAt: '2026-04-23' };
-      }),
-    );
-  };
-
-  const handleCreate = () => {
-    setMode('create');
-    setEditingId(null);
-    setForm(emptyForm);
-  };
-
-  const handleEdit = (item) => {
-    setMode('edit');
-    setEditingId(item.id);
-    setForm({
-      title: item.title,
-      type: item.type,
-      difficulty: item.difficulty,
-      status: item.status,
-      description: item.description ?? '',
-      tags: item.tags ?? '',
-    });
-  };
-
-  const handleChange = (field) => (event) => {
-    setForm((currentForm) => ({ ...currentForm, [field]: event.target.value }));
-  };
-
-  const handleCancel = () => {
-    setMode('idle');
-    setEditingId(null);
-    setForm(emptyForm);
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
-    if (isCreating) {
-      const nextId = Math.max(0, ...items.map((item) => item.id)) + 1;
-      setItems((currentItems) => [
-        {
-          id: nextId,
-          ...form,
-          updatedAt: '2026-04-23',
-        },
-        ...currentItems,
-      ]);
-      handleCancel();
+function loadGoogleMaps(apiKey) {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      reject(new Error('no-window'));
       return;
     }
 
-    if (!editingItem) return;
+    if (window.google?.maps) {
+      resolve(window.google.maps);
+      return;
+    }
 
-    setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === editingItem.id
-          ? {
-              ...item,
-              ...form,
-              updatedAt: '2026-04-23',
-            }
-          : item,
-      ),
-    );
-    handleCancel();
+    const existing = document.getElementById('google-maps-script');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.google.maps));
+      existing.addEventListener('error', () => reject(new Error('google-maps-load-failed')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'google-maps-script';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly&loading=async`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve(window.google.maps);
+    script.onerror = () => reject(new Error('google-maps-load-failed'));
+    document.head.appendChild(script);
+  });
+}
+
+function buildContentItems(places, scenarios, missions) {
+  return [
+    ...places.map((place) => ({
+      id: `place-${place.id}`,
+      type: '장소',
+      title: place.placeName,
+      status: '운영 중',
+      difficulty: '-',
+      description: place.placeDescription || 'Google Places 요약이 아직 없습니다.',
+      tags: `${place.regionName}, ${place.scenarioTitle}`,
+      updatedAt: place.updatedAt,
+    })),
+    ...scenarios.map((scenario) => ({
+      id: `scenario-${scenario.id}`,
+      type: '시나리오',
+      title: scenario.scenarioDescription,
+      status: scenario.status ?? '초안',
+      difficulty: scenario.level,
+      description: scenario.prompt,
+      tags: `${scenario.category}, ${scenario.completeExp} EXP`,
+      updatedAt: scenario.updatedAt,
+    })),
+    ...missions.map((mission) => ({
+      id: `mission-${mission.id}`,
+      type: '미션',
+      title: mission.missionTitle,
+      status: '운영 중',
+      difficulty: '-',
+      description: mission.missionDescription,
+      tags: mission.scenarioTitle,
+      updatedAt: mission.updatedAt,
+    })),
+  ];
+}
+
+function formatCardText(text) {
+  return (text ?? '').replace(/,\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
+}
+
+function AdminContentPage() {
+  const navigate = useNavigate();
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  const initialRegions = adminService.fetchAdminRegions();
+  const initialScenarios = adminService.fetchAdminScenarios();
+  const searchTypes = adminService.fetchAdminPlaceSearchTypes();
+  const levelOptions = adminService.fetchAdminScenarioLevelOptions();
+  const categoryOptions = adminService.fetchAdminScenarioCategoryOptions();
+
+  const [regions] = useState(initialRegions);
+  const [places, setPlaces] = useState(() => adminService.fetchAdminPlaces());
+  const [scenarios, setScenarios] = useState(initialScenarios);
+  const [missions, setMissions] = useState(() => adminService.fetchAdminMissions());
+  const [placeForm, setPlaceForm] = useState(() => ({
+    ...EMPTY_PLACE_FORM,
+    scenarioId: String(initialScenarios[0]?.id ?? ''),
+    regionId: String(initialRegions[0]?.id ?? ''),
+  }));
+  const [scenarioForm, setScenarioForm] = useState(EMPTY_SCENARIO_FORM);
+  const [missionForm, setMissionForm] = useState(() => ({
+    ...EMPTY_MISSION_FORM,
+    scenarioId: String(initialScenarios[0]?.id ?? ''),
+  }));
+  const [selectedSearchType, setSelectedSearchType] = useState(searchTypes[0]?.id ?? 'cafe');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedGooglePlaceId, setSelectedGooglePlaceId] = useState('');
+  const [mapStatus, setMapStatus] = useState(apiKey ? '지도 준비 중...' : 'Google Maps API 키가 없어서 검색 지도를 불러올 수 없습니다.');
+  const [activePanel, setActivePanel] = useState('place');
+
+  const mapElementRef = useRef(null);
+  const mapRef = useRef(null);
+  const infoWindowRef = useRef(null);
+  const markersRef = useRef([]);
+
+  const selectedRegion = useMemo(
+    () => regions.find((region) => String(region.id) === String(placeForm.regionId)) ?? regions[0],
+    [placeForm.regionId, regions],
+  );
+
+  const contentItems = useMemo(() => buildContentItems(places, scenarios, missions), [missions, places, scenarios]);
+
+  useEffect(() => {
+    if (!apiKey || !selectedRegion) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    loadGoogleMaps(apiKey)
+      .then(async (maps) => {
+        if (cancelled || !mapElementRef.current) {
+          return;
+        }
+
+        const { Map, InfoWindow } = await window.google.maps.importLibrary('maps');
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!mapRef.current) {
+          mapRef.current = new Map(mapElementRef.current, {
+            center: selectedRegion.center,
+            zoom: 14,
+            mapTypeControl: false,
+            fullscreenControl: false,
+            streetViewControl: false,
+            clickableIcons: false,
+          });
+          infoWindowRef.current = new InfoWindow();
+        } else {
+          mapRef.current.panTo(selectedRegion.center);
+          mapRef.current.setZoom(14);
+        }
+
+        setMapStatus('검색 조건을 선택한 뒤 장소 찾기를 눌러주세요.');
+        return maps;
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMapStatus('지도를 불러오지 못했습니다. API 키와 Places API 설정을 확인해 주세요.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiKey, selectedRegion]);
+
+  const clearMarkers = () => {
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current = [];
+  };
+
+  const handleMarkerPick = async (place) => {
+    try {
+      await place.fetchFields({
+        fields: ['displayName', 'formattedAddress', 'location', 'editorialSummary'],
+      });
+
+      const latitude = place.location?.lat?.();
+      const longitude = place.location?.lng?.();
+
+      setSelectedGooglePlaceId(place.id ?? '');
+      setPlaceForm((currentForm) => ({
+        ...currentForm,
+        googlePlaceId: place.id ?? '',
+        placeName: place.displayName ?? '',
+        placeAddress: place.formattedAddress ?? '',
+        latitude: latitude == null ? '' : String(latitude),
+        longitude: longitude == null ? '' : String(longitude),
+        placeDescription: place.editorialSummary ?? '',
+      }));
+
+      if (infoWindowRef.current && mapRef.current) {
+        infoWindowRef.current.setContent(
+          `
+            <div style="min-width:200px">
+              <strong>${place.displayName ?? '장소 선택'}</strong>
+              <p style="margin:6px 0 0;color:#526274;font-size:12px;">${place.formattedAddress ?? ''}</p>
+            </div>
+          `,
+        );
+      }
+
+      setMapStatus('마커에서 장소 정보를 가져왔습니다. 아래 폼에서 시나리오와 지역을 확인해 주세요.');
+    } catch {
+      setMapStatus('장소 상세 정보를 가져오지 못했습니다. 다른 마커를 선택해 주세요.');
+    }
+  };
+
+  const handleSearchPlaces = async () => {
+    if (!apiKey || !mapRef.current || !selectedRegion) {
+      return;
+    }
+
+    const selectedType = searchTypes.find((type) => type.id === selectedSearchType) ?? searchTypes[0];
+    const query = searchKeyword.trim() || `${selectedRegion.name} ${selectedType.label}`;
+
+    setMapStatus('Google Places에서 장소를 찾는 중입니다...');
+
+    try {
+      await loadGoogleMaps(apiKey);
+      const { Place } = await window.google.maps.importLibrary('places');
+
+      const { places: foundPlaces = [] } = await Place.searchByText({
+        textQuery: query,
+        fields: ['id', 'displayName', 'formattedAddress', 'location'],
+        includedType: selectedType.googleType,
+        useStrictTypeFiltering: false,
+        locationBias: selectedRegion.center,
+        language: 'ko',
+        region: selectedRegion.querySuffix === 'Tokyo' ? 'jp' : selectedRegion.querySuffix === 'Sydney' ? 'au' : 'kr',
+        maxResultCount: 8,
+      });
+
+      clearMarkers();
+      setSearchResults(foundPlaces);
+
+      if (!foundPlaces.length) {
+        setMapStatus('검색 결과가 없습니다. 검색어를 바꾸거나 다른 지역을 선택해 주세요.');
+        return;
+      }
+
+      foundPlaces.forEach((place) => {
+        const marker = new window.google.maps.Marker({
+          map: mapRef.current,
+          position: place.location,
+          title: place.displayName ?? '장소',
+        });
+
+        marker.addListener('click', async () => {
+          await handleMarkerPick(place);
+
+          if (infoWindowRef.current) {
+            infoWindowRef.current.open({
+              anchor: marker,
+              map: mapRef.current,
+            });
+          }
+        });
+
+        markersRef.current.push(marker);
+      });
+
+      if (foundPlaces[0]?.location) {
+        mapRef.current.panTo(foundPlaces[0].location);
+      }
+
+      setMapStatus('마커를 클릭하면 장소 생성 폼이 자동으로 채워집니다.');
+    } catch {
+      setSearchResults([]);
+      clearMarkers();
+      setMapStatus('Places 검색에 실패했습니다. Places API (New) 활성화 여부를 확인해 주세요.');
+    }
+  };
+
+  const handlePlaceFormChange = (field) => (event) => {
+    setPlaceForm((currentForm) => ({
+      ...currentForm,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleScenarioFormChange = (field) => (event) => {
+    setScenarioForm((currentForm) => ({
+      ...currentForm,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleMissionFormChange = (field) => (event) => {
+    setMissionForm((currentForm) => ({
+      ...currentForm,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleCreatePlace = (event) => {
+    event.preventDefault();
+
+    const region = regions.find((item) => String(item.id) === String(placeForm.regionId));
+    const scenario = scenarios.find((item) => String(item.id) === String(placeForm.scenarioId));
+
+    if (!placeForm.googlePlaceId || !region || !scenario) {
+      setMapStatus('마커를 먼저 선택하고 시나리오와 지역을 확인해 주세요.');
+      return;
+    }
+
+    const nextPlace = {
+      id: Math.max(0, ...places.map((item) => item.id)) + 1,
+      googlePlaceId: placeForm.googlePlaceId,
+      placeName: placeForm.placeName,
+      placeAddress: placeForm.placeAddress,
+      latitude: Number(placeForm.latitude),
+      longitude: Number(placeForm.longitude),
+      placeDescription: placeForm.placeDescription,
+      scenarioId: scenario.id,
+      regionId: region.id,
+      scenarioTitle: scenario.scenarioDescription,
+      regionName: region.name,
+      updatedAt: '2026-04-24',
+    };
+
+    setPlaces((currentPlaces) => [nextPlace, ...currentPlaces]);
+    setPlaceForm({
+      ...EMPTY_PLACE_FORM,
+      scenarioId: String(scenarios[0]?.id ?? ''),
+      regionId: String(region.id),
+    });
+    setSelectedGooglePlaceId('');
+    setActivePanel('place');
+    setMapStatus('장소가 생성되었습니다. 다른 장소를 등록하려면 다시 검색해 주세요.');
+  };
+
+  const handleCreateScenario = (event) => {
+    event.preventDefault();
+
+    const nextScenario = {
+      id: Math.max(0, ...scenarios.map((item) => item.id)) + 1,
+      prompt: scenarioForm.prompt,
+      scenarioDescription: scenarioForm.scenarioDescription,
+      level: scenarioForm.level,
+      category: scenarioForm.category,
+      completeExp: Number(scenarioForm.completeExp),
+      status: '초안',
+      updatedAt: '2026-04-24',
+    };
+
+    setScenarios((currentScenarios) => [nextScenario, ...currentScenarios]);
+    setScenarioForm(EMPTY_SCENARIO_FORM);
+    setMissionForm((currentForm) => ({
+      ...currentForm,
+      scenarioId: currentForm.scenarioId || String(nextScenario.id),
+    }));
+    setPlaceForm((currentForm) => ({
+      ...currentForm,
+      scenarioId: currentForm.scenarioId || String(nextScenario.id),
+    }));
+    setActivePanel('scenario');
+  };
+
+  const handleCreateMission = (event) => {
+    event.preventDefault();
+
+    const scenario = scenarios.find((item) => String(item.id) === String(missionForm.scenarioId));
+    if (!scenario) {
+      return;
+    }
+
+    const nextMission = {
+      id: Math.max(0, ...missions.map((item) => item.id)) + 1,
+      missionTitle: missionForm.missionTitle,
+      missionDescription: missionForm.missionDescription,
+      scenarioId: scenario.id,
+      scenarioTitle: scenario.scenarioDescription,
+      updatedAt: '2026-04-24',
+    };
+
+    setMissions((currentMissions) => [nextMission, ...currentMissions]);
+    setMissionForm({
+      ...EMPTY_MISSION_FORM,
+      scenarioId: String(scenarios[0]?.id ?? ''),
+    });
+    setActivePanel('mission');
   };
 
   return (
     <div className="mapingo-dashboard">
       <MapingoPageSection
         eyebrow="Admin"
-        title="콘텐츠 관리"
-        description="장소, 학습 미션, 시나리오 콘텐츠를 추가하고 기본 정보와 운영 상태를 관리할 수 있어요."
+        title="콘텐츠 생성 관리"
+        description="장소, 시나리오, 미션 생성에 필요한 입력값을 한 화면에서 관리합니다. 장소는 Google Maps 마커를 클릭해 기본 정보를 자동으로 채우고, 시나리오와 지역은 내부 PK로 연결합니다."
       >
         <div className="mapingo-page-actions">
           <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/admin')}>
@@ -115,158 +420,418 @@ function AdminContentPage() {
       </MapingoPageSection>
 
       <section className="mapingo-page-section">
+        <div className="mapingo-dashboard-stats admin-overview-grid">
+          <article className="mapingo-stat-card admin-overview-card">
+            <p className="mapingo-stat-label">등록된 장소</p>
+            <strong className="mapingo-stat-value">{places.length}</strong>
+            <p className="mapingo-stat-hint">Google Places에서 가져온 장소</p>
+          </article>
+          <article className="mapingo-stat-card admin-overview-card">
+            <p className="mapingo-stat-label">시나리오</p>
+            <strong className="mapingo-stat-value">{scenarios.length}</strong>
+            <p className="mapingo-stat-hint">프롬프트와 보상 정책 포함</p>
+          </article>
+          <article className="mapingo-stat-card admin-overview-card">
+            <p className="mapingo-stat-label">미션</p>
+            <strong className="mapingo-stat-value">{missions.length}</strong>
+            <p className="mapingo-stat-hint">시나리오별 미션 연결 완료</p>
+          </article>
+          <article className="mapingo-stat-card admin-overview-card">
+            <p className="mapingo-stat-label">전체 콘텐츠</p>
+            <strong className="mapingo-stat-value">{contentItems.length}</strong>
+            <p className="mapingo-stat-hint">관리 화면에서 확인 가능한 총 항목</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="mapingo-page-section">
         <div className="mapingo-admin-grid admin-content-layout">
           <div className="mapingo-form-card">
-            <div className="mapingo-card-header-row">
+            <div className="mapingo-card-header-row admin-builder-head">
               <div>
-                <h3>{isCreating ? '새 콘텐츠 추가' : isEditing ? '콘텐츠 편집' : '콘텐츠 추가 · 편집'}</h3>
-                <p className="mapingo-muted-copy">
-                  새 콘텐츠를 만들거나 기존 콘텐츠의 제목, 유형, 난이도, 설명, 태그를 수정해요.
-                </p>
+                <h3>생성 폼</h3>
+                <p className="mapingo-muted-copy">장소, 시나리오, 미션 생성에 필요한 입력값만 분리해서 구성했습니다.</p>
               </div>
-              <button type="button" className="mapingo-submit-button admin-content-add-button" onClick={handleCreate}>
-                새 콘텐츠
-              </button>
+              <div className="admin-content-tab-row">
+                <button
+                  type="button"
+                  className={`admin-content-tab ${activePanel === 'place' ? 'is-active' : ''}`}
+                  onClick={() => setActivePanel('place')}
+                >
+                  장소 생성
+                </button>
+                <button
+                  type="button"
+                  className={`admin-content-tab ${activePanel === 'scenario' ? 'is-active' : ''}`}
+                  onClick={() => setActivePanel('scenario')}
+                >
+                  시나리오 생성
+                </button>
+                <button
+                  type="button"
+                  className={`admin-content-tab ${activePanel === 'mission' ? 'is-active' : ''}`}
+                  onClick={() => setActivePanel('mission')}
+                >
+                  미션 생성
+                </button>
+              </div>
             </div>
 
-            {isFormActive ? (
-              <>
-                <div className="mapingo-admin-editing-banner">
-                  <strong>{isCreating ? '새 콘텐츠를 작성 중이에요.' : editingItem.title}</strong>
-                  <p>
-                    {isCreating
-                      ? '필수 정보를 입력하고 저장하면 콘텐츠 목록 맨 위에 추가됩니다.'
-                      : '선택한 콘텐츠 정보를 수정 중이에요. 저장하면 목록에 바로 반영됩니다.'}
-                  </p>
+            <section className={`admin-builder-section ${activePanel === 'place' ? 'is-active' : ''}`}>
+              <div className="mapingo-admin-editing-banner">
+                <strong>장소 생성</strong>
+                <p>구글 맵에서 검색된 마커를 클릭하면 장소 ID, 이름, 주소, 좌표, 설명이 자동 입력됩니다.</p>
+              </div>
+
+              <div className="admin-place-search-bar">
+                <label className="mapingo-field">
+                  <span className="mapingo-field-label">지역</span>
+                  <select className="mapingo-input" value={placeForm.regionId} onChange={handlePlaceFormChange('regionId')}>
+                    {regions.map((region) => (
+                      <option key={region.id} value={region.id}>
+                        {region.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="mapingo-field admin-place-search-field">
+                  <span className="mapingo-field-label">검색어</span>
+                  <input
+                    className="mapingo-input"
+                    value={searchKeyword}
+                    onChange={(event) => setSearchKeyword(event.target.value)}
+                    placeholder="예: 성수 카페, 김포공항, 시드니 약국"
+                  />
+                </label>
+
+                <button type="button" className="mapingo-submit-button admin-place-search-button" onClick={handleSearchPlaces}>
+                  장소 찾기
+                </button>
+              </div>
+
+              <div className="admin-place-type-row">
+                {searchTypes.map((type) => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    className={`mapingo-inline-badge admin-place-type ${selectedSearchType === type.id ? 'is-active' : ''}`}
+                    onClick={() => setSelectedSearchType(type.id)}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="admin-place-map-panel">
+                <div ref={mapElementRef} className={`admin-place-map ${!apiKey ? 'is-placeholder' : ''}`}>
+                  {!apiKey ? (
+                    <div className="admin-place-map-empty">
+                      <strong>Google Maps API 키가 없어서 장소 검색을 실행할 수 없습니다.</strong>
+                      <p>`VITE_GOOGLE_MAPS_API_KEY`와 Places API (New)가 설정되면 마커 클릭으로 자동 입력됩니다.</p>
+                    </div>
+                  ) : null}
                 </div>
 
-                <form className="mapingo-admin-form" onSubmit={handleSubmit}>
-                  <label className="mapingo-field">
-                    <span className="mapingo-field-label">콘텐츠 제목</span>
-                    <input
-                      className="mapingo-input"
-                      value={form.title}
-                      onChange={handleChange('title')}
-                      placeholder="예: 공항 입국 심사 대화"
-                      required
-                    />
-                  </label>
-
-                  <div className="admin-content-form-grid">
-                    <label className="mapingo-field">
-                      <span className="mapingo-field-label">콘텐츠 유형</span>
-                      <select className="mapingo-input" value={form.type} onChange={handleChange('type')}>
-                        <option value="장소">장소</option>
-                        <option value="학습 미션">학습 미션</option>
-                        <option value="시나리오">시나리오</option>
-                      </select>
-                    </label>
-                    <label className="mapingo-field">
-                      <span className="mapingo-field-label">난이도</span>
-                      <select className="mapingo-input" value={form.difficulty} onChange={handleChange('difficulty')}>
-                        <option value="입문">입문</option>
-                        <option value="보통">보통</option>
-                        <option value="어려움">어려움</option>
-                      </select>
-                    </label>
-                    <label className="mapingo-field">
-                      <span className="mapingo-field-label">운영 상태</span>
-                      <select className="mapingo-input" value={form.status} onChange={handleChange('status')}>
-                        {statusOrder.map((status) => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-
-                  <label className="mapingo-field">
-                    <span className="mapingo-field-label">콘텐츠 설명</span>
-                    <textarea
-                      className="mapingo-input mapingo-admin-textarea"
-                      value={form.description}
-                      onChange={handleChange('description')}
-                      placeholder="사용자가 어떤 학습을 하는 콘텐츠인지 적어주세요."
-                      required
-                    />
-                  </label>
-
-                  <label className="mapingo-field">
-                    <span className="mapingo-field-label">연결 태그</span>
-                    <input
-                      className="mapingo-input"
-                      value={form.tags}
-                      onChange={handleChange('tags')}
-                      placeholder="예: 주문, 길찾기, 체크인"
-                    />
-                  </label>
-
-                  <div className="mapingo-admin-action-row">
-                    <button type="submit" className="mapingo-submit-button">
-                      {isCreating ? '콘텐츠 추가' : '수정 저장'}
-                    </button>
-                    <button type="button" className="mapingo-ghost-button" onClick={handleCancel}>
-                      취소
-                    </button>
-                  </div>
-                </form>
-              </>
-            ) : (
-              <div className="admin-content-empty-editor">
-                <strong>새 콘텐츠를 추가하거나 편집할 콘텐츠를 선택해 주세요.</strong>
-                <p>상단의 새 콘텐츠 버튼을 누르거나, 오른쪽 목록에서 편집 버튼을 누르면 입력 폼이 열립니다.</p>
+                <div className="admin-place-map-meta">
+                  <strong>지도 상태</strong>
+                  <p>{mapStatus}</p>
+                </div>
               </div>
-            )}
+
+              <div className="admin-search-result-list">
+                {searchResults.map((place) => (
+                  <button
+                    key={place.id}
+                    type="button"
+                    className={`admin-search-result-item ${selectedGooglePlaceId === place.id ? 'is-selected' : ''}`}
+                    onClick={() => handleMarkerPick(place)}
+                  >
+                    <strong>{place.displayName ?? '이름 없음'}</strong>
+                    <span>{place.formattedAddress ?? '주소 정보 없음'}</span>
+                  </button>
+                ))}
+              </div>
+
+              <form className="mapingo-admin-form admin-builder-form" onSubmit={handleCreatePlace}>
+                <div className="admin-content-form-grid admin-place-field-grid">
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">Google 장소 ID</span>
+                    <input className="mapingo-input" value={placeForm.googlePlaceId} readOnly placeholder="마커 클릭 시 자동 입력" />
+                  </label>
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">장소 이름</span>
+                    <input className="mapingo-input" value={placeForm.placeName} readOnly placeholder="마커 클릭 시 자동 입력" />
+                  </label>
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">장소 주소</span>
+                    <input className="mapingo-input" value={placeForm.placeAddress} readOnly placeholder="마커 클릭 시 자동 입력" />
+                  </label>
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">위도</span>
+                    <input className="mapingo-input" value={placeForm.latitude} readOnly placeholder="마커 클릭 시 자동 입력" />
+                  </label>
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">경도</span>
+                    <input className="mapingo-input" value={placeForm.longitude} readOnly placeholder="마커 클릭 시 자동 입력" />
+                  </label>
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">시나리오 PK</span>
+                    <select className="mapingo-input" value={placeForm.scenarioId} onChange={handlePlaceFormChange('scenarioId')}>
+                      {scenarios.map((scenario) => (
+                        <option key={scenario.id} value={scenario.id}>
+                          {scenario.id} - {scenario.scenarioDescription}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">지역 PK</span>
+                    <select className="mapingo-input" value={placeForm.regionId} onChange={handlePlaceFormChange('regionId')}>
+                      {regions.map((region) => (
+                        <option key={region.id} value={region.id}>
+                          {region.id} - {region.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <label className="mapingo-field">
+                  <span className="mapingo-field-label">장소 설명</span>
+                  <textarea
+                    className="mapingo-input mapingo-admin-textarea"
+                    value={placeForm.placeDescription}
+                    readOnly
+                    placeholder="Google Places editorial summary가 있으면 자동 입력됩니다."
+                  />
+                </label>
+
+                <div className="mapingo-admin-action-row">
+                  <button type="submit" className="mapingo-submit-button">
+                    장소 저장
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section className={`admin-builder-section ${activePanel === 'scenario' ? 'is-active' : ''}`}>
+              <div className="mapingo-admin-editing-banner">
+                <strong>시나리오 생성</strong>
+                <p>FastAPI의 긴 프롬프트 전 단계로, 관리자 페이지에서는 간단한 프롬프트와 운영 속성만 입력합니다.</p>
+              </div>
+
+              <form className="mapingo-admin-form admin-builder-form" onSubmit={handleCreateScenario}>
+                <label className="mapingo-field">
+                  <span className="mapingo-field-label">프롬프트</span>
+                  <textarea
+                    className="mapingo-input mapingo-admin-textarea"
+                    value={scenarioForm.prompt}
+                    onChange={handleScenarioFormChange('prompt')}
+                    placeholder="예: 공항 입국 심사에서 여행 목적과 숙소를 자연스럽게 말해보세요."
+                    required
+                  />
+                </label>
+
+                <label className="mapingo-field">
+                  <span className="mapingo-field-label">시나리오 설명</span>
+                  <input
+                    className="mapingo-input"
+                    value={scenarioForm.scenarioDescription}
+                    onChange={handleScenarioFormChange('scenarioDescription')}
+                    placeholder="예: 공항 입국 심사 응답"
+                    required
+                  />
+                </label>
+
+                <div className="admin-content-form-grid">
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">시나리오 레벨</span>
+                    <select className="mapingo-input" value={scenarioForm.level} onChange={handleScenarioFormChange('level')}>
+                      {levelOptions.map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">카테고리</span>
+                    <select className="mapingo-input" value={scenarioForm.category} onChange={handleScenarioFormChange('category')}>
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="mapingo-field">
+                    <span className="mapingo-field-label">완료 경험치</span>
+                    <input
+                      className="mapingo-input"
+                      type="number"
+                      min="0"
+                      step="10"
+                      value={scenarioForm.completeExp}
+                      onChange={handleScenarioFormChange('completeExp')}
+                      required
+                    />
+                  </label>
+                </div>
+
+                <div className="mapingo-admin-action-row">
+                  <button type="submit" className="mapingo-submit-button">
+                    시나리오 저장
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section className={`admin-builder-section ${activePanel === 'mission' ? 'is-active' : ''}`}>
+              <div className="mapingo-admin-editing-banner">
+                <strong>미션 생성</strong>
+                <p>미션은 시나리오 PK를 선택해서 연결합니다. 저장 후 오른쪽 목록에서 바로 확인할 수 있습니다.</p>
+              </div>
+
+              <form className="mapingo-admin-form admin-builder-form" onSubmit={handleCreateMission}>
+                <label className="mapingo-field">
+                  <span className="mapingo-field-label">미션 주제</span>
+                  <input
+                    className="mapingo-input"
+                    value={missionForm.missionTitle}
+                    onChange={handleMissionFormChange('missionTitle')}
+                    placeholder="예: 여행 목적과 숙소 말하기"
+                    required
+                  />
+                </label>
+
+                <label className="mapingo-field">
+                  <span className="mapingo-field-label">미션 설명</span>
+                  <textarea
+                    className="mapingo-input mapingo-admin-textarea"
+                    value={missionForm.missionDescription}
+                    onChange={handleMissionFormChange('missionDescription')}
+                    placeholder="예: 입국 심사 질문 3개에 정확하고 짧게 답하는 연습"
+                    required
+                  />
+                </label>
+
+                <label className="mapingo-field">
+                  <span className="mapingo-field-label">시나리오 PK</span>
+                  <select className="mapingo-input" value={missionForm.scenarioId} onChange={handleMissionFormChange('scenarioId')}>
+                    {scenarios.map((scenario) => (
+                      <option key={scenario.id} value={scenario.id}>
+                        {scenario.id} - {scenario.scenarioDescription}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="mapingo-admin-action-row">
+                  <button type="submit" className="mapingo-submit-button">
+                    미션 저장
+                  </button>
+                </div>
+              </form>
+            </section>
           </div>
 
           <div className="mapingo-list-card">
-            <div className="mapingo-card-header-row">
+            <div className="mapingo-card-header-row admin-result-head">
               <div>
-                <h3>콘텐츠 목록</h3>
-                <p className="mapingo-muted-copy">장소 · 미션 · 시나리오</p>
+                <h3>생성 결과</h3>
+                <p className="mapingo-muted-copy">저장한 장소, 시나리오, 미션을 각각의 데이터 구조에 맞게 확인합니다.</p>
               </div>
-              <span className="mapingo-inline-badge">{items.length}개</span>
+              <span className="mapingo-inline-badge">{contentItems.length}개</span>
             </div>
 
-            <div className="mapingo-selectable-list">
-              {items.map((item) => (
-                <article
-                  key={item.id}
-                  className={`mapingo-post-card admin-content-card ${editingId === item.id ? 'is-selected' : ''}`}
-                >
-                  <div className="mapingo-admin-item-head">
-                    <div>
-                      <strong>{item.title}</strong>
-                      <p>{`${item.type} 콘텐츠 · 난이도 ${item.difficulty} · 최근 수정 ${item.updatedAt}`}</p>
-                    </div>
-                    <div className="mapingo-inline-badges">
-                      <span className="mapingo-inline-badge">{item.type}</span>
-                      <span className="mapingo-inline-badge">{item.status}</span>
-                    </div>
-                  </div>
+            <div className="admin-entity-stack">
+              <section className="admin-entity-section">
+                <div className="admin-entity-head">
+                  <strong>장소</strong>
+                  <span>{places.length}개</span>
+                </div>
+                <div className="mapingo-selectable-list">
+                  {places.map((place) => (
+                    <article key={place.id} className="mapingo-post-card admin-content-card">
+                      <div className="mapingo-admin-item-head">
+                        <div>
+                          <strong>{place.placeName}</strong>
+                          <p>{place.regionName} · 시나리오 PK {place.scenarioId}</p>
+                        </div>
+                        <span className="mapingo-inline-badge">장소</span>
+                      </div>
+                      <p className="admin-content-description">{formatCardText(place.placeAddress)}</p>
+                      <div className="mapingo-admin-meta-grid admin-place-meta-grid">
+                        <p>
+                          <strong>Google ID</strong>
+                          {place.googlePlaceId}
+                        </p>
+                        <p>
+                          <strong>위도</strong>
+                          {place.latitude}
+                        </p>
+                        <p>
+                          <strong>경도</strong>
+                          {place.longitude}
+                        </p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
 
-                  <p className="admin-content-description">{item.description}</p>
-                  <div className="admin-content-tags">
-                    {(item.tags ?? '')
-                      .split(',')
-                      .map((tag) => tag.trim())
-                      .filter(Boolean)
-                      .map((tag) => (
-                        <span key={tag}>{tag}</span>
-                      ))}
-                  </div>
+              <section className="admin-entity-section">
+                <div className="admin-entity-head">
+                  <strong>시나리오</strong>
+                  <span>{scenarios.length}개</span>
+                </div>
+                <div className="mapingo-selectable-list">
+                  {scenarios.map((scenario) => (
+                    <article key={scenario.id} className="mapingo-post-card admin-content-card">
+                      <div className="mapingo-admin-item-head">
+                        <div>
+                          <strong>{formatCardText(scenario.scenarioDescription)}</strong>
+                          <p>시나리오 PK {scenario.id}</p>
+                        </div>
+                        <div className="mapingo-inline-badges">
+                          <span className="mapingo-inline-badge">{scenario.level}</span>
+                          <span className="mapingo-inline-badge">{scenario.category}</span>
+                        </div>
+                      </div>
+                      <p className="admin-content-description">{formatCardText(scenario.prompt)}</p>
+                      <div className="admin-content-tags">
+                        <span>{scenario.completeExp} EXP</span>
+                        <span>{scenario.status ?? '초안'}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
 
-                  <div className="mapingo-admin-action-row">
-                    <button type="button" className="mapingo-submit-button" onClick={() => handleCycleStatus(item.id)}>
-                      상태 변경
-                    </button>
-                    <button type="button" className="mapingo-ghost-button" onClick={() => handleEdit(item)}>
-                      편집
-                    </button>
-                  </div>
-                </article>
-              ))}
+              <section className="admin-entity-section">
+                <div className="admin-entity-head">
+                  <strong>미션</strong>
+                  <span>{missions.length}개</span>
+                </div>
+                <div className="mapingo-selectable-list">
+                  {missions.map((mission) => (
+                    <article key={mission.id} className="mapingo-post-card admin-content-card">
+                      <div className="mapingo-admin-item-head">
+                        <div>
+                          <strong>{formatCardText(mission.missionTitle)}</strong>
+                          <p>시나리오 PK {mission.scenarioId}</p>
+                        </div>
+                        <span className="mapingo-inline-badge">미션</span>
+                      </div>
+                      <p className="admin-content-description">{formatCardText(mission.missionDescription)}</p>
+                      <div className="admin-content-tags">
+                        <span>{mission.scenarioTitle}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             </div>
           </div>
         </div>

@@ -73,7 +73,7 @@ export const adminCommunityConfigSeeds = [
     pageId: 'community-friends',
     section: '친구 요청',
     title: '친구 요청 및 추천 카드',
-    description: '대기 중 요청과 추천 친구 목록을 한 화면에서 관리합니다.',
+    description: '대기 중 요청과 추천 친구 목록을 같은 화면에서 관리합니다.',
     visibility: 'VISIBLE',
     itemCount: 5,
     order: 1,

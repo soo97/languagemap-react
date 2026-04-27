@@ -11,6 +11,40 @@ const emptyForm = {
   publishAt: '',
 };
 
+const emptyFaqForm = {
+  question: '',
+  answer: '',
+};
+
+const emptyInquiryForm = {
+  category: '',
+};
+
+const initialSupportInquiries = [
+  {
+    id: 1,
+    category: '로그인/회원가입 문의',
+    title: '로그인 후 홈 이동 여부',
+    body: '로그인 완료 후 홈으로 이동하는 플로우를 확인하고 싶어요.',
+    status: '답변 완료',
+    memo: '가이드 문구 안내 완료',
+    answer: '네. 시연용 플로우에서는 로그인 완료 후 홈 화면으로 이동합니다.',
+    answeredBy: '운영팀',
+    answeredAt: '2026-04-23 10:30',
+  },
+  {
+    id: 2,
+    category: '학습 기록 문의',
+    title: '최근 학습 카드가 비어 보여요',
+    body: '최근 학습 카드가 없을 때 기본 데이터가 보이는지 궁금해요.',
+    status: '접수됨',
+    memo: '재현 확인 필요',
+    answer: '',
+    answeredBy: '',
+    answeredAt: '',
+  },
+];
+
 const PAGE_SIZE = 3;
 
 function getStatusClassName(status) {
@@ -21,9 +55,17 @@ function getStatusClassName(status) {
 
 function AdminNoticesPage() {
   const navigate = useNavigate();
+  const [activeSupportTab, setActiveSupportTab] = useState('notices');
   const [notices, setNotices] = useState(adminService.fetchAdminNotices());
   const [form, setForm] = useState(emptyForm);
   const [editingNoticeId, setEditingNoticeId] = useState(null);
+  const [faqs, setFaqs] = useState(() => adminService.fetchAdminSupportFaqs());
+  const [faqForm, setFaqForm] = useState(emptyFaqForm);
+  const [editingFaqId, setEditingFaqId] = useState(null);
+  const [inquiryTemplates, setInquiryTemplates] = useState(() => adminService.fetchAdminSupportInquiryTemplates());
+  const [inquiryForm, setInquiryForm] = useState(emptyInquiryForm);
+  const [editingTemplateIndex, setEditingTemplateIndex] = useState(null);
+  const [inquiries, setInquiries] = useState(initialSupportInquiries);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('pinned');
@@ -32,6 +74,11 @@ function AdminNoticesPage() {
   const editingNotice = useMemo(
     () => notices.find((notice) => notice.id === editingNoticeId) ?? null,
     [editingNoticeId, notices],
+  );
+
+  const editingFaq = useMemo(
+    () => faqs.find((faq) => faq.id === editingFaqId) ?? null,
+    [editingFaqId, faqs],
   );
 
   const scheduledNotices = useMemo(
@@ -168,12 +215,87 @@ function AdminNoticesPage() {
     );
   };
 
+  const resetFaqForm = () => {
+    setFaqForm(emptyFaqForm);
+    setEditingFaqId(null);
+  };
+
+  const handleSubmitFaq = () => {
+    if (!faqForm.question.trim() || !faqForm.answer.trim()) return;
+
+    if (editingFaqId) {
+      setFaqs((currentFaqs) =>
+        currentFaqs.map((faq) =>
+          faq.id === editingFaqId
+            ? { ...faq, question: faqForm.question.trim(), answer: faqForm.answer.trim() }
+            : faq,
+        ),
+      );
+      resetFaqForm();
+      return;
+    }
+
+    setFaqs((currentFaqs) => [
+      {
+        id: Math.max(0, ...currentFaqs.map((faq) => faq.id)) + 1,
+        question: faqForm.question.trim(),
+        answer: faqForm.answer.trim(),
+      },
+      ...currentFaqs,
+    ]);
+    resetFaqForm();
+  };
+
+  const handleEditFaq = (faq) => {
+    setEditingFaqId(faq.id);
+    setFaqForm({ question: faq.question, answer: faq.answer });
+  };
+
+  const handleDeleteFaq = (faqId) => {
+    if (!window.confirm('이 FAQ를 삭제할까요?')) return;
+    setFaqs((currentFaqs) => currentFaqs.filter((faq) => faq.id !== faqId));
+    if (editingFaqId === faqId) resetFaqForm();
+  };
+
+  const resetInquiryForm = () => {
+    setInquiryForm(emptyInquiryForm);
+    setEditingTemplateIndex(null);
+  };
+
+  const handleSubmitInquiryTemplate = () => {
+    const category = inquiryForm.category.trim();
+    if (!category) return;
+
+    if (editingTemplateIndex != null) {
+      setInquiryTemplates((currentTemplates) =>
+        currentTemplates.map((template, index) => (index === editingTemplateIndex ? category : template)),
+      );
+      resetInquiryForm();
+      return;
+    }
+
+    setInquiryTemplates((currentTemplates) => [category, ...currentTemplates]);
+    resetInquiryForm();
+  };
+
+  const handleDeleteInquiryTemplate = (templateIndex) => {
+    if (!window.confirm('이 문의 유형을 삭제할까요?')) return;
+    setInquiryTemplates((currentTemplates) => currentTemplates.filter((_, index) => index !== templateIndex));
+    resetInquiryForm();
+  };
+
+  const updateInquiry = (inquiryId, updates) => {
+    setInquiries((currentInquiries) =>
+      currentInquiries.map((inquiry) => (inquiry.id === inquiryId ? { ...inquiry, ...updates } : inquiry)),
+    );
+  };
+
   return (
     <div className="mapingo-dashboard">
       <MapingoPageSection
         eyebrow="Admin"
-        title="공지 관리"
-        description="공지 작성, 수정, 삭제, 검색, 필터, 예약 발행, 페이지네이션까지 한 화면에서 관리할 수 있어요."
+        title="고객지원 관리"
+        description="고객지원 공지사항의 작성, 수정, 삭제, 검색, 필터, 예약 발행, 페이지네이션을 한 화면에서 관리합니다."
       >
         <div className="mapingo-page-actions">
           <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/admin')}>
@@ -182,11 +304,38 @@ function AdminNoticesPage() {
         </div>
       </MapingoPageSection>
 
+      <section className="mapingo-page-section">
+        <div className="admin-content-tab-row admin-support-tabs">
+          <button
+            type="button"
+            className={`admin-content-tab ${activeSupportTab === 'notices' ? 'is-active' : ''}`}
+            onClick={() => setActiveSupportTab('notices')}
+          >
+            공지사항
+          </button>
+          <button
+            type="button"
+            className={`admin-content-tab ${activeSupportTab === 'faq' ? 'is-active' : ''}`}
+            onClick={() => setActiveSupportTab('faq')}
+          >
+            FAQ
+          </button>
+          <button
+            type="button"
+            className={`admin-content-tab ${activeSupportTab === 'inquiry' ? 'is-active' : ''}`}
+            onClick={() => setActiveSupportTab('inquiry')}
+          >
+            1:1 문의
+          </button>
+        </div>
+      </section>
+
+      {activeSupportTab === 'notices' ? (
       <section className="mapingo-admin-grid">
         <article className="mapingo-list-card">
           <div className="mapingo-card-header-row">
             <div>
-              <h3>{editingNotice ? '공지 수정' : '공지 작성'}</h3>
+              <h3>{editingNotice ? '고객지원 공지 수정' : '고객지원 공지 작성'}</h3>
               <span className="mapingo-muted-copy">
                 {editingNotice ? '선택한 공지 내용을 수정하고 저장할 수 있어요.' : '새 공지를 작성하고 초안 또는 예약 상태로 추가할 수 있어요.'}
               </span>
@@ -266,7 +415,7 @@ function AdminNoticesPage() {
         <article className="mapingo-list-card">
           <div className="mapingo-card-header-row">
             <div>
-              <h3>공지 목록</h3>
+              <h3>고객지원 공지 목록</h3>
               <span className="mapingo-muted-copy">{`${filteredNotices.length}개 표시 중`}</span>
             </div>
           </div>
@@ -385,6 +534,227 @@ function AdminNoticesPage() {
           </div>
         </article>
       </section>
+      ) : null}
+
+      {activeSupportTab === 'faq' ? (
+        <section className="mapingo-admin-grid">
+          <article className="mapingo-list-card">
+            <div className="mapingo-card-header-row">
+              <div>
+                <h3>{editingFaq ? 'FAQ 수정' : 'FAQ 작성'}</h3>
+                <span className="mapingo-muted-copy">고객지원 FAQ 탭에 표시될 질문과 답변을 관리합니다.</span>
+              </div>
+            </div>
+            <div className="mapingo-admin-form">
+              <input
+                className="mapingo-input"
+                value={faqForm.question}
+                onChange={(event) => setFaqForm((current) => ({ ...current, question: event.target.value }))}
+                placeholder="질문"
+              />
+              <textarea
+                className="mapingo-input mapingo-admin-textarea"
+                value={faqForm.answer}
+                onChange={(event) => setFaqForm((current) => ({ ...current, answer: event.target.value }))}
+                placeholder="답변"
+              />
+              <div className="mapingo-admin-action-row">
+                <button type="button" className="mapingo-submit-button" onClick={handleSubmitFaq}>
+                  {editingFaq ? 'FAQ 수정 저장' : 'FAQ 추가'}
+                </button>
+                {editingFaq ? (
+                  <button type="button" className="mapingo-ghost-button" onClick={resetFaqForm}>
+                    취소
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </article>
+
+          <article className="mapingo-list-card">
+            <div className="mapingo-card-header-row">
+              <div>
+                <h3>FAQ 목록</h3>
+                <span className="mapingo-muted-copy">{faqs.length}개 표시 중</span>
+              </div>
+            </div>
+            <div className="mapingo-selectable-list">
+              {faqs.map((faq) => (
+                <article key={faq.id} className="mapingo-post-card">
+                  <div className="mapingo-admin-item-head">
+                    <div>
+                      <strong>{faq.question}</strong>
+                      <p>{faq.answer}</p>
+                    </div>
+                  </div>
+                  <div className="mapingo-admin-action-row">
+                    <button type="button" className="mapingo-submit-button" onClick={() => handleEditFaq(faq)}>
+                      수정
+                    </button>
+                    <button type="button" className="mapingo-ghost-button" onClick={() => handleDeleteFaq(faq.id)}>
+                      삭제
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </article>
+        </section>
+      ) : null}
+
+      {activeSupportTab === 'inquiry' ? (
+        <section className="mapingo-admin-grid">
+          <article className="mapingo-list-card">
+            <div className="mapingo-card-header-row">
+              <div>
+                <h3>{editingTemplateIndex != null ? '문의 유형 수정' : '문의 유형 추가'}</h3>
+                <span className="mapingo-muted-copy">사용자가 1:1 문의 작성 시 선택하는 유형을 관리합니다.</span>
+              </div>
+            </div>
+            <div className="mapingo-admin-form">
+              <input
+                className="mapingo-input"
+                value={inquiryForm.category}
+                onChange={(event) => setInquiryForm({ category: event.target.value })}
+                placeholder="예: 결제/구독 문의"
+              />
+              <div className="mapingo-admin-action-row">
+                <button type="button" className="mapingo-submit-button" onClick={handleSubmitInquiryTemplate}>
+                  {editingTemplateIndex != null ? '유형 수정 저장' : '유형 추가'}
+                </button>
+                {editingTemplateIndex != null ? (
+                  <button type="button" className="mapingo-ghost-button" onClick={resetInquiryForm}>
+                    취소
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="admin-support-template-list">
+              {inquiryTemplates.map((template, index) => (
+                <div key={`${template}-${index}`} className="admin-support-template-item">
+                  <span>{template}</span>
+                  <div>
+                    <button
+                      type="button"
+                      className="mapingo-ghost-button"
+                      onClick={() => {
+                        setEditingTemplateIndex(index);
+                        setInquiryForm({ category: template });
+                      }}
+                    >
+                      수정
+                    </button>
+                    <button type="button" className="mapingo-ghost-button" onClick={() => handleDeleteInquiryTemplate(index)}>
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="mapingo-list-card">
+            <div className="mapingo-card-header-row">
+              <div>
+                <h3>1:1 문의 목록</h3>
+                <span className="mapingo-muted-copy">{inquiries.length}건 접수</span>
+              </div>
+            </div>
+            <div className="mapingo-selectable-list">
+              {inquiries.map((inquiry) => (
+                <article key={inquiry.id} className="mapingo-post-card">
+                  <div className="mapingo-admin-item-head">
+                    <div>
+                      <strong>{inquiry.title}</strong>
+                      <p>{inquiry.body}</p>
+                      <p className="admin-notice-meta">{inquiry.category}</p>
+                    </div>
+                    <span className="mapingo-inline-badge">{inquiry.status}</span>
+                  </div>
+                  <div className="admin-content-form-grid">
+                    <label className="mapingo-field">
+                      <span className="mapingo-field-label">처리 상태</span>
+                      <select
+                        className="mapingo-input"
+                        value={inquiry.status}
+                        onChange={(event) => updateInquiry(inquiry.id, { status: event.target.value })}
+                      >
+                        <option value="접수됨">접수됨</option>
+                        <option value="확인 중">확인 중</option>
+                        <option value="답변 완료">답변 완료</option>
+                      </select>
+                    </label>
+                    <label className="mapingo-field">
+                      <span className="mapingo-field-label">관리자 메모</span>
+                      <input
+                        className="mapingo-input"
+                        value={inquiry.memo}
+                        onChange={(event) => updateInquiry(inquiry.id, { memo: event.target.value })}
+                      />
+                    </label>
+                  </div>
+                  <div className="admin-support-answer-box">
+                    <div className="admin-support-answer-head">
+                      <strong>답변 작성</strong>
+                      <span>{inquiry.answeredAt || '답변 전'}</span>
+                    </div>
+                    <textarea
+                      className="mapingo-input mapingo-admin-textarea"
+                      value={inquiry.answer}
+                      onChange={(event) => updateInquiry(inquiry.id, { answer: event.target.value })}
+                      placeholder="회원에게 전달할 답변을 입력하세요."
+                    />
+                    <div className="admin-content-form-grid">
+                      <label className="mapingo-field">
+                        <span className="mapingo-field-label">답변자</span>
+                        <input
+                          className="mapingo-input"
+                          value={inquiry.answeredBy}
+                          onChange={(event) => updateInquiry(inquiry.id, { answeredBy: event.target.value })}
+                          placeholder="운영팀"
+                        />
+                      </label>
+                      <label className="mapingo-field">
+                        <span className="mapingo-field-label">답변 일시</span>
+                        <input
+                          className="mapingo-input"
+                          type="datetime-local"
+                          value={inquiry.answeredAt}
+                          onChange={(event) => updateInquiry(inquiry.id, { answeredAt: event.target.value })}
+                        />
+                      </label>
+                    </div>
+                    <div className="mapingo-admin-action-row admin-support-answer-actions">
+                      <button
+                        type="button"
+                        className="mapingo-submit-button"
+                        onClick={() =>
+                          updateInquiry(inquiry.id, {
+                            status: '답변 완료',
+                            answeredBy: inquiry.answeredBy || '운영팀',
+                            answeredAt: inquiry.answeredAt || '2026-04-27T09:00',
+                          })
+                        }
+                        disabled={!inquiry.answer.trim()}
+                      >
+                        답변 저장
+                      </button>
+                      <button
+                        type="button"
+                        className="mapingo-ghost-button"
+                        onClick={() => updateInquiry(inquiry.id, { status: '확인 중' })}
+                      >
+                        확인 중으로 표시
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </article>
+        </section>
+      ) : null}
     </div>
   );
 }

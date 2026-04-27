@@ -4,9 +4,15 @@ import { MapingoPageSection } from '../../components/MapingoPageBlocks';
 import { adminService } from '../../api/adminService';
 
 const visibilityLabelMap = {
-  VISIBLE: '노출 중',
+  VISIBLE: '노출중',
   HIDDEN: '숨김',
-  REVIEW: '검토 중',
+  REVIEW: '검토중',
+};
+
+const visibilityToneMap = {
+  VISIBLE: 'is-visible',
+  HIDDEN: 'is-hidden',
+  REVIEW: 'is-review',
 };
 
 const statusToneMap = {
@@ -22,9 +28,14 @@ function sortConfigs(items) {
 function AdminCommunityPage() {
   const navigate = useNavigate();
   const [pages] = useState(() => adminService.fetchAdminCommunityPages());
+  const [members] = useState(() => adminService.fetchAdminMembers());
   const [savedConfigs, setSavedConfigs] = useState(() => adminService.fetchAdminCommunityConfigs());
   const [configs, setConfigs] = useState(() => adminService.fetchAdminCommunityConfigs());
   const [selectedPageId, setSelectedPageId] = useState(() => pages[0]?.id ?? '');
+  const [configSearchTerm, setConfigSearchTerm] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState('ALL');
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
+  const [selectedMemberId, setSelectedMemberId] = useState(() => members[0]?.id ?? '');
   const [saveMessage, setSaveMessage] = useState('');
 
   const selectedPage = useMemo(
@@ -37,6 +48,22 @@ function AdminCommunityPage() {
     [configs, selectedPageId],
   );
 
+  const filteredSelectedConfigs = useMemo(() => {
+    const normalizedSearchTerm = configSearchTerm.trim().toLowerCase();
+
+    return selectedConfigs.filter((config) => {
+      const matchesVisibility = visibilityFilter === 'ALL' || config.visibility === visibilityFilter;
+      const matchesSearch =
+        !normalizedSearchTerm ||
+        [config.section, config.title, config.description, visibilityLabelMap[config.visibility]]
+          .join(' ')
+          .toLowerCase()
+          .includes(normalizedSearchTerm);
+
+      return matchesVisibility && matchesSearch;
+    });
+  }, [configSearchTerm, selectedConfigs, visibilityFilter]);
+
   const savedSelectedConfigs = useMemo(
     () => sortConfigs(savedConfigs.filter((config) => config.pageId === selectedPageId)),
     [savedConfigs, selectedPageId],
@@ -47,25 +74,50 @@ function AdminCommunityPage() {
     [savedSelectedConfigs, selectedConfigs],
   );
 
+  const filteredMembers = useMemo(() => {
+    const normalizedSearchTerm = memberSearchTerm.trim().toLowerCase();
+
+    if (!normalizedSearchTerm) {
+      return members;
+    }
+
+    return members.filter((member) =>
+      [member.name, member.email, member.plan, member.level, member.role, member.goal, member.status]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearchTerm),
+    );
+  }, [memberSearchTerm, members]);
+
+  const selectedMember = useMemo(
+    () => members.find((member) => String(member.id) === String(selectedMemberId)) ?? filteredMembers[0] ?? null,
+    [filteredMembers, members, selectedMemberId],
+  );
+
   const pageStats = useMemo(
     () => [
       {
         label: '관리 페이지',
         value: pages.length,
-        hint: '관리자에서 조정 가능한 커뮤니티 화면 수',
+        hint: '관리자에서 조정 가능한 커뮤니티 화면',
       },
       {
-        label: '노출 중 섹션',
+        label: '노출 섹션',
         value: configs.filter((config) => config.visibility === 'VISIBLE').length,
-        hint: '현재 사용자 화면에 보이는 섹션 수',
+        hint: '사용자 화면에 표시되는 섹션',
       },
       {
-        label: '검토 중 섹션',
+        label: '검토 섹션',
         value: configs.filter((config) => config.visibility === 'REVIEW').length,
-        hint: '문구나 노출 상태 확인이 필요한 섹션 수',
+        hint: '문구 또는 노출 상태 확인 필요',
+      },
+      {
+        label: '커뮤니티 회원',
+        value: members.length,
+        hint: '검색 가능한 회원',
       },
     ],
-    [configs, pages.length],
+    [configs, members.length, pages.length],
   );
 
   const previewSummary = useMemo(() => {
@@ -81,6 +133,8 @@ function AdminCommunityPage() {
 
   const handlePageSelect = (pageId) => {
     setSelectedPageId(pageId);
+    setConfigSearchTerm('');
+    setVisibilityFilter('ALL');
     setSaveMessage('');
   };
 
@@ -145,7 +199,7 @@ function AdminCommunityPage() {
       <MapingoPageSection
         eyebrow="Admin"
         title="커뮤니티 관리"
-        description="커뮤니티 메인, 친구 관리, 순위 비교, 즐겨찾기 화면을 선택하고 섹션별 문구, 노출 상태, 표시 순서를 관리할 수 있습니다."
+        description="커뮤니티 화면별 섹션 문구, 노출 상태, 표시 순서를 한 곳에서 확인하고 조정합니다."
       >
         <div className="mapingo-page-actions">
           <button type="button" className="mapingo-ghost-button" onClick={() => navigate('/admin')}>
@@ -167,19 +221,71 @@ function AdminCommunityPage() {
       </section>
 
       <section className="mapingo-page-section">
+        <div className="admin-community-member-panel">
+          <div className="admin-community-member-copy">
+            <p className="mapingo-eyebrow">Member Search</p>
+            <h3>{selectedMember ? `${selectedMember.name} 커뮤니티 활동` : '회원 검색'}</h3>
+            <p>
+              {selectedMember
+                ? `${selectedMember.email} · ${selectedMember.plan} · ${selectedMember.level} · ${selectedMember.status}`
+                : '커뮤니티 활동을 확인할 회원을 검색하세요.'}
+            </p>
+          </div>
+
+          <div className="admin-community-member-controls">
+            <label className="mapingo-field">
+              <span className="mapingo-field-label">회원 검색</span>
+              <input
+                className="mapingo-input"
+                type="search"
+                value={memberSearchTerm}
+                onChange={(event) => setMemberSearchTerm(event.target.value)}
+                placeholder="이름, 이메일, 플랜, 상태로 검색"
+              />
+            </label>
+            <div className="admin-community-member-list">
+              {filteredMembers.map((member) => (
+                <button
+                  key={member.id}
+                  type="button"
+                  className={`admin-community-member-item ${String(selectedMemberId) === String(member.id) ? 'is-selected' : ''}`}
+                  onClick={() => setSelectedMemberId(member.id)}
+                >
+                  <strong>{member.name}</strong>
+                  <span>{member.email}</span>
+                </button>
+              ))}
+              {filteredMembers.length === 0 ? <p>검색 결과가 없습니다.</p> : null}
+            </div>
+          </div>
+
+          <div className="admin-community-member-summary">
+            <p>
+              <strong>학습 목표</strong>
+              {selectedMember?.goal ?? '-'}
+            </p>
+            <p>
+              <strong>최근 활동</strong>
+              {selectedMember?.lastActive ?? '-'}
+            </p>
+            <p>
+              <strong>관리 메모</strong>
+              {selectedMember?.memo ?? '-'}
+            </p>
+          </div>
+        </div>
+
         <div className="mapingo-admin-grid admin-content-layout admin-community-layout">
-          <div className="mapingo-list-card">
+          <aside className="mapingo-list-card admin-community-sidebar">
             <div className="mapingo-card-header-row admin-builder-head">
               <div>
-                <h3>커뮤니티 페이지</h3>
-                <p className="mapingo-muted-copy">
-                  관리할 페이지를 선택하면 오른쪽에서 섹션 편집과 미리보기를 바로 확인할 수 있습니다.
-                </p>
+                <h3>관리할 화면</h3>
+                <p className="mapingo-muted-copy">화면을 고르면 오른쪽에서 섹션 구성과 미리보기를 바로 확인할 수 있습니다.</p>
               </div>
               <span className="mapingo-inline-badge">{pages.length}개</span>
             </div>
 
-            <div className="admin-content-tab-row admin-community-page-tabs">
+            <div className="admin-content-tab-row admin-community-page-tabs" aria-label="커뮤니티 화면 빠른 선택">
               {pages.map((page) => (
                 <button
                   key={`tab-${page.id}`}
@@ -202,7 +308,7 @@ function AdminCommunityPage() {
                   }`}
                   onClick={() => handlePageSelect(page.id)}
                 >
-                  <div className="mapingo-admin-item-head">
+                  <div className="admin-community-page-card-head">
                     <div>
                       <strong>{page.title}</strong>
                       <p>{page.route}</p>
@@ -212,19 +318,19 @@ function AdminCommunityPage() {
                     </span>
                   </div>
                   <p className="admin-content-description">{page.summary}</p>
-                  <div className="admin-content-tags">
+                  <div className="admin-community-page-card-foot">
                     <span>{page.primaryData}</span>
-                    <span>{`섹션 ${page.itemCount}개`}</span>
+                    <strong>{page.itemCount}개 섹션</strong>
                   </div>
                 </button>
               ))}
             </div>
-          </div>
+          </aside>
 
-          <div className="mapingo-form-card">
+          <div className="mapingo-form-card admin-community-editor">
             {selectedPage ? (
               <>
-                <div className="mapingo-card-header-row admin-result-head">
+                <div className="mapingo-card-header-row admin-result-head admin-community-editor-head">
                   <div>
                     <h3>{selectedPage.title}</h3>
                     <p className="mapingo-muted-copy">
@@ -234,7 +340,7 @@ function AdminCommunityPage() {
                   <div className="mapingo-inline-badges">
                     <span className="mapingo-inline-badge">{selectedPage.owner}</span>
                     <span className="mapingo-inline-badge">{selectedPage.status}</span>
-                    {isSelectedPageDirty ? <span className="mapingo-inline-badge">미저장 변경</span> : null}
+                    {isSelectedPageDirty ? <span className="mapingo-inline-badge is-warning">미저장 변경</span> : null}
                   </div>
                 </div>
 
@@ -255,8 +361,8 @@ function AdminCommunityPage() {
 
                 <div className="admin-community-toolbar">
                   <div className="admin-community-toolbar-copy">
-                    <strong>페이지 편집</strong>
-                    <p>섹션 문구를 수정하고 위아래 순서를 바꾼 뒤 저장해 주세요.</p>
+                    <strong>섹션 편집</strong>
+                    <p>검색과 상태 필터로 필요한 섹션만 좁힌 뒤 문구, 개수, 노출 여부를 수정하세요.</p>
                   </div>
                   <div className="admin-community-toolbar-actions">
                     <button
@@ -279,12 +385,12 @@ function AdminCommunityPage() {
                   <div className="mapingo-card-header-row admin-community-preview-head">
                     <div>
                       <h3>페이지 미리보기</h3>
-                      <p className="mapingo-muted-copy">지금 설정 기준으로 실제 화면 구성을 간단히 미리 확인합니다.</p>
+                      <p className="mapingo-muted-copy">현재 설정 기준으로 실제 화면에 어떤 섹션이 보이는지 요약합니다.</p>
                     </div>
                     <div className="mapingo-inline-badges">
-                      <span className="mapingo-inline-badge">{`노출 ${previewSummary.visibleCount}개`}</span>
-                      <span className="mapingo-inline-badge">{`검토 ${previewSummary.reviewCount}개`}</span>
-                      <span className="mapingo-inline-badge">{`항목 ${previewSummary.totalItems}개`}</span>
+                      <span className="mapingo-inline-badge">노출 {previewSummary.visibleCount}개</span>
+                      <span className="mapingo-inline-badge">검토 {previewSummary.reviewCount}개</span>
+                      <span className="mapingo-inline-badge">항목 {previewSummary.totalItems}개</span>
                     </div>
                   </div>
 
@@ -293,96 +399,138 @@ function AdminCommunityPage() {
                       <article key={`preview-${config.id}`} className="admin-community-preview-card">
                         <div className="admin-community-preview-meta">
                           <strong>{config.title}</strong>
-                          <span>{visibilityLabelMap[config.visibility] ?? config.visibility}</span>
+                          <span className={`admin-community-visibility ${visibilityToneMap[config.visibility]}`}>
+                            {visibilityLabelMap[config.visibility] ?? config.visibility}
+                          </span>
                         </div>
                         <p>{config.description}</p>
                         <div className="admin-content-tags">
                           <span>{config.section}</span>
-                          <span>{`표시 ${config.itemCount}개`}</span>
-                          <span>{`순서 ${config.order}`}</span>
+                          <span>표시 {config.itemCount}개</span>
+                          <span>순서 {config.order}</span>
                         </div>
                       </article>
                     ))}
                   </div>
                 </div>
 
+                <div className="admin-community-filter-bar">
+                  <label className="mapingo-field admin-community-search">
+                    <span className="mapingo-field-label">섹션 검색</span>
+                    <input
+                      className="mapingo-input"
+                      type="search"
+                      value={configSearchTerm}
+                      onChange={(event) => setConfigSearchTerm(event.target.value)}
+                      placeholder="제목, 설명, 섹션명으로 검색"
+                    />
+                  </label>
+                  <label className="mapingo-field admin-community-filter">
+                    <span className="mapingo-field-label">노출 상태</span>
+                    <select
+                      className="mapingo-input"
+                      value={visibilityFilter}
+                      onChange={(event) => setVisibilityFilter(event.target.value)}
+                    >
+                      <option value="ALL">전체</option>
+                      <option value="VISIBLE">노출중</option>
+                      <option value="REVIEW">검토중</option>
+                      <option value="HIDDEN">숨김</option>
+                    </select>
+                  </label>
+                </div>
+
                 <div className="admin-entity-stack admin-community-config-stack">
-                  {selectedConfigs.map((config, index) => (
-                    <article key={config.id} className="admin-entity-section">
-                      <div className="admin-entity-head admin-community-section-head">
-                        <div>
-                          <strong>{config.section}</strong>
-                          <p className="admin-community-order-label">{`섹션 순서 ${config.order}`}</p>
-                        </div>
-                        <div className="admin-community-section-actions">
-                          <button
-                            type="button"
-                            className="mapingo-ghost-button"
-                            onClick={() => moveConfig(config.id, -1)}
-                            disabled={index === 0}
-                          >
-                            위로
-                          </button>
-                          <button
-                            type="button"
-                            className="mapingo-ghost-button"
-                            onClick={() => moveConfig(config.id, 1)}
-                            disabled={index === selectedConfigs.length - 1}
-                          >
-                            아래로
-                          </button>
-                          <span>{visibilityLabelMap[config.visibility] ?? config.visibility}</span>
-                        </div>
-                      </div>
+                  {filteredSelectedConfigs.map((config) => {
+                    const originalIndex = selectedConfigs.findIndex((item) => item.id === config.id);
 
-                      <div className="mapingo-admin-form admin-community-config-form">
-                        <label className="mapingo-field">
-                          <span className="mapingo-field-label">섹션 제목</span>
-                          <input className="mapingo-input" value={config.title} onChange={handleConfigChange(config.id, 'title')} />
-                        </label>
-
-                        <label className="mapingo-field">
-                          <span className="mapingo-field-label">설명</span>
-                          <textarea
-                            className="mapingo-input mapingo-admin-textarea"
-                            value={config.description}
-                            onChange={handleConfigChange(config.id, 'description')}
-                          />
-                        </label>
-
-                        <div className="admin-content-form-grid admin-community-config-grid">
-                          <label className="mapingo-field">
-                            <span className="mapingo-field-label">노출 상태</span>
-                            <select
-                              className="mapingo-input"
-                              value={config.visibility}
-                              onChange={handleConfigChange(config.id, 'visibility')}
+                    return (
+                      <article key={config.id} className="admin-entity-section admin-community-config-card">
+                        <div className="admin-entity-head admin-community-section-head">
+                          <div>
+                            <strong>{config.section}</strong>
+                            <p className="admin-community-order-label">섹션 순서 {config.order}</p>
+                          </div>
+                          <div className="admin-community-section-actions">
+                            <button
+                              type="button"
+                              className="mapingo-ghost-button"
+                              onClick={() => moveConfig(config.id, -1)}
+                              disabled={originalIndex === 0}
                             >
-                              <option value="VISIBLE">노출 중</option>
-                              <option value="REVIEW">검토 중</option>
-                              <option value="HIDDEN">숨김</option>
-                            </select>
-                          </label>
+                              위로
+                            </button>
+                            <button
+                              type="button"
+                              className="mapingo-ghost-button"
+                              onClick={() => moveConfig(config.id, 1)}
+                              disabled={originalIndex === selectedConfigs.length - 1}
+                            >
+                              아래로
+                            </button>
+                            <span className={`admin-community-visibility ${visibilityToneMap[config.visibility]}`}>
+                              {visibilityLabelMap[config.visibility] ?? config.visibility}
+                            </span>
+                          </div>
+                        </div>
 
+                        <div className="mapingo-admin-form admin-community-config-form">
                           <label className="mapingo-field">
-                            <span className="mapingo-field-label">표시 개수</span>
+                            <span className="mapingo-field-label">섹션 제목</span>
                             <input
                               className="mapingo-input"
-                              type="number"
-                              min="0"
-                              value={config.itemCount}
-                              onChange={handleConfigChange(config.id, 'itemCount')}
+                              value={config.title}
+                              onChange={handleConfigChange(config.id, 'title')}
                             />
                           </label>
 
                           <label className="mapingo-field">
-                            <span className="mapingo-field-label">최근 수정</span>
-                            <input className="mapingo-input" value={config.updatedAt} readOnly />
+                            <span className="mapingo-field-label">설명</span>
+                            <textarea
+                              className="mapingo-input mapingo-admin-textarea"
+                              value={config.description}
+                              onChange={handleConfigChange(config.id, 'description')}
+                            />
                           </label>
+
+                          <div className="admin-content-form-grid admin-community-config-grid">
+                            <label className="mapingo-field">
+                              <span className="mapingo-field-label">노출 상태</span>
+                              <select
+                                className="mapingo-input"
+                                value={config.visibility}
+                                onChange={handleConfigChange(config.id, 'visibility')}
+                              >
+                                <option value="VISIBLE">노출중</option>
+                                <option value="REVIEW">검토중</option>
+                                <option value="HIDDEN">숨김</option>
+                              </select>
+                            </label>
+
+                            <label className="mapingo-field">
+                              <span className="mapingo-field-label">표시 개수</span>
+                              <input
+                                className="mapingo-input"
+                                type="number"
+                                min="0"
+                                value={config.itemCount}
+                                onChange={handleConfigChange(config.id, 'itemCount')}
+                              />
+                            </label>
+
+                            <label className="mapingo-field">
+                              <span className="mapingo-field-label">최근 수정</span>
+                              <input className="mapingo-input" value={config.updatedAt} readOnly />
+                            </label>
+                          </div>
                         </div>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
+
+                  {filteredSelectedConfigs.length === 0 ? (
+                    <div className="admin-content-empty-state">조건에 맞는 섹션이 없습니다. 검색어나 상태 필터를 확인하세요.</div>
+                  ) : null}
                 </div>
               </>
             ) : (

@@ -11,6 +11,26 @@ import {
   adminScenarioSeeds,
 } from '../mocks/adminMockData';
 import { adminCommunityConfigSeeds, adminCommunityPageList } from '../mocks/adminCommunityMockData';
+import {
+  coachingModes,
+  evaluationResult,
+  pronunciationSentences,
+  scenarioByMode,
+  youtubeRecommendations,
+} from '../domains/coaching/data/coachingMockData';
+import {
+  defaultBadgeProgress,
+  resolveBadgeCatalog,
+} from '../data/badgeSystem';
+import {
+  growthHighlights,
+  learningActivities,
+  learningGoalSuggestions,
+  learningLevelOptions,
+  learningSummary,
+} from '../mocks/learningMockData';
+import { supportFaqItems, supportInquiryTemplates } from '../mocks/supportMockData';
+import { premiumFeatureAccess, subscriptionProducts } from '../mocks/subscriptionMockData';
 
 function fetchAdminMembers() {
   return adminMemberList;
@@ -60,6 +80,66 @@ function fetchAdminCommunityConfigs() {
   return adminCommunityConfigSeeds;
 }
 
+function fetchAdminCoachingModes() {
+  return coachingModes;
+}
+
+function fetchAdminCoachingScenarios() {
+  return scenarioByMode;
+}
+
+function fetchAdminCoachingEvaluation() {
+  return evaluationResult;
+}
+
+function fetchAdminCoachingPronunciationSentences() {
+  return pronunciationSentences;
+}
+
+function fetchAdminCoachingRecommendations() {
+  return youtubeRecommendations;
+}
+
+function fetchAdminGrowthSummary() {
+  return learningSummary;
+}
+
+function fetchAdminGrowthHighlights() {
+  return growthHighlights;
+}
+
+function fetchAdminLearningLevelOptions() {
+  return learningLevelOptions;
+}
+
+function fetchAdminLearningGoalSuggestions() {
+  return learningGoalSuggestions;
+}
+
+function fetchAdminLearningActivities() {
+  return learningActivities;
+}
+
+function fetchAdminBadgeCatalog() {
+  return resolveBadgeCatalog(defaultBadgeProgress);
+}
+
+function fetchAdminSupportFaqs() {
+  return supportFaqItems;
+}
+
+function fetchAdminSupportInquiryTemplates() {
+  return supportInquiryTemplates;
+}
+
+function fetchAdminSubscriptionProducts() {
+  return subscriptionProducts;
+}
+
+function fetchAdminPremiumFeatureAccess() {
+  return premiumFeatureAccess;
+}
+
 export const adminService = {
   fetchAdminMembers,
   fetchAdminNotices,
@@ -73,4 +153,19 @@ export const adminService = {
   fetchAdminScenarioCategoryOptions,
   fetchAdminCommunityPages,
   fetchAdminCommunityConfigs,
+  fetchAdminCoachingModes,
+  fetchAdminCoachingScenarios,
+  fetchAdminCoachingEvaluation,
+  fetchAdminCoachingPronunciationSentences,
+  fetchAdminCoachingRecommendations,
+  fetchAdminGrowthSummary,
+  fetchAdminGrowthHighlights,
+  fetchAdminLearningLevelOptions,
+  fetchAdminLearningGoalSuggestions,
+  fetchAdminLearningActivities,
+  fetchAdminBadgeCatalog,
+  fetchAdminSupportFaqs,
+  fetchAdminSupportInquiryTemplates,
+  fetchAdminSubscriptionProducts,
+  fetchAdminPremiumFeatureAccess,
 };

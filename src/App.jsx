@@ -22,6 +22,9 @@ import AdminMembersPage from './pages/admin/AdminMembersPage';
 import AdminNoticesPage from './pages/admin/AdminNoticesPage';
 import AdminContentPage from './pages/admin/AdminContentPage';
 import AdminCommunityPage from './pages/admin/AdminCommunityPage';
+import AdminCoachingPage from './pages/admin/AdminCoachingPage';
+import AdminGrowthPage from './pages/admin/AdminGrowthPage';
+import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
 import SignupPage from './pages/user/SignupPage';
 import ProfilePage from './pages/user/ProfilePage';
 import LoginPage from './pages/user/LoginPage';
@@ -71,8 +74,12 @@ function App() {
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/admin/members" element={<AdminMembersPage />} />
           <Route path="/admin/notices" element={<AdminNoticesPage />} />
+          <Route path="/admin/support" element={<AdminNoticesPage />} />
           <Route path="/admin/content" element={<AdminContentPage />} />
           <Route path="/admin/community" element={<AdminCommunityPage />} />
+          <Route path="/admin/coaching" element={<AdminCoachingPage />} />
+          <Route path="/admin/growth" element={<AdminGrowthPage />} />
+          <Route path="/admin/payments" element={<AdminPaymentsPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -9,16 +9,34 @@ const adminCards = [
     path: '/admin/members',
   },
   {
-    id: 'notices',
-    title: '공지 관리',
-    description: '공지 작성, 예약, 게시 상태 변경까지 운영 공지를 한 화면에서 관리합니다.',
-    path: '/admin/notices',
+    id: 'support',
+    title: '고객지원 관리',
+    description: '고객지원에 노출되는 공지사항 작성, 예약, 게시 상태를 한 화면에서 관리합니다.',
+    path: '/admin/support',
   },
   {
     id: 'content',
     title: '콘텐츠 관리',
     description: '장소, 시나리오, 미션 콘텐츠 생성과 운영 상태를 관리자 화면에서 조정합니다.',
     path: '/admin/content',
+  },
+  {
+    id: 'payments',
+    title: '결제 관리',
+    description: '프리미엄 구독 결제 내역, 결제 상태, 환불과 취소 처리를 관리합니다.',
+    path: '/admin/payments',
+  },
+  {
+    id: 'coaching',
+    title: 'AI 코칭 관리',
+    description: 'AI 코칭 모드, 연습 프롬프트, 발음 복습 문장, 추천 영상을 관리합니다.',
+    path: '/admin/coaching',
+  },
+  {
+    id: 'growth',
+    title: '성장 리포트 관리',
+    description: '성장 지표, 리포트 하이라이트, 레벨 옵션, 목표 제안과 학습 기록을 관리합니다.',
+    path: '/admin/growth',
   },
   {
     id: 'community',

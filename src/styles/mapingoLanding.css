@@ -4726,6 +4726,42 @@
   margin-top: 18px;
 }
 
+.admin-member-detail-controls .mapingo-field {
+  min-width: 0;
+}
+
+.admin-member-detail-controls .mapingo-field + .mapingo-field {
+  margin-top: 0;
+}
+
+.admin-member-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 18px 0 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e4f3f0;
+}
+
+.admin-member-detail-actions .mapingo-submit-button,
+.admin-member-detail-actions .mapingo-ghost-button {
+  box-sizing: border-box;
+  width: 72px;
+  height: 40px;
+  min-width: 72px;
+  min-height: 40px;
+  margin-top: 0;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .admin-member-detail-memo {
   grid-column: 1 / -1;
 }

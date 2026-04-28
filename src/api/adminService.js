@@ -10,7 +10,14 @@ import {
   adminScenarioLevelOptions,
   adminScenarioSeeds,
 } from '../mocks/adminMockData';
-import { adminCommunityConfigSeeds, adminCommunityPageList } from '../mocks/adminCommunityMockData';
+import {
+  adminCommunityConfigSeeds,
+  adminCommunityFriendSeeds,
+  adminCommunityGoalSeeds,
+  adminCommunityPageList,
+  adminCommunityRankingSeeds,
+  adminCommunityReportSeeds,
+} from '../mocks/adminCommunityMockData';
 import {
   coachingModes,
   evaluationResult,
@@ -78,6 +85,22 @@ function fetchAdminCommunityPages() {
 
 function fetchAdminCommunityConfigs() {
   return adminCommunityConfigSeeds;
+}
+
+function fetchAdminCommunityGoals() {
+  return adminCommunityGoalSeeds;
+}
+
+function fetchAdminCommunityReports() {
+  return adminCommunityReportSeeds;
+}
+
+function fetchAdminCommunityFriends() {
+  return adminCommunityFriendSeeds;
+}
+
+function fetchAdminCommunityRanking() {
+  return adminCommunityRankingSeeds;
 }
 
 function fetchAdminCoachingModes() {
@@ -153,6 +176,10 @@ export const adminService = {
   fetchAdminScenarioCategoryOptions,
   fetchAdminCommunityPages,
   fetchAdminCommunityConfigs,
+  fetchAdminCommunityGoals,
+  fetchAdminCommunityReports,
+  fetchAdminCommunityFriends,
+  fetchAdminCommunityRanking,
   fetchAdminCoachingModes,
   fetchAdminCoachingScenarios,
   fetchAdminCoachingEvaluation,

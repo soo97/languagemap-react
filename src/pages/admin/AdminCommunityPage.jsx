@@ -31,6 +31,7 @@ const statusClassMap = {
   RESOLVED: 'is-published',
   ACCEPTED: 'is-published',
   BLOCKED: 'is-draft',
+  REJECTED: 'is-draft',
 };
 
 const communityTabs = [
@@ -51,9 +52,9 @@ const communityTabs = [
   {
     id: 'friends',
     label: '친구 관리',
-    kicker: '연결 관리',
-    description: '친구 관계 목록을 확인하고 필요한 경우 관리자 권한으로 삭제합니다.',
-    api: 'GET · DELETE',
+    kicker: 'Social Admin',
+    description: '신고 목록, 상세 조회, 상태 변경과 차단/거절 이력 조회를 이 화면에서 처리합니다.',
+    api: 'GET list · GET detail · PATCH status · GET history',
   },
   {
     id: 'ranking',
@@ -70,33 +71,54 @@ function includesSearch(fields, query) {
   return fields.join(' ').toLowerCase().includes(normalizedQuery);
 }
 
+function getNowLabel() {
+  return '2026-04-29 09:00';
+}
+
 function AdminCommunityPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const panelParam = searchParams.get('panel');
   const activePanel = communityTabs.some((tab) => tab.id === panelParam) ? panelParam : null;
+
   const [goals, setGoals] = useState(() => adminService.fetchAdminCommunityGoals());
   const [reports, setReports] = useState(() => adminService.fetchAdminCommunityReports());
-  const [friends, setFriends] = useState(() => adminService.fetchAdminCommunityFriends());
+  const [friends] = useState(() => adminService.fetchAdminCommunityFriends());
   const [ranking] = useState(() => adminService.fetchAdminCommunityRanking());
+
   const [goalForm, setGoalForm] = useState(emptyGoalForm);
   const [editingGoalId, setEditingGoalId] = useState(null);
+
   const [goalSearch, setGoalSearch] = useState('');
   const [reportSearch, setReportSearch] = useState('');
   const [friendSearch, setFriendSearch] = useState('');
+  const [blockedSearch, setBlockedSearch] = useState('');
+  const [rejectedSearch, setRejectedSearch] = useState('');
   const [rankingSearch, setRankingSearch] = useState('');
+
   const [selectedReportId, setSelectedReportId] = useState(() => adminService.fetchAdminCommunityReports()[0]?.id ?? null);
+  const [reportDrafts, setReportDrafts] = useState({});
+  const [reportError, setReportError] = useState('');
 
   const activeGoals = goals.filter((goal) => goal.isActive);
   const pendingReports = reports.filter((report) => report.status === 'PENDING');
-  const acceptedFriends = friends.filter((friend) => friend.status === 'ACCEPTED');
+  const blockedFriends = friends.filter((friend) => friend.status === 'BLOCKED');
+  const rejectedFriends = friends.filter((friend) => friend.status === 'REJECTED');
 
-  const stats = [
+  const defaultStats = [
     { label: '활성 목표', value: activeGoals.length, hint: '사용자에게 노출되는 목표' },
     { label: '처리 대기 신고', value: pendingReports.length, hint: 'PENDING 상태 신고' },
     { label: '친구 관계', value: friends.length, hint: '관리 가능한 친구 연결' },
     { label: '랭킹 사용자', value: ranking.length, hint: '관리자 조회 대상' },
   ];
 
+  const friendAdminStats = [
+    { label: '신고 목록', value: reports.length, hint: '조회 가능한 신고 건수' },
+    { label: '처리 대기 신고', value: pendingReports.length, hint: 'PENDING 상태 신고' },
+    { label: '차단 이력', value: blockedFriends.length, hint: '조회 전용' },
+    { label: '거절 이력', value: rejectedFriends.length, hint: '조회 전용' },
+  ];
+
+  const stats = activePanel === 'friends' ? friendAdminStats : defaultStats;
   const activeTab = communityTabs.find((tab) => tab.id === activePanel);
 
   const filteredGoals = useMemo(
@@ -116,18 +138,30 @@ function AdminCommunityPage() {
     () =>
       reports.filter((report) =>
         includesSearch(
-          [report.reporterName, report.reporterEmail, report.targetName, report.targetEmail, report.reason, report.status],
-          reportSearch,
+          [
+            report.reporterName,
+            report.reporterEmail,
+            report.targetName,
+            report.targetEmail,
+            report.reason,
+            report.status,
+            report.adminMemo,
+          ],
+          activePanel === 'friends' ? friendSearch : reportSearch,
         ),
       ),
-    [reportSearch, reports],
+    [activePanel, friendSearch, reportSearch, reports],
   );
 
   const selectedReport = reports.find((report) => report.id === selectedReportId) ?? filteredReports[0] ?? null;
 
-  const filteredFriends = useMemo(
+  const activeReportDraft = selectedReport
+    ? reportDrafts[selectedReport.id] ?? { status: selectedReport.status, adminMemo: selectedReport.adminMemo ?? '' }
+    : { status: '', adminMemo: '' };
+
+  const filteredBlockedFriends = useMemo(
     () =>
-      friends.filter((friend) =>
+      blockedFriends.filter((friend) =>
         includesSearch(
           [
             friend.requesterName,
@@ -135,11 +169,32 @@ function AdminCommunityPage() {
             friend.addresseeName,
             friend.addresseeEmail,
             friend.status,
+            friend.requestedAt,
+            friend.respondedAt,
           ],
-          friendSearch,
+          blockedSearch,
         ),
       ),
-    [friendSearch, friends],
+    [blockedFriends, blockedSearch],
+  );
+
+  const filteredRejectedFriends = useMemo(
+    () =>
+      rejectedFriends.filter((friend) =>
+        includesSearch(
+          [
+            friend.requesterName,
+            friend.requesterEmail,
+            friend.addresseeName,
+            friend.addresseeEmail,
+            friend.status,
+            friend.requestedAt,
+            friend.respondedAt,
+          ],
+          rejectedSearch,
+        ),
+      ),
+    [rejectedFriends, rejectedSearch],
   );
 
   const filteredRanking = useMemo(
@@ -215,23 +270,43 @@ function AdminCommunityPage() {
     if (editingGoalId === goalId) resetGoalForm();
   };
 
-  const updateReport = (reportId, updates) => {
+  const handleSaveReportStatus = (reportId) => {
+    const targetReport = reports.find((report) => report.id === reportId);
+    if (!targetReport) return;
+
+    const draft = reportDrafts[reportId] ?? {
+      status: targetReport.status,
+      adminMemo: targetReport.adminMemo ?? '',
+    };
+
+    const trimmedMemo = draft.adminMemo.trim();
+    if (!trimmedMemo) {
+      setReportError('상태 변경 시 관리자 메모를 입력해야 합니다.');
+      return;
+    }
+
     setReports((currentReports) =>
-      currentReports.map((report) => (report.id === reportId ? { ...report, ...updates } : report)),
+      currentReports.map((report) =>
+        report.id === reportId
+          ? {
+              ...report,
+              status: draft.status,
+              adminMemo: trimmedMemo,
+              processedAt: getNowLabel(),
+            }
+          : report,
+      ),
     );
-  };
 
-  const handleResolveReport = (reportId) => {
-    updateReport(reportId, {
-      status: 'RESOLVED',
-      processedAt: '2026-04-28 10:00',
-      adminMemo: reports.find((report) => report.id === reportId)?.adminMemo || '관리자 확인 후 처리 완료했습니다.',
-    });
-  };
+    setReportDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [reportId]: {
+        status: draft.status,
+        adminMemo: trimmedMemo,
+      },
+    }));
 
-  const handleForceDeleteFriend = (friendId) => {
-    if (!window.confirm('선택한 친구 관계를 강제 삭제할까요?')) return;
-    setFriends((currentFriends) => currentFriends.filter((friend) => friend.id !== friendId));
+    setReportError('');
   };
 
   return (
@@ -296,217 +371,216 @@ function AdminCommunityPage() {
       ) : null}
 
       {activePanel ? (
-      <section className="mapingo-page-section">
-        {activePanel === 'goals' ? (
-          <div className="mapingo-admin-grid admin-content-layout">
-            <div className="mapingo-form-card">
-              <div className="mapingo-card-header-row admin-builder-head">
-                <div>
-                  <h3>{editingGoalId ? '목표 수정' : '목표 등록'}</h3>
-                  <p className="mapingo-muted-copy">POST와 PATCH에 대응되는 목표 마스터 정보를 입력합니다.</p>
+        <section className="mapingo-page-section">
+          {activePanel === 'goals' ? (
+            <div className="mapingo-admin-grid admin-content-layout">
+              <div className="mapingo-form-card">
+                <div className="mapingo-card-header-row admin-builder-head">
+                  <div>
+                    <h3>{editingGoalId ? '목표 수정' : '목표 등록'}</h3>
+                    <p className="mapingo-muted-copy">POST와 PATCH에 대응되는 목표 마스터 정보를 입력합니다.</p>
+                  </div>
+                  <span className="mapingo-inline-badge">{communityTabs[0].api}</span>
                 </div>
-                <span className="mapingo-inline-badge">{communityTabs[0].api}</span>
-              </div>
 
-              <form className="mapingo-admin-form admin-builder-form" onSubmit={handleGoalSubmit}>
-                <label className="mapingo-field">
-                  <span className="mapingo-field-label">목표명</span>
-                  <input
-                    className="mapingo-input"
-                    value={goalForm.title}
-                    onChange={(event) => setGoalForm((current) => ({ ...current, title: event.target.value }))}
-                    required
-                  />
-                </label>
-                <label className="mapingo-field">
-                  <span className="mapingo-field-label">설명</span>
-                  <textarea
-                    className="mapingo-input mapingo-admin-textarea"
-                    value={goalForm.description}
-                    onChange={(event) => setGoalForm((current) => ({ ...current, description: event.target.value }))}
-                    required
-                  />
-                </label>
-                <div className="admin-content-form-grid">
+                <form className="mapingo-admin-form admin-builder-form" onSubmit={handleGoalSubmit}>
                   <label className="mapingo-field">
-                    <span className="mapingo-field-label">목표 타입</span>
-                    <select
-                      className="mapingo-input"
-                      value={goalForm.goalType}
-                      onChange={(event) => setGoalForm((current) => ({ ...current, goalType: event.target.value }))}
-                    >
-                      {Object.entries(goalTypeLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="mapingo-field">
-                    <span className="mapingo-field-label">목표값</span>
+                    <span className="mapingo-field-label">목표명</span>
                     <input
                       className="mapingo-input"
-                      type="number"
-                      min="1"
-                      value={goalForm.targetValue}
-                      onChange={(event) => setGoalForm((current) => ({ ...current, targetValue: event.target.value }))}
+                      value={goalForm.title}
+                      onChange={(event) => setGoalForm((current) => ({ ...current, title: event.target.value }))}
+                      required
                     />
                   </label>
                   <label className="mapingo-field">
-                    <span className="mapingo-field-label">기간</span>
-                    <select
-                      className="mapingo-input"
-                      value={goalForm.periodType}
-                      onChange={(event) => setGoalForm((current) => ({ ...current, periodType: event.target.value }))}
-                    >
-                      {Object.entries(periodLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="mapingo-field">
-                    <span className="mapingo-field-label">노출 순서</span>
-                    <input
-                      className="mapingo-input"
-                      type="number"
-                      min="1"
-                      value={goalForm.displayOrder}
-                      onChange={(event) => setGoalForm((current) => ({ ...current, displayOrder: event.target.value }))}
+                    <span className="mapingo-field-label">설명</span>
+                    <textarea
+                      className="mapingo-input mapingo-admin-textarea"
+                      value={goalForm.description}
+                      onChange={(event) => setGoalForm((current) => ({ ...current, description: event.target.value }))}
+                      required
                     />
                   </label>
-                  <label className="mapingo-field">
-                    <span className="mapingo-field-label">상태</span>
-                    <select
-                      className="mapingo-input"
-                      value={goalForm.isActive ? 'ACTIVE' : 'INACTIVE'}
-                      onChange={(event) =>
-                        setGoalForm((current) => ({ ...current, isActive: event.target.value === 'ACTIVE' }))
-                      }
-                    >
-                      <option value="ACTIVE">활성</option>
-                      <option value="INACTIVE">비활성</option>
-                    </select>
-                  </label>
-                </div>
-                <div className="mapingo-admin-action-row">
-                  <button type="submit" className="mapingo-submit-button">
-                    {editingGoalId ? '목표 수정 저장' : '목표 등록'}
-                  </button>
-                  {editingGoalId ? (
-                    <button type="button" className="mapingo-ghost-button" onClick={resetGoalForm}>
-                      취소
-                    </button>
-                  ) : null}
-                </div>
-              </form>
-            </div>
-
-            <div className="mapingo-list-card">
-              <div className="mapingo-card-header-row admin-result-head">
-                <div>
-                  <h3>목표 목록 조회</h3>
-                  <p className="mapingo-muted-copy">목표를 검색하고 PATCH 수정 또는 상태 변경으로 비활성화합니다.</p>
-                </div>
-                <span className="mapingo-inline-badge">{filteredGoals.length}개</span>
-              </div>
-              <input
-                className="mapingo-input admin-notice-search"
-                type="search"
-                value={goalSearch}
-                onChange={(event) => setGoalSearch(event.target.value)}
-                placeholder="목표명, 타입, 설명 검색"
-              />
-              <div className="admin-entity-stack">
-                {filteredGoals.map((goal) => (
-                  <article key={goal.id} className="mapingo-post-card admin-content-card">
-                    <div className="mapingo-admin-item-head">
-                      <div>
-                        <strong>{goal.title}</strong>
-                        <p>{goal.description}</p>
-                      </div>
-                      <span className={`admin-notice-status ${goal.isActive ? 'is-published' : 'is-draft'}`}>
-                        {goal.isActive ? '활성' : '비활성'}
-                      </span>
-                    </div>
-                    <div className="admin-content-tags">
-                      <span>{goalTypeLabels[goal.goalType]}</span>
-                      <span>{periodLabels[goal.periodType]}</span>
-                      <span>목표값 {goal.targetValue}</span>
-                      <span>순서 {goal.displayOrder}</span>
-                    </div>
-                    <div className="mapingo-admin-action-row admin-content-card-actions">
-                      <button type="button" className="mapingo-submit-button" onClick={() => handleEditGoal(goal)}>
-                        수정
-                      </button>
-                      <button
-                        type="button"
-                        className="mapingo-ghost-button"
-                        onClick={() => handleDeactivateGoal(goal.id)}
-                        disabled={!goal.isActive}
+                  <div className="admin-content-form-grid">
+                    <label className="mapingo-field">
+                      <span className="mapingo-field-label">목표 타입</span>
+                      <select
+                        className="mapingo-input"
+                        value={goalForm.goalType}
+                        onChange={(event) => setGoalForm((current) => ({ ...current, goalType: event.target.value }))}
                       >
-                        비활성화
+                        {Object.entries(goalTypeLabels).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="mapingo-field">
+                      <span className="mapingo-field-label">목표값</span>
+                      <input
+                        className="mapingo-input"
+                        type="number"
+                        min="1"
+                        value={goalForm.targetValue}
+                        onChange={(event) => setGoalForm((current) => ({ ...current, targetValue: event.target.value }))}
+                      />
+                    </label>
+                    <label className="mapingo-field">
+                      <span className="mapingo-field-label">기간</span>
+                      <select
+                        className="mapingo-input"
+                        value={goalForm.periodType}
+                        onChange={(event) => setGoalForm((current) => ({ ...current, periodType: event.target.value }))}
+                      >
+                        {Object.entries(periodLabels).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="mapingo-field">
+                      <span className="mapingo-field-label">노출 순서</span>
+                      <input
+                        className="mapingo-input"
+                        type="number"
+                        min="1"
+                        value={goalForm.displayOrder}
+                        onChange={(event) => setGoalForm((current) => ({ ...current, displayOrder: event.target.value }))}
+                      />
+                    </label>
+                    <label className="mapingo-field">
+                      <span className="mapingo-field-label">상태</span>
+                      <select
+                        className="mapingo-input"
+                        value={goalForm.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        onChange={(event) =>
+                          setGoalForm((current) => ({ ...current, isActive: event.target.value === 'ACTIVE' }))
+                        }
+                      >
+                        <option value="ACTIVE">활성</option>
+                        <option value="INACTIVE">비활성</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div className="mapingo-admin-action-row">
+                    <button type="submit" className="mapingo-submit-button">
+                      {editingGoalId ? '목표 수정 저장' : '목표 등록'}
+                    </button>
+                    {editingGoalId ? (
+                      <button type="button" className="mapingo-ghost-button" onClick={resetGoalForm}>
+                        취소
                       </button>
-                    </div>
-                  </article>
-                ))}
+                    ) : null}
+                  </div>
+                </form>
               </div>
-            </div>
-          </div>
-        ) : null}
 
-        {activePanel === 'reports' ? (
-          <div className="mapingo-admin-grid admin-content-layout">
-            <div className="mapingo-list-card">
-              <div className="mapingo-card-header-row admin-result-head">
-                <div>
-                  <h3>신고 목록 조회</h3>
-                  <p className="mapingo-muted-copy">신고자를 선택하면 오른쪽에서 상세 내용을 확인합니다.</p>
+              <div className="mapingo-list-card">
+                <div className="mapingo-card-header-row admin-result-head">
+                  <div>
+                    <h3>목표 목록 조회</h3>
+                    <p className="mapingo-muted-copy">목표를 검색하고 PATCH 수정 또는 상태 변경으로 비활성화합니다.</p>
+                  </div>
+                  <span className="mapingo-inline-badge">{filteredGoals.length}개</span>
                 </div>
-                <span className="mapingo-inline-badge">{communityTabs[1].api}</span>
-              </div>
-              <input
-                className="mapingo-input admin-notice-search"
-                type="search"
-                value={reportSearch}
-                onChange={(event) => setReportSearch(event.target.value)}
-                placeholder="신고자, 대상자, 사유, 상태 검색"
-              />
-              <div className="mapingo-selectable-list">
-                {filteredReports.map((report) => (
-                  <button
-                    key={report.id}
-                    type="button"
-                    className={`mapingo-post-card admin-content-card ${
-                      selectedReport?.id === report.id ? 'is-selected' : ''
-                    }`}
-                    onClick={() => setSelectedReportId(report.id)}
-                  >
-                    <div className="mapingo-admin-item-head">
-                      <div>
-                        <strong>{report.targetName}</strong>
-                        <p>신고자 {report.reporterName} · {report.createdAt}</p>
+                <input
+                  className="mapingo-input admin-notice-search"
+                  type="search"
+                  value={goalSearch}
+                  onChange={(event) => setGoalSearch(event.target.value)}
+                  placeholder="목표명, 타입, 설명 검색"
+                />
+                <div className="admin-entity-stack admin-growth-stack">
+                  {filteredGoals.map((goal) => (
+                    <article key={goal.id} className="mapingo-post-card admin-content-card">
+                      <div className="mapingo-admin-item-head">
+                        <div>
+                          <strong>{goal.title}</strong>
+                          <p>{goal.description}</p>
+                        </div>
+                        <span className={`admin-notice-status ${goal.isActive ? 'is-published' : 'is-draft'}`}>
+                          {goal.isActive ? '활성' : '비활성'}
+                        </span>
                       </div>
-                      <span className={`admin-notice-status ${statusClassMap[report.status] ?? 'is-draft'}`}>
-                        {report.status}
-                      </span>
-                    </div>
-                    <p className="admin-content-description">{report.reason}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mapingo-form-card">
-              <div className="mapingo-card-header-row admin-builder-head">
-                <div>
-                  <h3>신고 상세 조회</h3>
-                  <p className="mapingo-muted-copy">PENDING 신고는 처리 완료 상태로 변경할 수 있습니다.</p>
+                      <div className="admin-content-tags">
+                        <span>{goalTypeLabels[goal.goalType]}</span>
+                        <span>{periodLabels[goal.periodType]}</span>
+                        <span>목표값 {goal.targetValue}</span>
+                        <span>순서 {goal.displayOrder}</span>
+                      </div>
+                      <div className="mapingo-admin-action-row admin-content-card-actions">
+                        <button type="button" className="mapingo-submit-button" onClick={() => handleEditGoal(goal)}>
+                          수정
+                        </button>
+                        <button
+                          type="button"
+                          className="mapingo-ghost-button"
+                          onClick={() => handleDeactivateGoal(goal.id)}
+                          disabled={!goal.isActive}
+                        >
+                          비활성화
+                        </button>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </div>
-              {selectedReport ? (
-                <div className="admin-entity-stack">
+            </div>
+          ) : null}
+
+          {activePanel === 'reports' ? (
+            <div className="mapingo-admin-grid admin-content-layout">
+              <div className="mapingo-list-card">
+                <div className="mapingo-card-header-row admin-result-head">
+                  <div>
+                    <h3>신고 목록 조회</h3>
+                    <p className="mapingo-muted-copy">신고자를 선택하면 오른쪽에서 상세 내용을 확인합니다.</p>
+                  </div>
+                  <span className="mapingo-inline-badge">{communityTabs[1].api}</span>
+                </div>
+                <input
+                  className="mapingo-input admin-notice-search"
+                  type="search"
+                  value={reportSearch}
+                  onChange={(event) => setReportSearch(event.target.value)}
+                  placeholder="신고자, 대상자, 사유, 상태 검색"
+                />
+                <div className="mapingo-selectable-list">
+                  {filteredReports.map((report) => (
+                    <button
+                      key={report.id}
+                      type="button"
+                      className={`mapingo-post-card admin-content-card ${
+                        selectedReport?.id === report.id ? 'is-selected' : ''
+                      }`}
+                      onClick={() => setSelectedReportId(report.id)}
+                    >
+                      <div className="mapingo-admin-item-head">
+                        <div>
+                          <strong>{report.targetName}</strong>
+                          <p>신고자 {report.reporterName} · {report.createdAt}</p>
+                        </div>
+                        <span className={`admin-notice-status ${statusClassMap[report.status] ?? 'is-draft'}`}>
+                          {report.status}
+                        </span>
+                      </div>
+                      <p className="admin-content-description">{report.reason}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mapingo-form-card">
+                <div className="mapingo-card-header-row admin-builder-head">
+                  <div>
+                    <h3>신고 상세 조회</h3>
+                    <p className="mapingo-muted-copy">PENDING 신고는 처리 완료 상태로 변경할 수 있습니다.</p>
+                  </div>
+                </div>
+                {selectedReport ? (
                   <section className="admin-entity-section">
                     <div className="admin-entity-head">
                       <strong>{selectedReport.targetName}</strong>
@@ -529,7 +603,13 @@ function AdminCommunityPage() {
                       <textarea
                         className="mapingo-input mapingo-admin-textarea"
                         value={selectedReport.adminMemo}
-                        onChange={(event) => updateReport(selectedReport.id, { adminMemo: event.target.value })}
+                        onChange={(event) =>
+                          setReports((currentReports) =>
+                            currentReports.map((report) =>
+                              report.id === selectedReport.id ? { ...report, adminMemo: event.target.value } : report,
+                            ),
+                          )
+                        }
                         placeholder="처리 메모를 입력하세요"
                       />
                     </label>
@@ -537,106 +617,271 @@ function AdminCommunityPage() {
                       <button
                         type="button"
                         className="mapingo-submit-button"
-                        onClick={() => handleResolveReport(selectedReport.id)}
+                        onClick={() => handleSaveReportStatus(selectedReport.id)}
                         disabled={selectedReport.status === 'RESOLVED'}
                       >
                         RESOLVED 처리
                       </button>
                     </div>
                   </section>
+                ) : (
+                  <div className="admin-content-empty-state">선택할 신고가 없습니다.</div>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {activePanel === 'friends' ? (
+            <>
+              <div className="mapingo-admin-grid admin-content-layout">
+                <div className="mapingo-list-card">
+                  <div className="mapingo-card-header-row admin-result-head">
+                    <div>
+                      <h3>신고 목록 조회</h3>
+                      <p className="mapingo-muted-copy">소셜 신고 목록을 선택하면 오른쪽에서 상세 조회와 상태 변경을 진행합니다.</p>
+                    </div>
+                    <span className="mapingo-inline-badge">{filteredReports.length}건</span>
+                  </div>
+                  <input
+                    className="mapingo-input admin-notice-search"
+                    type="search"
+                    value={friendSearch}
+                    onChange={(event) => setFriendSearch(event.target.value)}
+                    placeholder="신고자, 대상자, 사유, 상태 검색"
+                  />
+                  <div className="mapingo-selectable-list">
+                    {filteredReports.map((report) => (
+                      <button
+                        key={report.id}
+                        type="button"
+                        className={`mapingo-post-card admin-content-card ${
+                          selectedReport?.id === report.id ? 'is-selected' : ''
+                        }`}
+                        onClick={() => {
+                          setSelectedReportId(report.id);
+                          setReportError('');
+                        }}
+                      >
+                        <div className="mapingo-admin-item-head">
+                          <div>
+                            <strong>{report.targetName}</strong>
+                            <p>신고자 {report.reporterName} · {report.createdAt}</p>
+                          </div>
+                          <span className={`admin-notice-status ${statusClassMap[report.status] ?? 'is-draft'}`}>
+                            {report.status}
+                          </span>
+                        </div>
+                        <p className="admin-content-description">{report.reason}</p>
+                      </button>
+                    ))}
+                    {filteredReports.length === 0 ? <div className="admin-content-empty-state">신고 내역이 없습니다.</div> : null}
+                  </div>
                 </div>
-              ) : (
-                <div className="admin-content-empty-state">선택할 신고가 없습니다.</div>
-              )}
-            </div>
-          </div>
-        ) : null}
 
-        {activePanel === 'friends' ? (
-          <div className="mapingo-list-card">
-            <div className="mapingo-card-header-row admin-result-head">
-              <div>
-                <h3>친구 목록 조회</h3>
-                <p className="mapingo-muted-copy">친구 관계를 검색하고 필요하면 관리자 권한으로 강제 삭제합니다.</p>
-              </div>
-              <div className="mapingo-inline-badges">
-                <span className="mapingo-inline-badge">전체 {friends.length}개</span>
-                <span className="mapingo-inline-badge">수락 {acceptedFriends.length}개</span>
-              </div>
-            </div>
-            <input
-              className="mapingo-input admin-notice-search"
-              type="search"
-              value={friendSearch}
-              onChange={(event) => setFriendSearch(event.target.value)}
-              placeholder="회원명, 이메일, 상태 검색"
-            />
-            <div className="admin-entity-stack">
-              {filteredFriends.map((friend) => (
-                <article key={friend.id} className="mapingo-post-card admin-content-card">
-                  <div className="mapingo-admin-item-head">
+                <div className="mapingo-form-card">
+                  <div className="mapingo-card-header-row admin-builder-head">
                     <div>
-                      <strong>{friend.requesterName} ↔ {friend.addresseeName}</strong>
-                      <p>{friend.requesterEmail} · {friend.addresseeEmail}</p>
+                      <h3>신고 상세 조회</h3>
+                      <p className="mapingo-muted-copy">상태 변경과 관리자 메모 입력을 이 영역에서 처리합니다.</p>
                     </div>
-                    <span className={`admin-notice-status ${statusClassMap[friend.status] ?? 'is-reserved'}`}>
-                      {friend.status}
-                    </span>
                   </div>
-                  <div className="mapingo-admin-meta-grid admin-community-meta-grid">
-                    <p><strong>요청일</strong>{friend.requestedAt}</p>
-                    <p><strong>응답일</strong>{friend.respondedAt || '-'}</p>
-                    <p><strong>관계 ID</strong>{friend.id}</p>
-                  </div>
-                  <div className="mapingo-admin-action-row admin-content-card-actions">
-                    <button type="button" className="mapingo-ghost-button" onClick={() => handleForceDeleteFriend(friend.id)}>
-                      강제 삭제
-                    </button>
-                  </div>
-                </article>
-              ))}
-              {filteredFriends.length === 0 ? <div className="admin-content-empty-state">친구 관계가 없습니다.</div> : null}
-            </div>
-          </div>
-        ) : null}
+                  {selectedReport ? (
+                    <section className="admin-entity-section">
+                      <div className="admin-entity-head">
+                        <strong>{selectedReport.targetName}</strong>
+                        <span className={`admin-notice-status ${statusClassMap[selectedReport.status] ?? 'is-draft'}`}>
+                          {selectedReport.status}
+                        </span>
+                      </div>
+                      <div className="mapingo-admin-meta-grid admin-community-meta-grid">
+                        <p><strong>신고자</strong>{selectedReport.reporterName}<br />{selectedReport.reporterEmail}</p>
+                        <p><strong>대상자</strong>{selectedReport.targetName}<br />{selectedReport.targetEmail}</p>
+                        <p><strong>접수일</strong>{selectedReport.createdAt}</p>
+                        <p><strong>처리일</strong>{selectedReport.processedAt || '-'}</p>
+                      </div>
+                      <label className="mapingo-field">
+                        <span className="mapingo-field-label">신고 사유</span>
+                        <textarea
+                          className="mapingo-input mapingo-admin-textarea"
+                          value={selectedReport.reason}
+                          readOnly
+                        />
+                      </label>
+                      <div className="admin-content-form-grid">
+                        <label className="mapingo-field">
+                          <span className="mapingo-field-label">신고 상태</span>
+                          <select
+                            className="mapingo-input"
+                            value={activeReportDraft.status}
+                            onChange={(event) => {
+                              setReportDrafts((currentDrafts) => ({
+                                ...currentDrafts,
+                                [selectedReport.id]: {
+                                  status: event.target.value,
+                                  adminMemo: activeReportDraft.adminMemo,
+                                },
+                              }));
+                              setReportError('');
+                            }}
+                          >
+                            {Array.from(new Set(reports.map((report) => report.status))).map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                      <label className="mapingo-field">
+                        <span className="mapingo-field-label">관리자 메모</span>
+                        <textarea
+                          className="mapingo-input mapingo-admin-textarea"
+                          value={activeReportDraft.adminMemo}
+                          onChange={(event) => {
+                            setReportDrafts((currentDrafts) => ({
+                              ...currentDrafts,
+                              [selectedReport.id]: {
+                                status: activeReportDraft.status,
+                                adminMemo: event.target.value,
+                              },
+                            }));
+                            setReportError('');
+                          }}
+                          placeholder="상태 변경 사유 또는 처리 메모를 입력하세요"
+                        />
+                      </label>
+                      {reportError ? <p className="mapingo-muted-copy">{reportError}</p> : null}
+                      <div className="mapingo-admin-action-row">
+                        <button
+                          type="button"
+                          className="mapingo-submit-button"
+                          onClick={() => handleSaveReportStatus(selectedReport.id)}
+                        >
+                          상태 변경 저장
+                        </button>
+                      </div>
+                    </section>
+                  ) : (
+                    <div className="admin-content-empty-state">선택된 신고가 없습니다.</div>
+                  )}
+                </div>
+              </div>
 
-        {activePanel === 'ranking' ? (
-          <div className="mapingo-list-card">
-            <div className="mapingo-card-header-row admin-result-head">
-              <div>
-                <h3>랭킹 조회</h3>
-                <p className="mapingo-muted-copy">기존 ranking API를 재사용하거나 admin prefix로 연결할 관리자용 조회 화면입니다.</p>
+              <div className="mapingo-list-card">
+                <div className="mapingo-card-header-row admin-result-head">
+                  <div>
+                    <h3>차단 이력 조회</h3>
+                    <p className="mapingo-muted-copy">차단 이력은 조회 전용으로만 제공합니다.</p>
+                  </div>
+                  <span className="mapingo-inline-badge">{filteredBlockedFriends.length}건</span>
+                </div>
+                <input
+                  className="mapingo-input admin-notice-search"
+                  type="search"
+                  value={blockedSearch}
+                  onChange={(event) => setBlockedSearch(event.target.value)}
+                  placeholder="회원명, 이메일, 상태 검색"
+                />
+                <div className="admin-entity-stack admin-growth-stack">
+                  {filteredBlockedFriends.map((friend) => (
+                    <article key={friend.id} className="mapingo-post-card admin-content-card">
+                      <div className="mapingo-admin-item-head">
+                        <div>
+                          <strong>{friend.requesterName} ↔ {friend.addresseeName}</strong>
+                          <p>{friend.requesterEmail} · {friend.addresseeEmail}</p>
+                        </div>
+                        <span className={`admin-notice-status ${statusClassMap[friend.status] ?? 'is-draft'}`}>
+                          {friend.status}
+                        </span>
+                      </div>
+                      <div className="mapingo-admin-meta-grid admin-community-meta-grid">
+                        <p><strong>요청일</strong>{friend.requestedAt}</p>
+                        <p><strong>응답일</strong>{friend.respondedAt || '-'}</p>
+                        <p><strong>관계 ID</strong>{friend.id}</p>
+                      </div>
+                    </article>
+                  ))}
+                  {filteredBlockedFriends.length === 0 ? <div className="admin-content-empty-state">차단 이력이 없습니다.</div> : null}
+                </div>
               </div>
-              <span className="mapingo-inline-badge">{communityTabs[3].api}</span>
-            </div>
-            <input
-              className="mapingo-input admin-notice-search"
-              type="search"
-              value={rankingSearch}
-              onChange={(event) => setRankingSearch(event.target.value)}
-              placeholder="이름, 이메일, 관심 학습, 점수 검색"
-            />
-            <div className="admin-entity-stack">
-              {filteredRanking.map((item) => (
-                <article key={item.id} className="mapingo-post-card admin-content-card">
-                  <div className="mapingo-admin-item-head">
-                    <div>
-                      <strong>{item.rank}위 · {item.name}</strong>
-                      <p>{item.email}</p>
+
+              <div className="mapingo-list-card">
+                <div className="mapingo-card-header-row admin-result-head">
+                  <div>
+                    <h3>거절 이력 조회</h3>
+                    <p className="mapingo-muted-copy">거절 이력은 조회 전용으로만 제공합니다.</p>
+                  </div>
+                  <span className="mapingo-inline-badge">{filteredRejectedFriends.length}건</span>
+                </div>
+                <input
+                  className="mapingo-input admin-notice-search"
+                  type="search"
+                  value={rejectedSearch}
+                  onChange={(event) => setRejectedSearch(event.target.value)}
+                  placeholder="회원명, 이메일, 상태 검색"
+                />
+                <div className="admin-entity-stack admin-growth-stack">
+                  {filteredRejectedFriends.map((friend) => (
+                    <article key={friend.id} className="mapingo-post-card admin-content-card">
+                      <div className="mapingo-admin-item-head">
+                        <div>
+                          <strong>{friend.requesterName} ↔ {friend.addresseeName}</strong>
+                          <p>{friend.requesterEmail} · {friend.addresseeEmail}</p>
+                        </div>
+                        <span className={`admin-notice-status ${statusClassMap[friend.status] ?? 'is-draft'}`}>
+                          {friend.status}
+                        </span>
+                      </div>
+                      <div className="mapingo-admin-meta-grid admin-community-meta-grid">
+                        <p><strong>요청일</strong>{friend.requestedAt}</p>
+                        <p><strong>응답일</strong>{friend.respondedAt || '-'}</p>
+                        <p><strong>관계 ID</strong>{friend.id}</p>
+                      </div>
+                    </article>
+                  ))}
+                  {filteredRejectedFriends.length === 0 ? <div className="admin-content-empty-state">거절 이력이 없습니다.</div> : null}
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          {activePanel === 'ranking' ? (
+            <div className="mapingo-list-card">
+              <div className="mapingo-card-header-row admin-result-head">
+                <div>
+                  <h3>랭킹 조회</h3>
+                  <p className="mapingo-muted-copy">기존 ranking API를 재사용하거나 admin prefix로 연결할 관리자용 조회 화면입니다.</p>
+                </div>
+                <span className="mapingo-inline-badge">{communityTabs[3].api}</span>
+              </div>
+              <input
+                className="mapingo-input admin-notice-search"
+                type="search"
+                value={rankingSearch}
+                onChange={(event) => setRankingSearch(event.target.value)}
+                placeholder="이름, 이메일, 관심 학습, 점수 검색"
+              />
+              <div className="admin-entity-stack admin-growth-stack">
+                {filteredRanking.map((item) => (
+                  <article key={item.id} className="mapingo-post-card admin-content-card">
+                    <div className="mapingo-admin-item-head">
+                      <div>
+                        <strong>{item.rank}위 · {item.name}</strong>
+                        <p>{item.email}</p>
+                      </div>
+                      <span className="mapingo-inline-badge">{item.score.toLocaleString('ko-KR')}점</span>
                     </div>
-                    <span className="mapingo-inline-badge">{item.score.toLocaleString('ko-KR')}점</span>
-                  </div>
-                  <div className="admin-content-tags">
-                    <span>연속 학습 {item.streak}일</span>
-                    <span>관심 학습 {item.focus}</span>
-                  </div>
-                </article>
-              ))}
-              {filteredRanking.length === 0 ? <div className="admin-content-empty-state">랭킹 결과가 없습니다.</div> : null}
+                    <div className="admin-content-tags">
+                      <span>연속 학습 {item.streak}일</span>
+                      <span>관심 학습 {item.focus}</span>
+                    </div>
+                  </article>
+                ))}
+                {filteredRanking.length === 0 ? <div className="admin-content-empty-state">랭킹 결과가 없습니다.</div> : null}
+              </div>
             </div>
-          </div>
-        ) : null}
-      </section>
+          ) : null}
+        </section>
       ) : null}
     </div>
   );

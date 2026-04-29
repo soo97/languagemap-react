@@ -27,9 +27,9 @@ export const adminCommunityPageList = [
     route: '/admin/community/friends',
     status: '운영중',
     owner: 'community',
-    summary: '친구 관계 목록을 조회하고 문제가 있는 관계를 강제 삭제합니다.',
+    summary: '신고 목록/상세/상태 변경과 차단·거절 이력 조회를 처리합니다.',
     primaryData: 'friendshipRows',
-    itemCount: 4,
+    itemCount: 5,
     updatedAt: '2026-04-28',
   },
   {
@@ -183,6 +183,16 @@ export const adminCommunityFriendSeeds = [
     status: 'BLOCKED',
     requestedAt: '2026-04-05 17:00',
     respondedAt: '2026-04-06 09:00',
+  },
+  {
+    id: 5,
+    requesterName: 'Mina',
+    requesterEmail: 'mina@mapingo.ai',
+    addresseeName: 'Joon',
+    addresseeEmail: 'joon@mapingo.ai',
+    status: 'REJECTED',
+    requestedAt: '2026-04-18 08:40',
+    respondedAt: '2026-04-18 09:10',
   },
 ];
 

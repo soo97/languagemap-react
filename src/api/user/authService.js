@@ -38,7 +38,7 @@ async function loginWithEmail({ email, password, rememberMe }) {
 // 일반 회원가입
 // POST /api/auth/signup
 // ─────────────────────────────────────────
-async function signupWithEmail({ email, password, name }) {
+async function signupWithEmail({ email, password, name, birthDate, address, phone, agreeTerms, agreePrivacy, agreeMarketing, passwordConfirm }) {
     if (!email || !password || !name) {
         const error = new Error('필수 입력값을 확인해주세요.');
         error.status = 400;
@@ -48,10 +48,16 @@ async function signupWithEmail({ email, password, name }) {
     await axiosInstance.post('/api/auth/signup', {
         email,
         password,
+        passwordConfirm,
         name,
+        birthDate,
+        address,
+        phoneNumber: phone,       // ← phone → phoneNumber 로 변환
+        serviceAgree: agreeTerms,         // ← agreeTerms → serviceAgree
+        privacyAgree: agreePrivacy,       // ← agreePrivacy → privacyAgree
+        marketingAgree: agreeMarketing,   // ← agreeMarketing → marketingAgree
     });
 
-    // 회원가입 성공 후 자동 로그인
     return loginWithEmail({ email, password, rememberMe: false });
 }
 

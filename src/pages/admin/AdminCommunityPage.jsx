@@ -39,7 +39,7 @@ const communityTabs = [
     id: 'goals',
     label: '목표 관리',
     kicker: '핵심 관리',
-    description: '목표를 등록하고 수정하며 비활성화 상태까지 한 번에 관리합니다.',
+    description: '목표 템플릿을 등록하고 수정하며 삭제와 비활성화 상태까지 한 번에 관리합니다.',
     api: 'POST · PATCH · DELETE · GET',
   },
   {
@@ -58,11 +58,16 @@ const communityTabs = [
   },
   {
     id: 'ranking',
-    label: '랭킹 조회',
+    label: '랭킹 관리',
     kicker: '순위 확인',
-    description: '기존 랭킹 데이터를 관리자 화면에서 검색하고 확인합니다.',
+    description: '전체 랭킹과 주간 랭킹 리스트를 구분해 조회합니다.',
     api: 'GET /ranking or /admin/ranking',
   },
+];
+
+const rankingScopeOptions = [
+  { id: 'overall', label: '전체랭킹' },
+  { id: 'weekly', label: '주간랭킹' },
 ];
 
 const communityEntryTabs = communityTabs.filter((tab) => tab.id !== 'reports');
@@ -90,50 +95,26 @@ function AdminCommunityPage() {
   const [goalForm, setGoalForm] = useState(emptyGoalForm);
   const [editingGoalId, setEditingGoalId] = useState(null);
 
-  const [goalSearch, setGoalSearch] = useState('');
   const [reportSearch, setReportSearch] = useState('');
   const [friendSearch, setFriendSearch] = useState('');
-  const [friendHistorySearch, setFriendHistorySearch] = useState('');
   const [rankingSearch, setRankingSearch] = useState('');
+  const [rankingScope, setRankingScope] = useState('overall');
 
   const [selectedReportId, setSelectedReportId] = useState(() => adminService.fetchAdminCommunityReports()[0]?.id ?? null);
   const [reportDrafts, setReportDrafts] = useState({});
   const [reportError, setReportError] = useState('');
 
-  const activeGoals = goals.filter((goal) => goal.isActive);
-  const pendingReports = reports.filter((report) => report.status === 'PENDING');
   const blockedFriends = friends.filter((friend) => friend.status === 'BLOCKED');
   const rejectedFriends = friends.filter((friend) => friend.status === 'REJECTED');
 
-  const defaultStats = [
-    { label: '활성 목표', value: activeGoals.length, hint: '사용자에게 노출되는 목표' },
-    { label: '처리 대기 신고', value: pendingReports.length, hint: 'PENDING 상태 신고' },
-    { label: '친구 관계', value: friends.length, hint: '관리 가능한 친구 연결' },
-    { label: '랭킹 사용자', value: ranking.length, hint: '관리자 조회 대상' },
-  ];
-
-  const friendAdminStats = [
-    { label: '신고 목록', value: reports.length, hint: '조회 가능한 신고 건수' },
-    { label: '처리 대기 신고', value: pendingReports.length, hint: 'PENDING 상태 신고' },
-    { label: '차단 이력', value: blockedFriends.length, hint: '조회 전용' },
-    { label: '거절 이력', value: rejectedFriends.length, hint: '조회 전용' },
-  ];
-
-  const stats = activePanel === 'friends' ? friendAdminStats : defaultStats;
   const activeTab = communityTabs.find((tab) => tab.id === activePanel);
 
-  const filteredGoals = useMemo(
-    () =>
-      [...goals]
-        .sort((left, right) => left.displayOrder - right.displayOrder)
-        .filter((goal) =>
-          includesSearch(
-            [goal.title, goal.description, goal.goalType, goalTypeLabels[goal.goalType], periodLabels[goal.periodType]],
-            goalSearch,
-          ),
-        ),
-    [goalSearch, goals],
+  const sortedGoals = useMemo(
+    () => [...goals].sort((left, right) => left.displayOrder - right.displayOrder),
+    [goals],
   );
+
+  const editingGoal = goals.find((goal) => goal.id === editingGoalId) ?? null;
 
   const filteredReports = useMemo(
     () =>
@@ -160,31 +141,28 @@ function AdminCommunityPage() {
     ? reportDrafts[selectedReport.id] ?? { status: selectedReport.status, adminMemo: selectedReport.adminMemo ?? '' }
     : { status: '', adminMemo: '' };
 
-  const filteredFriendHistories = useMemo(
+  const friendHistories = useMemo(() => [...blockedFriends, ...rejectedFriends], [blockedFriends, rejectedFriends]);
+
+  const weeklyRanking = useMemo(
     () =>
-      [...blockedFriends, ...rejectedFriends].filter((friend) =>
-        includesSearch(
-          [
-            friend.requesterName,
-            friend.requesterEmail,
-            friend.addresseeName,
-            friend.addresseeEmail,
-            friend.status,
-            friend.requestedAt,
-            friend.respondedAt,
-          ],
-          friendHistorySearch,
-        ),
-      ),
-    [blockedFriends, friendHistorySearch, rejectedFriends],
+      ranking
+        .map((item, index) => ({
+          ...item,
+          score: Math.max(0, Math.round(item.score * 0.18) + (ranking.length - index) * 12),
+        }))
+        .sort((left, right) => right.score - left.score)
+        .map((item, index) => ({ ...item, rank: index + 1 })),
+    [ranking],
   );
+
+  const rankingList = rankingScope === 'weekly' ? weeklyRanking : ranking;
 
   const filteredRanking = useMemo(
     () =>
-      ranking
-        .filter((item) => includesSearch([item.name, item.email, item.focus, String(item.score), String(item.rank)], rankingSearch))
+      rankingList
+        .filter((item) => includesSearch([item.name, String(item.score), String(item.rank)], rankingSearch))
         .sort((left, right) => left.rank - right.rank),
-    [ranking, rankingSearch],
+    [rankingList, rankingSearch],
   );
 
   const resetGoalForm = () => {
@@ -249,6 +227,11 @@ function AdminCommunityPage() {
         goal.id === goalId ? { ...goal, isActive: false, updatedAt: '2026-04-28' } : goal,
       ),
     );
+    if (editingGoalId === goalId) resetGoalForm();
+  };
+
+  const handleDeleteGoal = (goalId) => {
+    setGoals((currentGoals) => currentGoals.filter((goal) => goal.id !== goalId));
     if (editingGoalId === goalId) resetGoalForm();
   };
 
@@ -326,18 +309,6 @@ function AdminCommunityPage() {
       {activePanel ? (
         <>
           <section className="mapingo-page-section">
-            <div className="mapingo-dashboard-stats admin-overview-grid">
-              {stats.map((stat) => (
-                <article key={stat.label} className="mapingo-stat-card admin-overview-card">
-                  <p className="mapingo-stat-label">{stat.label}</p>
-                  <strong className="mapingo-stat-value">{stat.value}</strong>
-                  <p className="mapingo-stat-hint">{stat.hint}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="mapingo-page-section">
             <div className="mapingo-card-header-row admin-result-head">
               <div>
                 <p className="mapingo-eyebrow">Community Admin</p>
@@ -359,15 +330,24 @@ function AdminCommunityPage() {
               <div className="mapingo-form-card">
                 <div className="mapingo-card-header-row admin-builder-head">
                   <div>
-                    <h3>{editingGoalId ? '목표 수정' : '목표 등록'}</h3>
-                    <p className="mapingo-muted-copy">POST와 PATCH에 대응되는 목표 마스터 정보를 입력합니다.</p>
+                    <h3>{editingGoalId ? '목표 템플릿 상세 / 수정' : '목표 템플릿 등록'}</h3>
+                    <p className="mapingo-muted-copy">POST와 PATCH에 대응되는 목표 템플릿 정보를 입력합니다.</p>
                   </div>
                   <span className="mapingo-inline-badge">{communityTabs[0].api}</span>
                 </div>
 
                 <form className="mapingo-admin-form admin-builder-form" onSubmit={handleGoalSubmit}>
+                  {editingGoal ? (
+                    <div className="admin-content-tags">
+                      <span>ID {editingGoal.id}</span>
+                      <span>{goalTypeLabels[editingGoal.goalType]}</span>
+                      <span>{periodLabels[editingGoal.periodType]}</span>
+                      <span>{editingGoal.isActive ? '활성' : '비활성'}</span>
+                      <span>수정일 {editingGoal.updatedAt}</span>
+                    </div>
+                  ) : null}
                   <label className="mapingo-field">
-                    <span className="mapingo-field-label">목표명</span>
+                    <span className="mapingo-field-label">목표 템플릿명</span>
                     <input
                       className="mapingo-input"
                       value={goalForm.title}
@@ -449,7 +429,7 @@ function AdminCommunityPage() {
                   </div>
                   <div className="mapingo-admin-action-row">
                     <button type="submit" className="mapingo-submit-button">
-                      {editingGoalId ? '목표 수정 저장' : '목표 등록'}
+                      {editingGoalId ? '목표 템플릿 수정 저장' : '목표 템플릿 등록'}
                     </button>
                     {editingGoalId ? (
                       <button type="button" className="mapingo-ghost-button" onClick={resetGoalForm}>
@@ -463,20 +443,13 @@ function AdminCommunityPage() {
               <div className="mapingo-list-card">
                 <div className="mapingo-card-header-row admin-result-head">
                   <div>
-                    <h3>목표 목록 조회</h3>
-                    <p className="mapingo-muted-copy">목표를 검색하고 PATCH 수정 또는 상태 변경으로 비활성화합니다.</p>
+                    <h3>목표 템플릿 목록</h3>
+                    <p className="mapingo-muted-copy">클릭 시 상세 조회와 수정을 진행하고, DELETE로 템플릿을 삭제합니다.</p>
                   </div>
-                  <span className="mapingo-inline-badge">{filteredGoals.length}개</span>
+                  <span className="mapingo-inline-badge">{sortedGoals.length}개</span>
                 </div>
-                <input
-                  className="mapingo-input admin-notice-search"
-                  type="search"
-                  value={goalSearch}
-                  onChange={(event) => setGoalSearch(event.target.value)}
-                  placeholder="목표명, 타입, 설명 검색"
-                />
                 <div className="admin-entity-stack admin-growth-stack">
-                  {filteredGoals.map((goal) => (
+                  {sortedGoals.map((goal) => (
                     <article key={goal.id} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
                         <div>
@@ -504,6 +477,9 @@ function AdminCommunityPage() {
                           disabled={!goal.isActive}
                         >
                           비활성화
+                        </button>
+                        <button type="button" className="mapingo-ghost-button" onClick={() => handleDeleteGoal(goal.id)}>
+                          삭제
                         </button>
                       </div>
                     </article>
@@ -755,17 +731,10 @@ function AdminCommunityPage() {
                     <h3>차단 / 거절 이력 조회</h3>
                     <p className="mapingo-muted-copy">요청자, 대상자, 상태, 요청일, 응답일을 조회 전용으로 확인합니다.</p>
                   </div>
-                  <span className="mapingo-inline-badge">{filteredFriendHistories.length}건</span>
+                  <span className="mapingo-inline-badge">{friendHistories.length}건</span>
                 </div>
-                <input
-                  className="mapingo-input admin-notice-search"
-                  type="search"
-                  value={friendHistorySearch}
-                  onChange={(event) => setFriendHistorySearch(event.target.value)}
-                  placeholder="요청자, 대상자, 이메일, 상태 검색"
-                />
                 <div className="admin-entity-stack admin-growth-stack">
-                  {filteredFriendHistories.map((friend) => (
+                  {friendHistories.map((friend) => (
                     <article key={friend.id} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
                         <div>
@@ -785,7 +754,7 @@ function AdminCommunityPage() {
                       </div>
                     </article>
                   ))}
-                  {filteredFriendHistories.length === 0 ? (
+                  {friendHistories.length === 0 ? (
                     <div className="admin-content-empty-state">차단 / 거절 이력이 없습니다.</div>
                   ) : null}
                 </div>
@@ -794,34 +763,48 @@ function AdminCommunityPage() {
           ) : null}
 
           {activePanel === 'ranking' ? (
-            <div className="mapingo-list-card">
+            <div className="mapingo-list-card admin-ranking-panel">
               <div className="mapingo-card-header-row admin-result-head">
                 <div>
-                  <h3>랭킹 조회</h3>
-                  <p className="mapingo-muted-copy">기존 ranking API를 재사용하거나 admin prefix로 연결할 관리자용 조회 화면입니다.</p>
+                  <h3>랭킹 리스트 조회</h3>
+                  <p className="mapingo-muted-copy">전체랭킹과 주간랭킹을 구분해서 확인합니다.</p>
                 </div>
-                <span className="mapingo-inline-badge">{communityTabs[3].api}</span>
+                <span className="mapingo-inline-badge">{filteredRanking.length}명</span>
               </div>
-              <input
-                className="mapingo-input admin-notice-search"
-                type="search"
-                value={rankingSearch}
-                onChange={(event) => setRankingSearch(event.target.value)}
-                placeholder="이름, 이메일, 관심 학습, 점수 검색"
-              />
-              <div className="admin-entity-stack admin-growth-stack">
+              <div className="admin-ranking-toolbar">
+                <div className="admin-content-tags admin-ranking-tags">
+                  <span>전체 사용자 수 {ranking.length}명</span>
+                  <span>{rankingScope === 'weekly' ? '주간랭킹' : '전체랭킹'}</span>
+                </div>
+                <div className="mapingo-admin-action-row admin-ranking-toggle">
+                  {rankingScopeOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={rankingScope === option.id ? 'mapingo-submit-button' : 'mapingo-ghost-button'}
+                      onClick={() => setRankingScope(option.id)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  className="mapingo-input admin-notice-search admin-ranking-search"
+                  type="search"
+                  value={rankingSearch}
+                  onChange={(event) => setRankingSearch(event.target.value)}
+                  placeholder="이름, 점수 검색"
+                />
+              </div>
+              <div className="admin-entity-stack admin-growth-stack admin-ranking-list">
                 {filteredRanking.map((item) => (
-                  <article key={item.id} className="mapingo-post-card admin-content-card">
+                  <article key={item.id} className="mapingo-post-card admin-content-card admin-ranking-card">
                     <div className="mapingo-admin-item-head">
                       <div>
                         <strong>{item.rank}위 · {item.name}</strong>
-                        <p>{item.email}</p>
+                        <p>{rankingScope === 'weekly' ? '주간 랭킹' : '전체 랭킹'}</p>
                       </div>
                       <span className="mapingo-inline-badge">{item.score.toLocaleString('ko-KR')}점</span>
-                    </div>
-                    <div className="admin-content-tags">
-                      <span>연속 학습 {item.streak}일</span>
-                      <span>관심 학습 {item.focus}</span>
                     </div>
                   </article>
                 ))}

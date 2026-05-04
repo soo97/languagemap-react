@@ -4370,6 +4370,84 @@
   line-height: 1.2;
 }
 
+.admin-ranking-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid #d8ece8;
+  border-radius: 18px;
+  background: #f8fdfc;
+}
+
+.admin-ranking-tags,
+.admin-ranking-toggle {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+.admin-ranking-tags {
+  gap: 6px;
+}
+
+.admin-ranking-tags span,
+.admin-ranking-toggle .mapingo-submit-button,
+.admin-ranking-toggle .mapingo-ghost-button,
+.admin-ranking-search {
+  min-height: 42px;
+}
+
+.admin-ranking-tags span {
+  justify-content: center;
+  min-width: 116px;
+  padding: 0 14px;
+  border-radius: 14px;
+}
+
+.admin-ranking-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, 104px);
+  gap: 8px;
+}
+
+.admin-ranking-toggle .mapingo-submit-button,
+.admin-ranking-toggle .mapingo-ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 42px;
+  min-width: 0;
+  min-height: 42px;
+  margin-top: 0;
+  padding: 0 16px;
+  border-radius: 14px;
+  line-height: 1;
+}
+
+.admin-ranking-search {
+  flex: 1 1 220px;
+  max-width: 260px;
+  margin-top: 0;
+  border-radius: 14px;
+}
+
+.admin-ranking-list {
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.admin-ranking-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+}
+
+.admin-ranking-card .mapingo-admin-item-head {
+  align-items: center;
+}
+
 .admin-domain-entry {
   align-items: center;
 }
@@ -6169,6 +6247,15 @@
   .admin-entry-grid,
   .admin-content-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-ranking-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .admin-ranking-search {
+    flex-basis: 100%;
+    max-width: none;
   }
 
   .admin-members-row {

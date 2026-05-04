@@ -65,6 +65,8 @@ const communityTabs = [
   },
 ];
 
+const communityEntryTabs = communityTabs.filter((tab) => tab.id !== 'reports');
+
 function includesSearch(fields, query) {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return true;
@@ -91,8 +93,7 @@ function AdminCommunityPage() {
   const [goalSearch, setGoalSearch] = useState('');
   const [reportSearch, setReportSearch] = useState('');
   const [friendSearch, setFriendSearch] = useState('');
-  const [blockedSearch, setBlockedSearch] = useState('');
-  const [rejectedSearch, setRejectedSearch] = useState('');
+  const [friendHistorySearch, setFriendHistorySearch] = useState('');
   const [rankingSearch, setRankingSearch] = useState('');
 
   const [selectedReportId, setSelectedReportId] = useState(() => adminService.fetchAdminCommunityReports()[0]?.id ?? null);
@@ -159,9 +160,9 @@ function AdminCommunityPage() {
     ? reportDrafts[selectedReport.id] ?? { status: selectedReport.status, adminMemo: selectedReport.adminMemo ?? '' }
     : { status: '', adminMemo: '' };
 
-  const filteredBlockedFriends = useMemo(
+  const filteredFriendHistories = useMemo(
     () =>
-      blockedFriends.filter((friend) =>
+      [...blockedFriends, ...rejectedFriends].filter((friend) =>
         includesSearch(
           [
             friend.requesterName,
@@ -172,29 +173,10 @@ function AdminCommunityPage() {
             friend.requestedAt,
             friend.respondedAt,
           ],
-          blockedSearch,
+          friendHistorySearch,
         ),
       ),
-    [blockedFriends, blockedSearch],
-  );
-
-  const filteredRejectedFriends = useMemo(
-    () =>
-      rejectedFriends.filter((friend) =>
-        includesSearch(
-          [
-            friend.requesterName,
-            friend.requesterEmail,
-            friend.addresseeName,
-            friend.addresseeEmail,
-            friend.status,
-            friend.requestedAt,
-            friend.respondedAt,
-          ],
-          rejectedSearch,
-        ),
-      ),
-    [rejectedFriends, rejectedSearch],
+    [blockedFriends, friendHistorySearch, rejectedFriends],
   );
 
   const filteredRanking = useMemo(
@@ -320,7 +302,7 @@ function AdminCommunityPage() {
       {!activePanel ? (
         <section className="mapingo-page-section">
           <div className="mapingo-domain-entry-grid admin-entry-grid admin-community-entry-grid">
-            {communityTabs.map((tab, index) => (
+            {communityEntryTabs.map((tab, index) => (
               <button
                 key={tab.id}
                 type="button"
@@ -770,24 +752,24 @@ function AdminCommunityPage() {
               <div className="mapingo-list-card">
                 <div className="mapingo-card-header-row admin-result-head">
                   <div>
-                    <h3>차단 이력 조회</h3>
-                    <p className="mapingo-muted-copy">차단 이력은 조회 전용으로만 제공합니다.</p>
+                    <h3>차단 / 거절 이력 조회</h3>
+                    <p className="mapingo-muted-copy">요청자, 대상자, 상태, 요청일, 응답일을 조회 전용으로 확인합니다.</p>
                   </div>
-                  <span className="mapingo-inline-badge">{filteredBlockedFriends.length}건</span>
+                  <span className="mapingo-inline-badge">{filteredFriendHistories.length}건</span>
                 </div>
                 <input
                   className="mapingo-input admin-notice-search"
                   type="search"
-                  value={blockedSearch}
-                  onChange={(event) => setBlockedSearch(event.target.value)}
-                  placeholder="회원명, 이메일, 상태 검색"
+                  value={friendHistorySearch}
+                  onChange={(event) => setFriendHistorySearch(event.target.value)}
+                  placeholder="요청자, 대상자, 이메일, 상태 검색"
                 />
                 <div className="admin-entity-stack admin-growth-stack">
-                  {filteredBlockedFriends.map((friend) => (
+                  {filteredFriendHistories.map((friend) => (
                     <article key={friend.id} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
                         <div>
-                          <strong>{friend.requesterName} ↔ {friend.addresseeName}</strong>
+                          <strong>{friend.requesterName} → {friend.addresseeName}</strong>
                           <p>{friend.requesterEmail} · {friend.addresseeEmail}</p>
                         </div>
                         <span className={`admin-notice-status ${statusClassMap[friend.status] ?? 'is-draft'}`}>
@@ -795,51 +777,17 @@ function AdminCommunityPage() {
                         </span>
                       </div>
                       <div className="mapingo-admin-meta-grid admin-community-meta-grid">
+                        <p><strong>요청자</strong>{friend.requesterName}<br />{friend.requesterEmail}</p>
+                        <p><strong>대상자</strong>{friend.addresseeName}<br />{friend.addresseeEmail}</p>
+                        <p><strong>상태</strong>{friend.status}</p>
                         <p><strong>요청일</strong>{friend.requestedAt}</p>
                         <p><strong>응답일</strong>{friend.respondedAt || '-'}</p>
-                        <p><strong>관계 ID</strong>{friend.id}</p>
                       </div>
                     </article>
                   ))}
-                  {filteredBlockedFriends.length === 0 ? <div className="admin-content-empty-state">차단 이력이 없습니다.</div> : null}
-                </div>
-              </div>
-
-              <div className="mapingo-list-card">
-                <div className="mapingo-card-header-row admin-result-head">
-                  <div>
-                    <h3>거절 이력 조회</h3>
-                    <p className="mapingo-muted-copy">거절 이력은 조회 전용으로만 제공합니다.</p>
-                  </div>
-                  <span className="mapingo-inline-badge">{filteredRejectedFriends.length}건</span>
-                </div>
-                <input
-                  className="mapingo-input admin-notice-search"
-                  type="search"
-                  value={rejectedSearch}
-                  onChange={(event) => setRejectedSearch(event.target.value)}
-                  placeholder="회원명, 이메일, 상태 검색"
-                />
-                <div className="admin-entity-stack admin-growth-stack">
-                  {filteredRejectedFriends.map((friend) => (
-                    <article key={friend.id} className="mapingo-post-card admin-content-card">
-                      <div className="mapingo-admin-item-head">
-                        <div>
-                          <strong>{friend.requesterName} ↔ {friend.addresseeName}</strong>
-                          <p>{friend.requesterEmail} · {friend.addresseeEmail}</p>
-                        </div>
-                        <span className={`admin-notice-status ${statusClassMap[friend.status] ?? 'is-draft'}`}>
-                          {friend.status}
-                        </span>
-                      </div>
-                      <div className="mapingo-admin-meta-grid admin-community-meta-grid">
-                        <p><strong>요청일</strong>{friend.requestedAt}</p>
-                        <p><strong>응답일</strong>{friend.respondedAt || '-'}</p>
-                        <p><strong>관계 ID</strong>{friend.id}</p>
-                      </div>
-                    </article>
-                  ))}
-                  {filteredRejectedFriends.length === 0 ? <div className="admin-content-empty-state">거절 이력이 없습니다.</div> : null}
+                  {filteredFriendHistories.length === 0 ? (
+                    <div className="admin-content-empty-state">차단 / 거절 이력이 없습니다.</div>
+                  ) : null}
                 </div>
               </div>
             </>

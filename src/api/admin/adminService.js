@@ -184,20 +184,20 @@ async function createGoal(data) {
 
 // 학습 목표 수정
 async function updateGoal(goalMasterId, data) {
-  const res = await api.patch(`/api/admin/learning/goals/${goalMasterId}/active`, data);
+  const res = await api.patch(`/api/admin/learning/goals/${goalMasterId}`, data);
   return res.data.data;
 }
 
 // 학습 목표 활성 상태 변경
 async function updateGoalActive(goalMasterId, isActive) {
   const res = await api.patch(`/api/admin/learning/goals/${goalMasterId}/active`, {
-    isActive
+    active: isActive,
   });
   return res.data.data;
 }
 
 // 학습 목표 삭제
-async function daleteGoal(goalMasterId) {
+async function deleteGoal(goalMasterId) {
   await api.delete(`/api/admin/learning/goals/${goalMasterId}`);
 }
 

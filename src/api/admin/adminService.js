@@ -1,10 +1,4 @@
 
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'http://localhost:8080',
-});
-
 import {
   adminContentList,
   adminMemberList,
@@ -170,50 +164,6 @@ function fetchAdminPremiumFeatureAccess() {
   return premiumFeatureAccess;
 }
 
-// 학습 목표 목록 조회
-async function getGoals() {
-  const res = await api.get('/api/admin/learning/goals');
-  return res.data.data;
-}
-
-// 학습 목표 생성
-async function createGoal(data) {
-  const res = await api.post('/api/admin/learning/goals', data);
-  return res.data.data;
-}
-
-// 학습 목표 수정
-async function updateGoal(goalMasterId, data) {
-  const res = await api.patch(`/api/admin/learning/goals/${goalMasterId}`, data);
-  return res.data.data;
-}
-
-// 학습 목표 활성 상태 변경
-async function updateGoalActive(goalMasterId, isActive) {
-  const res = await api.patch(`/api/admin/learning/goals/${goalMasterId}/active`, {
-    active: isActive,
-  });
-  return res.data.data;
-}
-
-// 학습 목표 삭제
-async function deleteGoal(goalMasterId) {
-  await api.delete(`/api/admin/learning/goals/${goalMasterId}`);
-}
-
-// 전체 학습 기록 조회
-async function getLearningLogs() {
-  const res = await api.get('/api/admin/learning/logs');
-  return res.data.data;
-}
-
-// 사용자별 학습 기록 조회
-async function getUserLearningLogs(userId) {
-  const res = await api.get(`/api/admin/learning/logs/users/${userId}`);
-  return res.data.data;
-}
-
-
 export const adminService = {
   fetchAdminMembers,
   fetchAdminNotices,
@@ -246,11 +196,4 @@ export const adminService = {
   fetchAdminSupportInquiryTemplates,
   fetchAdminSubscriptionProducts,
   fetchAdminPremiumFeatureAccess,
-  getGoals,
-  createGoal,
-  updateGoal,
-  updateGoalActive,
-  deleteGoal,
-  getLearningLogs,
-  getUserLearningLogs,
 };

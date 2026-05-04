@@ -153,7 +153,27 @@ function AdminCommunityPage() {
       }
     } catch (error) {
       console.error(error);
-      alert('목표 비활성화 중 오류가 발생했습니다.');
+      alert(
+        error.response?.data?.message ||
+        '이미 사용 중인 목표는 삭제할 수 없습니다. 비활성화를 이용해주세요.'
+      );
+    }
+  };
+
+  const handleToggleGoal = async (goal) => {
+    try {
+      await adminService.updateGoalActive(goal.id, !goal.isActive);
+
+      alert(
+        goal.isActive
+          ? '목표가 비활성화되었습니다.'
+          : '목표가 활성화되었습니다.'
+      );
+
+      await fetchGoals();
+    } catch (error) {
+      console.error(error);
+      alert('상태 변경 중 오류가 발생했습니다.');
     }
   };
 
@@ -365,7 +385,7 @@ function AdminCommunityPage() {
                 {goalLoading ? <p className="mapingo-muted-copy">목표 목록을 불러오는 중입니다.</p> : null}
                 {goalError ? <p className="mapingo-muted-copy">{goalError}</p> : null}
 
-                <div className="admin-entity-stack admin-growth-stack">
+                <div className="admin-entity-stack admin-growth-stack admin-goal-scroll-list">
                   {sortedGoals.map((goal) => (
                     <article key={goal.id} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
@@ -391,11 +411,11 @@ function AdminCommunityPage() {
 
                         <button
                           type="button"
-                          className="mapingo-ghost-button"
-                          onClick={() => handleDeactivateGoal(goal.id)}
-                          disabled={!goal.isActive}
+                          className={`mapingo-ghost-button ${goal.isActive ? 'btn-deactivate' : 'btn-activate'
+                            }`}
+                          onClick={() => handleToggleGoal(goal)}
                         >
-                          비활성화
+                          {goal.isActive ? '비활성화' : '활성화'}
                         </button>
 
                         <button type="button" className="mapingo-ghost-button" onClick={() => handleDeleteGoal(goal.id)}>

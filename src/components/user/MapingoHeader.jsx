@@ -27,7 +27,7 @@ function MapingoHeader({
             <PingPopStarterLogo className="mapingo-brand-logo" />
           </div>
           <div className="mapingo-brand-copy">
-            <p className="mapingo-brand-title" style={{ color: palette.point }}>
+            <p className="mapingo-brand-title">
               Mapingo
             </p>
             <p className="mapingo-brand-subtitle">Learn English on the map</p>

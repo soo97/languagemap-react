@@ -1,4 +1,4 @@
-.mapingo-app {
+.mapingo-app{
   --mapingo-ink: #0f172a;
   --mapingo-deep: #155e63;
   --mapingo-mint: #1fb8ad;
@@ -23,31 +23,31 @@
     sans-serif;
 }
 
-.mapingo-app {
+.mapingo-app{
   letter-spacing: -0.015em;
 }
 
-.mapingo-app *,
-.mapingo-app *::before,
-.mapingo-app *::after {
+.mapingo-app*,
+.mapingo-app*::before,
+.mapingo-app*::after {
   box-sizing: border-box;
 }
 
-.mapingo-app button,
-.mapingo-app input,
-.mapingo-app textarea {
+.mapingo-appbutton,
+.mapingo-appinput,
+.mapingo-apptextarea {
   font: inherit;
 }
 
-.mapingo-app main,
-.mapingo-app section,
-.mapingo-app article,
-.mapingo-app nav,
-.mapingo-app header {
+.mapingo-appmain,
+.mapingo-appsection,
+.mapingo-apparticle,
+.mapingo-appnav,
+.mapingo-appheader {
   max-width: none;
 }
 
-.mapingo-app a {
+.mapingo-appa {
   color: inherit;
   text-decoration: none;
 }
@@ -123,6 +123,7 @@
   font-weight: 900;
   line-height: 1.02;
   letter-spacing: -0.03em;
+  color:rgb(19, 78, 74);
 }
 
 .mapingo-brand-subtitle {
@@ -2833,11 +2834,11 @@
   border: 1px solid #dcefeb;
 }
 
-.mapingo-admin-preview-body {
+.mapingo-admin-preview-.mapingo-app {
   margin-top: 10px;
 }
 
-.mapingo-admin-preview-body strong {
+.mapingo-admin-preview-.mapingo-app strong {
   display: block;
   margin-top: 12px;
   color: var(--mapingo-deep);
@@ -2845,7 +2846,7 @@
   line-height: 1.4;
 }
 
-.mapingo-admin-preview-body p {
+.mapingo-admin-preview-.mapingo-app p {
   margin: 10px 0 0;
   color: #526274;
   font-size: 0.92rem;
@@ -4525,11 +4526,11 @@
   border-radius: 24px;
 }
 
-.admin-community-entry-card .community-entry-card-body {
+.admin-community-entry-card .community-entry-card-.mapingo-app {
   margin-top: 42px;
 }
 
-.admin-community-entry-card .community-entry-card-body h3 {
+.admin-community-entry-card .community-entry-card-.mapingo-app h3 {
   font-size: 1.35rem;
 }
 
@@ -6662,4 +6663,126 @@
     padding-left: 18px;
     padding-right: 18px;
   }
+}
+
+/* 다크모드 */
+.mapingo-app.mapingo-dark {
+  --mapingo-ink: #F0F5F4;
+  --mapingo-deep: #F0F5F4;
+  --mapingo-mint: #E0E6E5;
+  --mapingo-mint-soft: #E0E6E5;
+  --mapingo-line: #d7efea;
+  --mapingo-panel: rgba(255, 255, 255, 0.82);
+  background: #232d31;
+  color: var(--mapingo-ink);
+}
+ 
+/* 헤더 */
+.mapingo-app.mapingo-dark .mapingo-header {
+  background: #181B20;
+  border-bottom-color:#20282c;
+}
+
+.mapingo-app.mapingo-dark .mapingo-brand-title{
+  color: #E0E6E5;
+}
+
+.mapingo-app.mapingo-dark .mapingo-nav-button{
+  background: transparent;
+  color: #526274;
+}
+
+.mapingo-nav-button:hover{
+  color:#E0E6E5;
+}
+
+.mapingo-app.mapingo-dark .mapingo-nav-button.is-active{
+  background: #dff8f3;
+  color: #155e63;
+}
+.mapingo-app.mapingo-dark .mapingo-domain-entry-copy{
+  color:#E0E6E5;
+}
+ 
+/* 카드 공통 */
+.mapingo-app.mapingo-dark .mapingo-home-recent-card,
+.mapingo-app.mapingo-dark .mapingo-home-domain-card,
+.mapingo-app.mapingo-dark .mapingo-stat-card,
+.mapingo-app.mapingo-dark .mapingo-detail-card,
+.mapingo-app.mapingo-dark .mapingo-feature-card,
+.mapingo-app.mapingo-dark .mapingo-panel-controls,
+.mapingo-app.mapingo-dark .mapingo-list-card,
+.mapingo-app.mapingo-dark .mapingo-form-card,
+.mapingo-app.mapingo-dark .mapingo-dashboard-head {
+  background: #56807E;
+  border-color: var(--dark-border-default);
+}
+ 
+/* 텍스트 */
+.mapingo-app.mapingo-dark .mapingo-home-recent-card h3,
+.mapingo-app.mapingo-dark .mapingo-detail-card h3,
+.mapingo-app.mapingo-dark .mapingo-dashboard-head h2 {
+  color: var(--dark-text-primary);
+}
+ 
+.mapingo-app.mapingo-dark .mapingo-home-recent-card p,
+.mapingo-app.mapingo-dark .mapingo-detail-card p,
+.mapingo-app.mapingo-dark .mapingo-stat-label,
+.mapingo-app.mapingo-dark .mapingo-muted-copy {
+  color: var(--dark-text-secondary);
+}
+ 
+/* 환경설정 페이지 카드 */
+.mapingo-app.mapingo-dark .mapingo-setting-card {
+  background: #2e3b41;
+  border-color: #3a4b53;
+}
+ 
+.mapingo-app.mapingo-dark .mapingo-setting-card:hover {
+  border-color: #3a4b53;
+  box-shadow: 0 4px 16px rgb(24 27 32);
+}
+
+ 
+.mapingo-app.mapingo-dark .mapingo-setting-value {
+  color: #F0F5F4;
+}
+ 
+.mapingo-app.mapingo-dark .mapingo-setting-group-label {
+  color: #F0F5F4;
+}
+ 
+/* 모달 */
+.mapingo-app.mapingo-dark .mapingo-modal {
+  background: #232d31;
+  border: 1px solid var(--dark-border-strong);
+}
+ 
+.mapingo-app.mapingo-dark .mapingo-modal-title {
+  color: #F0F5F4;
+}
+ 
+.mapingo-app.mapingo-dark .mapingo-modal-option-label {
+  color: #F0F5F4;
+}
+ 
+.mapingo-app.mapingo-dark .mapingo-modal-option:hover {
+  background: #56807E;
+}
+ 
+.mapingo-app.mapingo-dark .mapingo-modal-option.is-selected {
+  background: #324748;
+}
+ 
+/* 알림 배너 */
+.mapingo-app.mapingo-dark .mapingo-noti-banner.is-on {
+  background: var(--dark-accent-light);
+  color: #F0F5F4;
+  border-color: var(--dark-accent);
+}
+ 
+.mapingo-app.mapingo-dark .mapingo-noti-banner.is-off {
+  background: var(--dark-bg-surface);
+  color: #F0F5F4;
+  border-color: var(--dark-border-default);
 }

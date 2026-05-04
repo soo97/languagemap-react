@@ -1,6 +1,3 @@
-/* ===================================
-   환경설정 페이지 스타일
-   =================================== */
 
 /* 설정 카드 3열 그리드 */
 .mapingo-settings-grid {
@@ -72,8 +69,98 @@
   flex-wrap: wrap;
 }
 
-/* ── 모달 ───────────────────────────────────── */
+/* ────────────────────────────────────────────────
+   [학습언어] 준비중 옵션
+   - 클릭 시 ComingSoonModal 팝업 → 선택값 변경 없음
+   - 시각적으로 비활성 처리
+   ──────────────────────────────────────────────── */
+.mapingo-modal-option.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
+.mapingo-modal-option.is-disabled:hover {
+  background: transparent;
+}
+
+/* ────────────────────────────────────────────────
+   [알림설정] 알림 상태 배너
+   - 모든 알림 받기(is-on)  : 이메일 알림 전송 가능
+   - 알림 받지 않기(is-off) : 이메일 알림 전송 불가
+   ──────────────────────────────────────────────── */
+.mapingo-noti-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 760px;
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background 0.2s;
+}
+
+.mapingo-noti-banner.is-on {
+  background: #e8fbf7;
+  color: #0f6e56;
+  border: 1px solid #1d9e75;
+}
+
+.mapingo-noti-banner.is-off {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+.mapingo-noti-banner-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* ────────────────────────────────────────────────
+   [준비중] 안내 팝업 전용 스타일
+   ──────────────────────────────────────────────── */
+.mapingo-modal--sm {
+  width: 300px;
+}
+
+.mapingo-modal-body {
+  padding: 24px 20px 8px;
+}
+
+.mapingo-modal-message {
+  font-size: 15px;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.mapingo-modal-footer {
+  padding: 16px 20px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.mapingo-modal-confirm-btn {
+  padding: 10px 36px;
+  background: #1d9e75;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mapingo-modal-confirm-btn:hover {
+  background: #0f6e56;
+}
+
+/* ── 모달 공통 (기존 유지) ─────────────────────────── */
 .mapingo-modal-overlay {
   position: fixed;
   inset: 0;

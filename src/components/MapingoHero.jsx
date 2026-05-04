@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import PingPopStarterLogo from './PingPopStarterLogo';
+import { useNavigate } from 'react-router-dom';
 
 function loadGoogleMaps(apiKey) {
   return new Promise((resolve, reject) => {
@@ -25,6 +26,7 @@ function loadGoogleMaps(apiKey) {
 }
 
 function MapingoHero({ onPrimaryAction }) {
+  const navigate = useNavigate();
   const mapWidth = 480;
   const mapHeight = 360;
   const routeStops = [
@@ -163,7 +165,7 @@ function MapingoHero({ onPrimaryAction }) {
         </p>
 
         <div className="mapingo-hero-actions">
-          <button type="button" className="mapingo-home-primary" onClick={onPrimaryAction}>
+          <button type="button" className="mapingo-home-primary" onClick={() => navigate('/login')}>
             무료로 시작하기
 
                     {/* caption removed to restore original button layout */}

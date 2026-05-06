@@ -1,23 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminSocialService } from '../../api/admin/adminSocialService';
+import { formatDateTime } from '../../utils/formatDateTime';
+import { includesSearch } from '../../utils/search';
+import { statusClassMap, statusLabelMap } from '../../utils/statusLabels';
 import '../../styles/admin/AdminFriendPage.css';
-
-const statusClassMap = {
-    PENDING: 'is-reserved',
-    RESOLVED: 'is-published',
-    ACCEPTED: 'is-published',
-    BLOCKED: 'is-draft',
-    REJECTED: 'is-draft',
-};
-
-// [추가] 백엔드 상태값을 화면에서는 한글로 보여주기 위한 라벨
-const statusLabelMap = {
-    PENDING: '처리 대기',
-    RESOLVED: '처리 완료',
-    REJECTED: '반려',
-    ACCEPTED: '수락',
-    BLOCKED: '차단',
-};
 
 const reportStatusOptions = ['RESOLVED', 'REJECTED'];
 
@@ -27,15 +13,6 @@ function getDefaultReportStatus(status) {
     }
 
     return 'RESOLVED';
-}
-
-// [추가] LocalDateTime 문자열을 보기 좋게 변환
-function formatDateTime(value) {
-    if (!value) {
-        return '-';
-    }
-
-    return value.replace('T', ' ').slice(0, 16);
 }
 
 function normalizeReport(report) {
@@ -60,16 +37,6 @@ function normalizeFriendship(history) {
         requestedAt: history.requestedAt,
         respondedAt: history.respondedAt,
     };
-}
-
-function includesSearch(fields, query) {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    if (!normalizedQuery) {
-        return true;
-    }
-
-    return fields.join(' ').toLowerCase().includes(normalizedQuery);
 }
 
 function AdminFriendPage() {
@@ -153,7 +120,7 @@ function AdminFriendPage() {
         }
 
         const draft = reportDrafts[reportId] ?? {
-            status: targetReport.status,
+            status: getDefaultReportStatus(targetReport.status),
             adminMemo: targetReport.adminMemo ?? '',
         };
 
@@ -165,11 +132,6 @@ function AdminFriendPage() {
         }
 
         try {
-            console.log({
-                status: draft.status,
-                adminMemo: trimmedMemo,
-            });
-
             await adminSocialService.updateReportStatus(reportId, {
                 status: draft.status,
                 adminMemo: trimmedMemo,
@@ -225,11 +187,14 @@ function AdminFriendPage() {
                                     <div>
                                         <strong>신고 #{report.id}</strong>
                                         <p>
-                                            신고자 ID {report.reporterId} · {formatDateTime(report.createdAt)}
+                                            사용자 #{report.reporterId} · {formatDateTime(report.createdAt)}
                                         </p>
                                     </div>
 
-                                    <span className={`admin-notice-status ${statusClassMap[report.status] ?? 'is-draft'}`}>
+                                    <span
+                                        className={`admin-notice-status ${statusClassMap[report.status] ?? 'is-draft'
+                                            }`}
+                                    >
                                         {statusLabelMap[report.status] ?? report.status}
                                     </span>
                                 </div>
@@ -248,7 +213,9 @@ function AdminFriendPage() {
                     <div className="mapingo-card-header-row admin-builder-head">
                         <div>
                             <h3>신고 상세 조회</h3>
-                            <p className="mapingo-muted-copy">상태 변경과 관리자 메모 입력을 이 영역에서 처리합니다.</p>
+                            <p className="mapingo-muted-copy">
+                                상태 변경과 관리자 메모 입력을 이 영역에서 처리합니다.
+                            </p>
                         </div>
                     </div>
 
@@ -256,7 +223,11 @@ function AdminFriendPage() {
                         <section className="admin-entity-section admin-friend-detail-panel">
                             <div className="admin-entity-head">
                                 <strong>신고 #{selectedReport.id}</strong>
-                                <span className={`admin-notice-status ${statusClassMap[selectedReport.status] ?? 'is-draft'}`}>
+
+                                <span
+                                    className={`admin-notice-status ${statusClassMap[selectedReport.status] ?? 'is-draft'
+                                        }`}
+                                >
                                     {statusLabelMap[selectedReport.status] ?? selectedReport.status}
                                 </span>
                             </div>
@@ -264,16 +235,19 @@ function AdminFriendPage() {
                             <div className="mapingo-admin-meta-grid admin-friend-detail-grid">
                                 <p>
                                     <strong>신고자</strong>
-                                    ID {selectedReport.reporterId}
+                                    사용자 #{selectedReport.reporterId}
                                 </p>
+
                                 <p>
                                     <strong>대상자</strong>
-                                    ID {selectedReport.targetId}
+                                    사용자 #{selectedReport.targetId}
                                 </p>
+
                                 <p>
                                     <strong>접수일</strong>
                                     {formatDateTime(selectedReport.createdAt)}
                                 </p>
+
                                 <p>
                                     <strong>처리일</strong>
                                     {formatDateTime(selectedReport.processedAt)}
@@ -282,6 +256,7 @@ function AdminFriendPage() {
 
                             <label className="mapingo-field">
                                 <span className="mapingo-field-label">신고 사유</span>
+
                                 <textarea
                                     className="mapingo-input mapingo-admin-textarea admin-friend-readonly-textarea"
                                     value={selectedReport.reason}
@@ -292,6 +267,7 @@ function AdminFriendPage() {
                             <div className="admin-content-form-grid admin-friend-form-grid">
                                 <label className="mapingo-field">
                                     <span className="mapingo-field-label">신고 상태</span>
+
                                     <select
                                         className="mapingo-input"
                                         value={activeReportDraft.status}
@@ -303,6 +279,7 @@ function AdminFriendPage() {
                                                     adminMemo: activeReportDraft.adminMemo,
                                                 },
                                             }));
+
                                             setReportError('');
                                         }}
                                     >
@@ -317,6 +294,7 @@ function AdminFriendPage() {
 
                             <label className="mapingo-field">
                                 <span className="mapingo-field-label">관리자 메모</span>
+
                                 <textarea
                                     className="mapingo-input mapingo-admin-textarea admin-friend-memo-textarea"
                                     value={activeReportDraft.adminMemo}
@@ -328,13 +306,16 @@ function AdminFriendPage() {
                                                 adminMemo: event.target.value,
                                             },
                                         }));
+
                                         setReportError('');
                                     }}
                                     placeholder="상태 변경 사유 또는 처리 메모를 입력하세요"
                                 />
                             </label>
 
-                            {reportError ? <p className="mapingo-muted-copy">{reportError}</p> : null}
+                            {reportError ? (
+                                <p className="mapingo-muted-copy">{reportError}</p>
+                            ) : null}
 
                             <div className="mapingo-admin-action-row">
                                 <button
@@ -347,7 +328,9 @@ function AdminFriendPage() {
                             </div>
                         </section>
                     ) : (
-                        <div className="admin-content-empty-state">선택된 신고가 없습니다.</div>
+                        <div className="admin-content-empty-state">
+                            선택된 신고가 없습니다.
+                        </div>
                     )}
                 </div>
             </div>
@@ -356,26 +339,39 @@ function AdminFriendPage() {
                 <div className="mapingo-card-header-row admin-result-head">
                     <div>
                         <h3>차단 / 거절 이력 조회</h3>
-                        <p className="mapingo-muted-copy">요청자, 대상자, 상태, 요청일, 응답일을 조회 전용으로 확인합니다.</p>
+
+                        <p className="mapingo-muted-copy">
+                            요청자, 대상자, 상태, 요청일, 응답일을 조회 전용으로 확인합니다.
+                        </p>
                     </div>
 
-                    <span className="mapingo-inline-badge">{friendHistories.length}건</span>
+                    <span className="mapingo-inline-badge">
+                        {friendHistories.length}건
+                    </span>
                 </div>
 
                 <div className="admin-entity-stack admin-growth-stack admin-friend-history-stack">
                     {friendHistories.map((friend) => (
-                        <article key={friend.id} className="mapingo-post-card admin-content-card admin-friend-history-card">
+                        <article
+                            key={friend.id}
+                            className="mapingo-post-card admin-content-card admin-friend-history-card"
+                        >
                             <div className="mapingo-admin-item-head">
                                 <div>
                                     <strong>
                                         요청자 #{friend.requesterId} → 사용자 #{friend.addresseeId}
                                     </strong>
+
                                     <p>
-                                        요청일 {formatDateTime(friend.requestedAt)} · 응답일 {formatDateTime(friend.respondedAt)}
+                                        요청일 {formatDateTime(friend.requestedAt)} · 응답일{' '}
+                                        {formatDateTime(friend.respondedAt)}
                                     </p>
                                 </div>
 
-                                <span className={`admin-notice-status ${statusClassMap[friend.status] ?? 'is-draft'}`}>
+                                <span
+                                    className={`admin-notice-status ${statusClassMap[friend.status] ?? 'is-draft'
+                                        }`}
+                                >
                                     {statusLabelMap[friend.status] ?? friend.status}
                                 </span>
                             </div>
@@ -390,7 +386,9 @@ function AdminFriendPage() {
                     ))}
 
                     {!loading && friendHistories.length === 0 ? (
-                        <div className="admin-content-empty-state">차단 / 거절 이력이 없습니다.</div>
+                        <div className="admin-content-empty-state">
+                            차단 / 거절 이력이 없습니다.
+                        </div>
                     ) : null}
                 </div>
             </div>

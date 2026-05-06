@@ -132,7 +132,7 @@ function AdminCommunityPage() {
         </section>
       ) : null}
 
-      {activePanel === 'goals' ? <AdminLearningGoalPanel /> : null}
+      {activePanel === 'goals' ? <AdminLearningGoalPage /> : null}
 
       {activePanel === 'friends' ? <AdminFriendPage /> : null}
 

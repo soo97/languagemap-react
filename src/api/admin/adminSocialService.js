@@ -4,30 +4,30 @@ export const adminSocialService = {
 
     async getReports() {
         const res = await axiosInstance.get('/api/admin/social/reports');
-        return res.data.data;
+        return res.data;
     },
 
     async getReportDetail(reportId) {
         const res = await axiosInstance.get(`/api/admin/social/reports/${reportId}`);
-        return res.data.data;
+        return res.data;
     },
 
-    async updateReportStatus(reportId, status) {
+    async updateReportStatus(reportId, data) {
         const res = await axiosInstance.patch(
             `/api/admin/social/reports/${reportId}/status`,
-            { status }
+            data
         );
 
-        return res.data.data;
+        return res.data;
     },
 
     async getBlockedFriendships() {
         const res = await axiosInstance.get('/api/admin/social/friendships/blocked');
-        return res.data.data;
+        return res.data;
     },
 
-    async getRejectFriendships() {
+    async getRejectedFriendships() {
         const res = await axiosInstance.get('/api/admin/social/friendships/rejected');
-        return res.data.data;
+        return res.data;
     },
 }

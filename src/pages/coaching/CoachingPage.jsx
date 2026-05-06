@@ -4,7 +4,7 @@ import CoachingChatSection from '../../components/user/coaching/CoachingChatSect
 import CoachingSummaryCard from '../../components/user/coaching/CoachingSummaryCard';
 import PronunciationPracticeSection from '../../components/user/coaching/PronunciationPracticeSection';
 import YoutubeRecommendationSection from '../../components/user/coaching/YoutubeRecommendationSection';
-import { previousLearningSummary } from '../../mocks/user/coaching/coachingMockData';
+import { previousLearningSummary } from '../../mocks/user/coachingMockData';
 import '../../styles/user/coaching/coachingPage.css';
 import '../../styles/user/coaching/coachingChatSection.css';
 import '../../styles/user/coaching/pronunciationPractice.css';

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MapingoPageSection } from '../../components/MapingoPageBlocks';
 import { adminService } from '../../api/admin/adminService';
-import AdminLearningGoalPanel from './community/AdminLearningGoalPanel';
+import AdminLearningGoalPage from './AdminLearningGoalPage';
 import AdminFriendPage from './AdminFriendPage';
 
 const communityTabs = [

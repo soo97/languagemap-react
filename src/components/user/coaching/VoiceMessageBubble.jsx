@@ -1,5 +1,13 @@
 function VoiceMessageBubble({ message }) {
   const isUser = message.role === 'user';
+  const handlePlay = async () => {
+    if (!message.audioUrl) return;
+
+    const audio = new Audio(message.audioUrl);
+    try {
+      await audio.play();
+    } catch {}
+  };
 
   return (
     <article className={`coaching-message-row ${isUser ? 'is-user' : 'is-ai'}`}>
@@ -7,10 +15,10 @@ function VoiceMessageBubble({ message }) {
       <div className={`voice-message-bubble ${isUser ? 'is-user' : 'is-ai'}`}>
         <div className="voice-message-meta">
           <span>{message.speaker}</span>
-          <small>{message.duration}</small>
+          <small>{message.turnOrder ? `TURN ${message.turnOrder}` : message.duration ?? 'VOICE'}</small>
         </div>
         <div className="voice-message-body">
-          <button type="button" className="voice-play-button" aria-label={`${message.speaker} 음성 재생`}>
+          <button type="button" className="voice-play-button" aria-label={`${message.speaker} 음성 재생`} onClick={handlePlay}>
             ▶
           </button>
           <div className="voice-wave" aria-hidden="true">

@@ -75,7 +75,7 @@ function SignupPage() {
 
                 <div className="mapingo-field">
                     <label className="mapingo-field-label" htmlFor="mapingo-signup-birth">생년월일</label>
-                    <input id="mapingo-signup-birth" className="mapingo-input" type="text" name="birthDate" value={form.birthDate} onChange={handleChange} placeholder="1991-09-03" />
+                    <input id="mapingo-signup-birth" className="mapingo-input" type="date" name="birthDate" value={form.birthDate} onChange={handleChange} placeholder="1991-09-03" />
                 </div>
 
                 <div className="mapingo-field">

@@ -6,6 +6,8 @@ import { mapingoPalette } from '../../data/user/mapingoData';
 import { pathToPage, pageToPath } from '../../data/user/mapingoPageData';
 import { useMapingoStore } from '../../store/user/useMapingoStore';
 import '../../styles/user/mapingoLanding.css';
+import { useAuth } from '../../hooks/user/useAuth';
+
 
 function MapingoLayout() {
   const location = useLocation();
@@ -17,6 +19,7 @@ function MapingoLayout() {
   const subscriptionProductId = useMapingoStore((state) => state.subscriptionProductId);
   const isAdmin = useMapingoStore((state) => (state.session?.user?.role ?? 'user') === 'admin');
   const currentPage = useMemo(() => pathToPage[location.pathname] ?? 'home', [location.pathname]);
+  const { logout } = useAuth();
 
   const navigateToPage = (page) => {
     navigate(pageToPath[page] ?? '/');
@@ -67,8 +70,7 @@ function MapingoLayout() {
         subscriptionPlan={subscriptionPlan}
         subscriptionProductId={subscriptionProductId}
         onLogout={() => {
-          clearSession();
-          navigateToPage('home');
+          onLogout={logout}
         }}
       />
 

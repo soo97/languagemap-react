@@ -9,7 +9,9 @@ async function parseJsonSafe(response) {
 async function request(url, options = {}) {
   const response = await fetch(url, {
     headers: {
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.body && !(options.body instanceof FormData)
+        ? { 'Content-Type': 'application/json' }
+        : {}),
       ...(options.headers ?? {}),
     },
     ...options,
@@ -27,14 +29,18 @@ async function request(url, options = {}) {
   return payload?.data ?? payload;
 }
 
-function startCoachingFlow({ sessionId, optionType }) {
+export function getCoachingEntry(sessionId) {
+  return request(`/api/coaching/entry/${sessionId}`);
+}
+
+export function startCoachingFlow({ sessionId, optionType }) {
   return request('/api/coaching/flow/start', {
     method: 'POST',
     body: JSON.stringify({ sessionId, optionType }),
   });
 }
 
-function prepareCoachingScript({
+export function prepareCoachingScript({
   sessionId,
   optionType,
   placeName,
@@ -59,43 +65,38 @@ function prepareCoachingScript({
   });
 }
 
-function startConversation(coachingSessionId) {
+export function startConversation(coachingSessionId) {
   return request(`/api/coaching/conversation/${coachingSessionId}/start`, {
     method: 'POST',
   });
 }
 
-async function processUserSpeech(coachingSessionId, audioFile) {
+export async function processUserSpeech(coachingSessionId, audioFile) {
   const formData = new FormData();
   formData.append('audioFile', audioFile, audioFile.name ?? 'speech.webm');
 
-  const response = await fetch(`/api/coaching/conversation/${coachingSessionId}/speech`, {
+  return request(`/api/coaching/conversation/${coachingSessionId}/speech`, {
     method: 'POST',
     body: formData,
   });
-
-  const payload = await parseJsonSafe(response);
-
-  if (!response.ok) {
-    const error = new Error(payload?.message ?? '사용자 음성 처리에 실패했습니다.');
-    error.status = response.status;
-    error.payload = payload;
-    throw error;
-  }
-
-  return payload?.data ?? payload;
 }
 
-function finishConversation(coachingSessionId) {
+export function finishConversation(coachingSessionId) {
   return request(`/api/coaching/conversation/${coachingSessionId}/finish`, {
     method: 'POST',
   });
 }
 
+export function getCoachingMessages(coachingSessionId) {
+  return request(`/api/coaching/messages/${coachingSessionId}`);
+}
+
 export const coachingService = {
+  getCoachingEntry,
   startCoachingFlow,
   prepareCoachingScript,
   startConversation,
   processUserSpeech,
   finishConversation,
+  getCoachingMessages,
 };

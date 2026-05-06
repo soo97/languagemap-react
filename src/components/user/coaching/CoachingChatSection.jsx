@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useVoiceRecorder } from '../../../hooks/user/coaching/useVoiceRecorder';
 import { coachingService } from '../../../api/user/coachingService';
 import CoachingModeSelector from './CoachingModeSelector';
 import VoiceMessageBubble from './VoiceMessageBubble';
@@ -30,17 +31,25 @@ function createVoiceMessage({ role = 'ai', speaker, text, audioUrl, coachingScri
 function normalizePreviousMessages(messages = []) {
   return messages
     .map((message) => {
-      if (message.role) {
-        return {
-          role: String(message.role).toUpperCase(),
-          message: message.message ?? message.text ?? '',
-        };
+      const rawRole = String(message.role ?? '').toUpperCase();
+      const speaker = String(message.speaker ?? '').toLowerCase();
+
+      let role = 'USER';
+
+      if (
+        rawRole === 'ASSISTANT' ||
+        rawRole === 'AI' ||
+        rawRole === 'STAFF' ||
+        speaker.includes('staff') ||
+        speaker.includes('coach') ||
+        speaker.includes('ai')
+      ) {
+        role = 'ASSISTANT';
       }
 
-      const speaker = String(message.speaker ?? '').toLowerCase();
       return {
-        role: speaker.includes('staff') || speaker.includes('coach') ? 'ASSISTANT' : 'USER',
-        message: message.text ?? '',
+        role,
+        message: message.message ?? message.text ?? '',
       };
     })
     .filter((message) => message.message);
@@ -58,13 +67,11 @@ function CoachingChatSection({
 }) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
-  const [isRecording, setIsRecording] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [coachingSessionId, setCoachingSessionId] = useState(null);
   const [scriptReady, setScriptReady] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const mediaStreamRef = useRef(null);
+
   const chatLogRef = useRef(null);
 
   const learnerName = summary.name ?? summary.userName ?? '학습자';
@@ -72,7 +79,7 @@ function CoachingChatSection({
   const learningSessionId = summary.sessionId ?? summary.learningSessionId ?? null;
 
   const modeReplies = useMemo(
-    () => modes.map((mode) => ({ id: `mode_${mode.id}`, label: mode.label, modeId: mode.id })),
+    () => modes.map((mode) => ({ id: mode.id, label: mode.label, modeId: mode.id })),
     [modes],
   );
 
@@ -100,7 +107,6 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
     if (phase === 'intro') {
       setMessages([initialMessage]);
       setInput('');
-      setIsRecording(false);
       setIsBusy(false);
       setErrorMessage('');
       setCoachingSessionId(null);
@@ -110,36 +116,44 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
 
   useEffect(() => {
     const log = chatLogRef.current;
+
     if (!log) return;
+
     log.scrollTop = log.scrollHeight;
   }, [messages]);
-
-  useEffect(() => () => {
-    mediaRecorderRef.current?.stream?.getTracks().forEach((track) => track.stop());
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-  }, []);
 
   const appendMessages = (nextMessages) => {
     setMessages((current) => [...current, ...nextMessages]);
   };
 
   const buildPracticeStartMessage = async (modeId, nextCoachingSessionId) => {
+    const optionType = modeId?.replace('mode_', '');
+
     const previousMessages = summary.sessionMessages?.length
       ? normalizePreviousMessages(summary.sessionMessages)
       : normalizePreviousMessages(summary.mapArea?.conversationLog);
 
-    await coachingService.prepareCoachingScript({
+    const prepareScriptRequest = {
       sessionId: learningSessionId,
-      optionType: modeId,
+      optionType,
       placeName: summary.placeName ?? summary.mapArea?.title ?? '',
       country: summary.country ?? '',
       city: summary.city ?? '',
       placeAddress: summary.placeAddress ?? summary.mapArea?.address ?? '',
-      evaluation: summary.evaluation ?? summary.previousEvaluation?.content ?? '',
+      evaluation:
+        typeof summary.evaluation === 'string'
+          ? summary.evaluation
+          : summary.previousEvaluation?.content ?? '',
       previousMessages,
-    });
+    };
 
-    const conversationStart = await coachingService.startConversation(nextCoachingSessionId);
+    const scriptResponse = await coachingService.prepareCoachingScript(prepareScriptRequest);
+
+    const targetCoachingSessionId = scriptResponse.coachingSessionId ?? nextCoachingSessionId;
+
+    setCoachingSessionId(targetCoachingSessionId);
+
+    const conversationStart = await coachingService.startConversation(targetCoachingSessionId);
 
     setScriptReady(true);
     onPhaseChange('practice');
@@ -158,7 +172,8 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
   };
 
   const handleSelectMode = async (modeId) => {
-    const mode = modes.find((item) => item.id === modeId);
+    const optionType = modeId?.replace('mode_', '');
+    const mode = modes.find((item) => item.id === optionType);
 
     if (!learningSessionId) {
       setErrorMessage('학습 세션 정보를 아직 찾지 못했어요. 지도 학습 완료 후 다시 시도해주세요.');
@@ -171,15 +186,15 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
 
       const flowResponse = await coachingService.startCoachingFlow({
         sessionId: learningSessionId,
-        optionType: modeId,
+        optionType,
       });
 
       setCoachingSessionId(flowResponse.coachingSessionId);
-      onSelectMode(modeId);
+      onSelectMode(optionType);
       onPhaseChange('scenario');
 
       appendMessages([
-        createTextMessage('user', learnerName, `${mode?.label ?? modeId}로 연습할래요.`),
+        createTextMessage('user', learnerName, `${mode?.label ?? optionType}로 연습할래요.`),
         createTextMessage(
           'ai',
           'AI Coach',
@@ -197,7 +212,9 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
   };
 
   const handleStartPractice = async () => {
-    if (!coachingSessionId || !selectedModeId) {
+    const optionType = selectedModeId?.replace('mode_', '');
+
+    if (!coachingSessionId || !optionType) {
       setErrorMessage('코칭 세션 준비가 아직 완료되지 않았어요.');
       return;
     }
@@ -205,7 +222,7 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
     try {
       setIsBusy(true);
       setErrorMessage('');
-      await buildPracticeStartMessage(selectedModeId, coachingSessionId);
+      await buildPracticeStartMessage(optionType, coachingSessionId);
     } catch (error) {
       setErrorMessage(error.message || '대화 시작 준비 중 오류가 발생했어요.');
     } finally {
@@ -217,8 +234,8 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
     if (!coachingSessionId) return;
 
     const finalResult = await coachingService.finishConversation(coachingSessionId);
-
     const feedback = finalResult.feedback;
+
     appendMessages([
       createTextMessage(
         'ai',
@@ -251,9 +268,7 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
       ];
 
       if (turnResponse.userFeedback) {
-        nextMessages.push(
-          createTextMessage('ai', 'AI Coach', `발음 체크: ${turnResponse.userFeedback}`),
-        );
+        nextMessages.push(createTextMessage('ai', 'AI Coach', `발음 체크: ${turnResponse.userFeedback}`));
       }
 
       if (!turnResponse.conversationEnded && turnResponse.nextAssistantText) {
@@ -281,63 +296,26 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
     }
   };
 
-  const startRecording = async () => {
+  const { isRecording, toggleRecording } = useVoiceRecorder({
+    onRecorded: handleRecordedAudio,
+    onError: setErrorMessage,
+  });
+
+  const handleMicClick = async () => {
+    if (isBusy) return;
+
     if (phase !== 'practice' || !scriptReady) {
       setErrorMessage('먼저 옵션을 선택하고 대화를 시작해주세요.');
       return;
     }
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-
-      const chunks = [];
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunks.push(event.data);
-      };
-
-      recorder.onstop = async () => {
-        stream.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
-
-        const audioBlob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-        if (audioBlob.size > 0) {
-          await handleRecordedAudio(audioBlob);
-        }
-      };
-
-      recorder.start();
-      setIsRecording(true);
-      setErrorMessage('');
-    } catch {
-      setErrorMessage('마이크 권한을 확인해주세요.');
-    }
-  };
-
-  const stopRecording = () => {
-    const recorder = mediaRecorderRef.current;
-    if (!recorder) return;
-
-    setIsRecording(false);
-    recorder.stop();
-  };
-
-  const handleMicClick = async () => {
-    if (isBusy) return;
-
-    if (!isRecording) {
-      await startRecording();
-      return;
-    }
-
-    stopRecording();
+    setErrorMessage('');
+    await toggleRecording();
   };
 
   const handleSendMessage = (text = input) => {
     const trimmed = text.trim();
+
     if (!trimmed) return;
 
     setInput('');
@@ -372,12 +350,13 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
     }
   };
 
-  const statusLabel = {
-    intro: '대기 중',
-    scenario: isBusy ? '연결 중' : '준비 완료',
-    practice: isBusy ? '음성 처리 중' : '음성 대화',
-    completed: '평가 완료',
-  }[phase] ?? '대기 중';
+  const statusLabel =
+    {
+      intro: '대기 중',
+      scenario: isBusy ? '연결 중' : '준비 완료',
+      practice: isBusy ? '음성 처리 중' : '음성 대화',
+      completed: '평가 완료',
+    }[phase] ?? '대기 중';
 
   return (
     <section className="coaching-chat-panel" aria-labelledby="coaching-chat-title">
@@ -389,9 +368,7 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
             <h1 id="coaching-chat-title">심화 코칭 채팅</h1>
           </div>
         </div>
-        <span className={`coaching-status-pill is-${phase}`}>
-          {statusLabel}
-        </span>
+        <span className={`coaching-status-pill is-${phase}`}>{statusLabel}</span>
       </header>
 
       <div className="coaching-chat-log" ref={chatLogRef}>

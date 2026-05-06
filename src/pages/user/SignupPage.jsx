@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/user/useAuth';
 
 function SignupPage() {
     const navigate = useNavigate();
-    const { signup, isSubmitting, errorMessage, setErrorMessage } = useAuth();
+    const { signup, isSubmitting, errorMessage, setErrorMessage, loginWithGoogle } = useAuth();
     const [form, setForm] = useState({
         name: '',
         birthDate: '',
@@ -135,8 +135,14 @@ function SignupPage() {
                     <span>또는</span>
                 </div>
 
-                <button type="button" className="mapingo-login-social">G 구글로 회원가입</button>
-                <button type="button" className="mapingo-login-social is-kakao">K 카카오로 회원가입</button>
+                <button
+                    type="button"
+                    className="mapingo-login-social"
+                    onClick={loginWithGoogle}
+                >
+                    G 구글로 회원가입
+                </button>
+                {/* <button type="button" className="mapingo-login-social is-kakao">K 카카오로 회원가입</button> */}
 
                 <div className="mapingo-login-footer">
                     <span>이미 계정이 있나요?</span>

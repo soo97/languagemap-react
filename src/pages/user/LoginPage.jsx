@@ -122,9 +122,9 @@ function LoginPage() {
                 >
                     G 구글로 계속하기
                 </button>
-                <button type="button" className="mapingo-login-social is-kakao">
+                {/* <button type="button" className="mapingo-login-social is-kakao">
                     K 카카오로 계속하기
-                </button>
+                </button> */}
 
                 <div className="mapingo-login-footer">
                     <span>계정이 아직 없나요?</span>

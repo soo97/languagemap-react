@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminSocialService } from '../../api/admin/adminSocialService';
+import '../../styles/admin/AdminFriendPage.css';
 
 const statusClassMap = {
     PENDING: 'is-reserved',
@@ -184,9 +185,9 @@ function AdminFriendPage() {
     };
 
     return (
-        <section className="mapingo-page-section">
+        <section className="mapingo-page-section admin-friend-page">
             <div className="mapingo-admin-grid admin-content-layout">
-                <div className="mapingo-list-card">
+                <div className="mapingo-list-card admin-friend-report-list">
                     <div className="mapingo-card-header-row admin-result-head">
                         <div>
                             <h3>소셜 신고 목록</h3>
@@ -213,7 +214,7 @@ function AdminFriendPage() {
                             <button
                                 key={report.id}
                                 type="button"
-                                className={`mapingo-post-card admin-content-card ${selectedReport?.id === report.id ? 'is-selected' : ''
+                                className={`mapingo-post-card admin-content-card admin-friend-report-card ${selectedReport?.id === report.id ? 'is-selected' : ''
                                     }`}
                                 onClick={() => {
                                     setSelectedReportId(report.id);
@@ -252,7 +253,7 @@ function AdminFriendPage() {
                     </div>
 
                     {selectedReport ? (
-                        <section className="admin-entity-section">
+                        <section className="admin-entity-section admin-friend-detail-panel">
                             <div className="admin-entity-head">
                                 <strong>신고 #{selectedReport.id}</strong>
                                 <span className={`admin-notice-status ${statusClassMap[selectedReport.status] ?? 'is-draft'}`}>
@@ -260,7 +261,7 @@ function AdminFriendPage() {
                                 </span>
                             </div>
 
-                            <div className="mapingo-admin-meta-grid admin-community-meta-grid">
+                            <div className="mapingo-admin-meta-grid admin-friend-detail-grid">
                                 <p>
                                     <strong>신고자</strong>
                                     ID {selectedReport.reporterId}
@@ -281,10 +282,14 @@ function AdminFriendPage() {
 
                             <label className="mapingo-field">
                                 <span className="mapingo-field-label">신고 사유</span>
-                                <textarea className="mapingo-input mapingo-admin-textarea" value={selectedReport.reason} readOnly />
+                                <textarea
+                                    className="mapingo-input mapingo-admin-textarea admin-friend-readonly-textarea"
+                                    value={selectedReport.reason}
+                                    readOnly
+                                />
                             </label>
 
-                            <div className="admin-content-form-grid">
+                            <div className="admin-content-form-grid admin-friend-form-grid">
                                 <label className="mapingo-field">
                                     <span className="mapingo-field-label">신고 상태</span>
                                     <select
@@ -313,7 +318,7 @@ function AdminFriendPage() {
                             <label className="mapingo-field">
                                 <span className="mapingo-field-label">관리자 메모</span>
                                 <textarea
-                                    className="mapingo-input mapingo-admin-textarea"
+                                    className="mapingo-input mapingo-admin-textarea admin-friend-memo-textarea"
                                     value={activeReportDraft.adminMemo}
                                     onChange={(event) => {
                                         setReportDrafts((currentDrafts) => ({
@@ -347,7 +352,7 @@ function AdminFriendPage() {
                 </div>
             </div>
 
-            <div className="mapingo-list-card">
+            <div className="mapingo-list-card admin-friend-history-list">
                 <div className="mapingo-card-header-row admin-result-head">
                     <div>
                         <h3>차단 / 거절 이력 조회</h3>
@@ -357,9 +362,9 @@ function AdminFriendPage() {
                     <span className="mapingo-inline-badge">{friendHistories.length}건</span>
                 </div>
 
-                <div className="admin-entity-stack admin-growth-stack">
+                <div className="admin-entity-stack admin-growth-stack admin-friend-history-stack">
                     {friendHistories.map((friend) => (
-                        <article key={friend.id} className="mapingo-post-card admin-content-card">
+                        <article key={friend.id} className="mapingo-post-card admin-content-card admin-friend-history-card">
                             <div className="mapingo-admin-item-head">
                                 <div>
                                     <strong>
@@ -375,27 +380,11 @@ function AdminFriendPage() {
                                 </span>
                             </div>
 
-                            <div className="mapingo-admin-meta-grid admin-community-meta-grid">
-                                <p>
-                                    <strong>요청자</strong>
-                                    사용자 #{friend.requesterId}
-                                </p>
-                                <p>
-                                    <strong>대상자</strong>
-                                    사용자 #{friend.addresseeId}
-                                </p>
-                                <p>
-                                    <strong>상태</strong>
-                                    {statusLabelMap[friend.status] ?? friend.status}
-                                </p>
-                                <p>
-                                    <strong>요청일</strong>
-                                    {formatDateTime(friend.requestedAt)}
-                                </p>
-                                <p>
-                                    <strong>응답일</strong>
-                                    {formatDateTime(friend.respondedAt)}
-                                </p>
+                            <div className="admin-friend-history-meta">
+                                <span>요청자 사용자 #{friend.requesterId}</span>
+                                <span>대상자 사용자 #{friend.addresseeId}</span>
+                                <span>요청일 {formatDateTime(friend.requestedAt)}</span>
+                                <span>응답일 {formatDateTime(friend.respondedAt)}</span>
                             </div>
                         </article>
                     ))}

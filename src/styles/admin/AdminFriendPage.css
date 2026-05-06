@@ -1,0 +1,84 @@
+.admin-friend-report-list .mapingo-selectable-list,
+.admin-friend-history-stack {
+  gap: 8px;
+}
+
+.admin-friend-report-card {
+  padding: 11px 13px;
+}
+
+.admin-friend-report-card .mapingo-admin-item-head {
+  gap: 10px;
+}
+
+.admin-friend-report-card .admin-content-description {
+  margin-top: 8px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.admin-friend-detail-panel {
+  gap: 10px;
+}
+
+.admin-friend-detail-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-friend-detail-grid p {
+  display: grid;
+  gap: 5px;
+  min-height: 0;
+}
+
+.admin-friend-detail-grid strong {
+  margin-right: 0;
+}
+
+.admin-friend-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-friend-readonly-textarea {
+  min-height: 92px;
+}
+
+.admin-friend-memo-textarea {
+  min-height: 108px;
+}
+
+.admin-friend-history-card {
+  padding: 12px 14px;
+}
+
+.admin-friend-history-card .mapingo-admin-item-head {
+  gap: 10px;
+}
+
+.admin-friend-history-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.admin-friend-history-meta span {
+  padding: 9px 11px;
+  border: 1px solid #deebe8;
+  border-radius: 12px;
+  background: #f8fcfb;
+  color: #526274;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .admin-friend-detail-grid,
+  .admin-friend-form-grid,
+  .admin-friend-history-meta {
+    grid-template-columns: 1fr;
+  }
+}

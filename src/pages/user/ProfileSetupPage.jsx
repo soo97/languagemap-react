@@ -27,15 +27,37 @@ function ProfileSetupPage() {
     };
 
     return (
-        <section className="mapingo-signup-shell">
-            <article className="mapingo-signup-card">
-                <div className="mapingo-login-card-head">
-                    <div className="mapingo-login-logo-shell">
-                        <PingPopLogo className="mapingo-login-logo" />
-                    </div>
+        <section style={{
+            height: 'calc(100vh - 64px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            overflow: 'auto',
+        }}>
+            <article style={{
+                background: 'var(--bg-secondary, #fff)',
+                border: '1px solid var(--border, #dee2e6)',
+                borderRadius: '1rem',
+                padding: '2.5rem',
+                width: '100%',
+                maxWidth: '560px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    marginBottom: '2rem',
+                }}>
+                    <PingPopLogo style={{ width: '48px', height: '48px' }} />
                     <div>
-                        <h2>프로필 입력</h2>
-                        <p>학습 시작을 위해 추가 정보를 입력해주세요.</p>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                            프로필 입력
+                        </h2>
+                        <p style={{ color: 'var(--text-secondary, #6c757d)', fontSize: '0.9rem' }}>
+                            학습 시작을 위해 추가 정보를 입력해주세요.
+                        </p>
                     </div>
                 </div>
 
@@ -88,6 +110,7 @@ function ProfileSetupPage() {
                 <button
                     type="button"
                     className="mapingo-login-primary"
+                    style={{ width: '100%', marginTop: '1rem' }}
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                 >

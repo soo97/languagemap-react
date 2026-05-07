@@ -1,5 +1,6 @@
 import axiosInstance from '../axiosInstance';
-import axios from '../axiosInstance';
+
+
 
 // 로그인
 async function loginWithEmail({ email, password, rememberMe }) {
@@ -93,6 +94,7 @@ function loginWithGoogle() {
 async function exchangeOauthCode(code) {
     try {
         const response = await axiosInstance.post('/api/auth/oauth/tokens', { code });
+
         localStorage.setItem('accessToken', response.data.accessToken);
         return {
             loginMethod: 'google',

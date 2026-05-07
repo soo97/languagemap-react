@@ -1,3 +1,4 @@
+import axiosInstance from '../axiosInstance';
 import axios from '../axiosInstance';
 
 // 로그인
@@ -91,7 +92,7 @@ function loginWithGoogle() {
 // OAuth code 교환
 async function exchangeOauthCode(code) {
     try {
-        const response = await axios.post('/api/auth/oauth/tokens', { code });
+        const response = await axiosInstance.post('/api/auth/oauth/tokens', { code });
         localStorage.setItem('accessToken', response.data.accessToken);
         return {
             loginMethod: 'google',

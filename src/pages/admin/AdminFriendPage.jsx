@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminSocialService } from '../../api/admin/community/adminSocialService';
-import { formatDateTime } from '../community/utils/formatDateTime';
-import { includesSearch } from '../community/utils/search';
-import { statusClassMap, statusLabelMap } from '../community/utils/statusLabels';
+import { formatDateTime } from '../../utils/community/formatDateTime';
+import { includesSearch } from '../../utils/community/search';
+import { statusClassMap, statusLabelMap } from '../../utils/community/statusLabels';
 import '../../styles/admin/AdminFriendPage.css';
 
 const reportStatusOptions = ['RESOLVED', 'REJECTED'];

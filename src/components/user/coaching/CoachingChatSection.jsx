@@ -71,6 +71,7 @@ function CoachingChatSection({
   const [errorMessage, setErrorMessage] = useState('');
   const [coachingSessionId, setCoachingSessionId] = useState(null);
   const [scriptReady, setScriptReady] = useState(false);
+  const [scriptTurns, setScriptTurns] = useState([]);
 
   const chatLogRef = useRef(null);
 
@@ -111,6 +112,7 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
       setErrorMessage('');
       setCoachingSessionId(null);
       setScriptReady(false);
+      setScriptTurns([]);
     }
   }, [initialMessage, phase]);
 
@@ -126,34 +128,8 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
     setMessages((current) => [...current, ...nextMessages]);
   };
 
-  const buildPracticeStartMessage = async (modeId, nextCoachingSessionId) => {
-    const optionType = modeId?.replace('mode_', '');
-
-    const previousMessages = summary.sessionMessages?.length
-      ? normalizePreviousMessages(summary.sessionMessages)
-      : normalizePreviousMessages(summary.mapArea?.conversationLog);
-
-    const prepareScriptRequest = {
-      sessionId: learningSessionId,
-      optionType,
-      placeName: summary.placeName ?? summary.mapArea?.title ?? '',
-      country: summary.country ?? '',
-      city: summary.city ?? '',
-      placeAddress: summary.placeAddress ?? summary.mapArea?.address ?? '',
-      evaluation:
-        typeof summary.evaluation === 'string'
-          ? summary.evaluation
-          : summary.previousEvaluation?.content ?? '',
-      previousMessages,
-    };
-
-    const scriptResponse = await coachingService.prepareCoachingScript(prepareScriptRequest);
-
-    const targetCoachingSessionId = scriptResponse.coachingSessionId ?? nextCoachingSessionId;
-
-    setCoachingSessionId(targetCoachingSessionId);
-
-    const conversationStart = await coachingService.startConversation(targetCoachingSessionId);
+  const buildPracticeStartMessage = async (nextCoachingSessionId) => {
+    const conversationStart = await coachingService.startConversation(nextCoachingSessionId);
 
     setScriptReady(true);
     onPhaseChange('practice');
@@ -189,7 +165,30 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
         optionType,
       });
 
-      setCoachingSessionId(flowResponse.coachingSessionId);
+      const previousMessages = (
+        summary.sessionMessages?.length
+          ? normalizePreviousMessages(summary.sessionMessages)
+          : normalizePreviousMessages(summary.mapArea?.conversationLog)
+      ).slice(-4);
+
+      const scriptResponse = await coachingService.prepareCoachingScript({
+        sessionId: learningSessionId,
+        optionType,
+        placeName: summary.placeName ?? summary.mapArea?.title ?? '',
+        country: summary.country ?? '',
+        city: summary.city ?? '',
+        placeAddress: summary.placeAddress ?? summary.mapArea?.address ?? '',
+        evaluation:
+          typeof summary.evaluation === 'string'
+            ? summary.evaluation
+            : summary.previousEvaluation?.content ?? '',
+        previousMessages,
+      });
+
+      const targetCoachingSessionId = scriptResponse.coachingSessionId ?? flowResponse.coachingSessionId;
+
+      setCoachingSessionId(targetCoachingSessionId);
+      setScriptTurns(scriptResponse.turns ?? []);
       onSelectMode(optionType);
       onPhaseChange('scenario');
 
@@ -198,7 +197,15 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
         createTextMessage(
           'ai',
           'AI Coach',
-          flowResponse.initialMessage?.message ?? '좋아요. 지금부터 AI 코칭을 시작해볼게요.',
+          `${flowResponse.initialMessage?.message ?? '좋아요. 지금부터 AI 코칭을 시작해볼게요.'}
+
+이번 코칭 대화는 총 ${scriptResponse.turns?.length ?? 0}턴으로 준비했어요.
+
+${(scriptResponse.turns ?? [])
+  .map((turn) => `TURN ${turn.turnOrder}
+AI: ${turn.assistantText}
+You: ${turn.expectedText}`)
+  .join('\n\n')}`,
           {
             quickReplies: [{ id: 'start_practice', label: '오케이, 시작하기' }],
           },
@@ -212,17 +219,15 @@ AI Coach랑 조금 더 재밌게 이어서 대화해봐요~ 히히
   };
 
   const handleStartPractice = async () => {
-    const optionType = selectedModeId?.replace('mode_', '');
-
-    if (!coachingSessionId || !optionType) {
-      setErrorMessage('코칭 세션 준비가 아직 완료되지 않았어요.');
+    if (!coachingSessionId || !selectedModeId || !scriptTurns.length) {
+      setErrorMessage('코칭 스크립트 준비가 아직 완료되지 않았어요.');
       return;
     }
 
     try {
       setIsBusy(true);
       setErrorMessage('');
-      await buildPracticeStartMessage(optionType, coachingSessionId);
+      await buildPracticeStartMessage(coachingSessionId);
     } catch (error) {
       setErrorMessage(error.message || '대화 시작 준비 중 오류가 발생했어요.');
     } finally {

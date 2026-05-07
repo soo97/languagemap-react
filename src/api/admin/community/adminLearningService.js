@@ -1,27 +1,23 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'http://localhost:8080',
-});
+import axiosInstance from "../../axiosInstance";
 
 export const adminLearningService = {
   async getGoals() {
-    const res = await api.get('/api/admin/learning/goals');
+    const res = await axiosInstance.get('/api/admin/learning/goals');
     return res.data.data;
   },
 
   async createGoal(data) {
-    const res = await api.post('/api/admin/learning/goals', data);
+    const res = await axiosInstance.post('/api/admin/learning/goals', data);
     return res.data.data;
   },
 
   async updateGoal(goalMasterId, data) {
-    const res = await api.patch(`/api/admin/learning/goals/${goalMasterId}`, data);
+    const res = await axiosInstance.patch(`/api/admin/learning/goals/${goalMasterId}`, data);
     return res.data.data;
   },
 
   async updateGoalActive(goalMasterId, active) {
-    const res = await api.patch(
+    const res = await axiosInstance.patch(
       `/api/admin/learning/goals/${goalMasterId}/active`,
       { active }
     );
@@ -29,7 +25,7 @@ export const adminLearningService = {
   },
 
   async deleteGoal(goalMasterId) {
-    const res = await api.delete(`/api/admin/learning/goals/${goalMasterId}`);
+    const res = await axiosInstance.delete(`/api/admin/learning/goals/${goalMasterId}`);
     return res.data.data;
   },
 };

@@ -71,8 +71,6 @@ function PlaceMap({
                 markersRef.current.forEach((marker) => marker.setMap(null));
                 markersRef.current = [];
 
-                const bounds = new maps.LatLngBounds();
-
                 places.forEach((place) => {
                     const isSelected = place.id === selectedPlaceId;
 
@@ -93,7 +91,6 @@ function PlaceMap({
 
                     marker.addListener('click', () => onSelectPlace(place.id));
                     markersRef.current.push(marker);
-                    bounds.extend({ lat: place.lat, lng: place.lng });
                 });
 
                 if (selectedPlaceId) {
@@ -112,9 +109,14 @@ function PlaceMap({
                     return;
                 }
 
-                if (!bounds.isEmpty()) {
-                    map.fitBounds(bounds, 72);
-                    return;
+                if (selectedPlaceId) {
+                    const currentPlace = places.find((place) => place.id === selectedPlaceId);
+
+                    if (currentPlace) {
+                        map.panTo({ lat: currentPlace.lat, lng: currentPlace.lng });
+                        map.setZoom(Math.max(activeCapital.zoom, 15));
+                        return;
+                    }
                 }
 
                 map.panTo(activeCapital.center);

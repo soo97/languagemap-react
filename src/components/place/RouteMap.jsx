@@ -75,7 +75,7 @@ function RouteMap({
             activeCapitalId={activeCapitalId}
             onSelectCapital={onSelectCapital}
           />
-          <div className="map-domain -floating-summary">
+          <div className="map-domain-floating-summary">
             <article className="map-domain-mini-card">
               <span>나라</span>
               <strong>{selectedCapital.country}</strong>

@@ -73,6 +73,21 @@ export function useAuth() {
         }
     };
 
+    // 프로필 정보 입력
+    const setupProfile = async (form) => {
+    try {
+        setIsSubmitting(true);
+        setErrorMessage('');
+        await userService.setupProfile(form);
+        navigate('/');
+    } catch (error) {
+        setErrorMessage(error.message || '프로필 입력에 실패했습니다.');
+    } finally {
+        setIsSubmitting(false);
+    }
+};
+
+
     const restoreSession = async () => {
         const token = localStorage.getItem('accessToken');
         if (!token) return;
@@ -107,6 +122,7 @@ export function useAuth() {
         loginWithGoogle,
         restoreSession,
         exchangeOauthCode,
+        setupProfile ,
         isSubmitting,
         errorMessage,
         setErrorMessage,

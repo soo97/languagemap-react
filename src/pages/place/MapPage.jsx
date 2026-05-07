@@ -59,6 +59,8 @@ function MapPage() {
   const [learningSession, setLearningSession] = useState(null);
   const [activeMissionId, setActiveMissionId] = useState(null);
   const [completedMissionIds, setCompletedMissionIds] = useState([]);
+  const currentUser = useMapingoStore((state) => state.session.user);
+  const session = useMapingoStore((state) => state.session);
   const activeCapitalId = useMapingoStore((state) => state.mapActiveTab);
   const selectedPlaceId = useMapingoStore((state) => state.selectedRouteId);
   const setActiveCapitalId = useMapingoStore((state) => state.setMapActiveTab);
@@ -131,6 +133,8 @@ function MapPage() {
   };
 
   const handleSelectPlace = async (placeId) => {
+    console.log(session);
+    console.log(session.user);
     if (!placeId) {
       setSelectedPlaceId('');
       setSelectedPlaceDetail(null);
@@ -165,9 +169,15 @@ function MapPage() {
       return;
     }
 
+    if (!currentUser) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
     try {
+
       const request = {
-        userId: 1, // TODO: 로그인 연결 후 현재 로그인 userId로 교체
+        userId: currentUser.userId,
         level: selectedLevel,
       };
 

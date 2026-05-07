@@ -138,10 +138,17 @@ function SignupPage() {
                 <button
                     type="button"
                     className="mapingo-login-social"
-                    onClick={loginWithGoogle}
+                    onClick={() => {
+                        if (!form.agreeTerms || !form.agreePrivacy) {
+                            setErrorMessage('필수 약관에 동의해주세요.');
+                            return;
+                        }
+                        loginWithGoogle();
+                    }}
                 >
-                    G 구글로 회원가입
+                G 구글로 회원가입
                 </button>
+
                 {/* <button type="button" className="mapingo-login-social is-kakao">K 카카오로 회원가입</button> */}
 
                 <div className="mapingo-login-footer">

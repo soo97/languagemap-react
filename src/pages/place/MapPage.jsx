@@ -57,6 +57,7 @@ function MapPage() {
   const capitals = placeService.fetchPlaceTabs();
   const [learningSession, setLearningSession] = useState(null);
   const [activeMissionId, setActiveMissionId] = useState(null);
+  const [completedMissionIds, setCompletedMissionIds] = useState([]);
   const activeCapitalId = useMapingoStore((state) => state.mapActiveTab);
   const selectedPlaceId = useMapingoStore((state) => state.selectedRouteId);
   const setActiveCapitalId = useMapingoStore((state) => state.setMapActiveTab);
@@ -230,6 +231,10 @@ function MapPage() {
       return;
     }
 
+    if (Number(activeMissionId) === Number(missionId)) {
+      return;
+    }
+
     try {
       const response = await placeService.startMissionSession(
         learningSession.learningSessionId,
@@ -237,6 +242,8 @@ function MapPage() {
       );
 
       console.log('미션 세션 시작 성공:', response);
+
+      setActiveMissionId(Number(missionId));
 
       const aiMessage = {
         role: 'ai',
@@ -247,7 +254,6 @@ function MapPage() {
       setPanelVisible(true);
       setPanelMode('chat');
       setChatInput('');
-      setActiveMissionId(missionId);
       setChatCompleted(false);
       setChatLog((prev) => [...prev, aiMessage]);
       setRecentMapChatLog((prev) => [...prev, aiMessage]);
@@ -280,9 +286,8 @@ function MapPage() {
 
     try {
       const response = await placeService.sendChatMessage({
-        learningSessionId: learningSession.learningSessionId,
-        missionId: activeMissionId,
-        userMessage: trimmed,
+        sessionId: learningSession.learningSessionId,
+        message: trimmed,
       });
 
       const aiMessage = {
@@ -296,6 +301,38 @@ function MapPage() {
     } catch (error) {
       console.error('채팅 응답 실패:', error);
       alert('AI 응답을 불러오지 못했습니다.');
+    }
+  };
+
+  const handleCompleteMission = async () => {
+    if (!learningSession || !activeMissionId) {
+      return;
+    }
+
+    try {
+      const response = await placeService.completeMissionSession(
+        learningSession.learningSessionId,
+        activeMissionId
+      );
+
+      console.log('미션 완료 성공:', response);
+
+      const evaluationMessage = {
+        role: 'ai',
+        speaker: 'AI Coach',
+        text: response.aiFeedback ?? response.evaluation ?? response.aiMessage ?? '미션 평가를 불러오지 못했습니다.',
+        kind: 'evaluation',
+      };
+
+      setChatLog((prev) => [...prev, evaluationMessage]);
+      setRecentMapChatLog((prev) => [...prev, evaluationMessage]);
+
+      setCompletedMissionIds((prev) => [...prev, Number(activeMissionId)]);
+      setActiveMissionId(null);
+      setChatCompleted(true);
+    } catch (error) {
+      console.error('미션 완료 실패:', error);
+      alert('미션 완료 처리에 실패했습니다.');
     }
   };
 
@@ -330,6 +367,9 @@ function MapPage() {
           onOpenCoaching={() => navigate('/coaching')}
           learningSession={learningSession}
           onStartMission={handleStartMission}
+          activeMissionId={activeMissionId}
+          completedMissionIds={completedMissionIds}
+          onCompleteMission={handleCompleteMission}
         />
       </section>
     </div>

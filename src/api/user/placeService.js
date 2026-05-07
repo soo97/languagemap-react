@@ -47,7 +47,15 @@ async function startMissionSession(sessionId, missionId) {
 }
 
 async function sendChatMessage(request) {
-  const response = await axiosInstance.post('/api/place/learningSessions/chat', request);
+  const response = await axiosInstance.post('/api/place/chat', request);
+
+  return response.data;
+}
+
+async function completeMissionSession(sessionId, missionId) {
+  const response = await axiosInstance.patch(
+    `/api/place/missionSessions/${sessionId}/missions/${missionId}`
+  );
 
   return response.data;
 }
@@ -59,5 +67,6 @@ export const placeService = {
   readPlaceMarkers,
   startLearningSession,
   startMissionSession,
-  sendChatMessage
+  sendChatMessage,
+  completeMissionSession
 };

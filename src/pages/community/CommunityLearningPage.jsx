@@ -125,9 +125,6 @@ function GoalMasterCard({ goal, disabled, onAdd }) {
           <span className="community-favorites-chip is-goal">
             {getGoalTypeLabel(goal.goalType)}
           </span>
-          <span className="community-favorites-chip is-goal">
-            목표값 {goal.targetValue}
-          </span>
         </div>
       </div>
 
@@ -193,6 +190,10 @@ export default function CommunityLearningPage() {
         learningService.getCompletedGoals(),
       ]);
 
+      console.log('availableData:', availableData);
+      console.log('activeData:', activeData);
+      console.log('completedData:', completedData);
+
       setAvailableGoals(availableData || []);
       setActiveGoals(activeData || []);
       setCompletedGoals(completedData || []);
@@ -214,9 +215,16 @@ export default function CommunityLearningPage() {
 
       await learningService.selectGoal(goalMasterId);
       await fetchLearningGoals();
+      setFeedbackMessage('');
     } catch (error) {
       console.error(error);
-      setFeedbackMessage('목표 추가에 실패했어요.');
+
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        '목표 추가에 실패했어요.';
+        
+      setFeedbackMessage(message);
     }
   };
 
@@ -347,9 +355,8 @@ export default function CommunityLearningPage() {
               )}
 
               <p
-                className={`community-favorites-selection-message ${
-                  feedbackMessage ? 'is-error' : ''
-                }`}
+                className={`community-favorites-selection-message ${feedbackMessage ? 'is-error' : ''
+                  }`}
               >
                 {feedbackMessage ||
                   '완료된 목표는 아래 완료 이력에서 다시 확인할 수 있어요.'}

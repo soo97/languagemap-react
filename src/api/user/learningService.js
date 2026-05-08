@@ -1,11 +1,11 @@
-import axiosInstance from '../../axiosInstance';
+import axiosInstance from '../axiosInstance';
 
 import {
   buildBadgeProgressFromStore,
   defaultBadgeProgress,
   resolveBadgeCatalog,
   resolveLearningSummary,
-} from '../../../data/user/badgeSystem';
+} from '../../data/user/badgeSystem';
 
 import {
   growthHighlights,
@@ -14,11 +14,11 @@ import {
   learningGoalSuggestions,
   learningLevelOptions,
   learningSummary,
-} from '../../../mocks/user/learningMockData';
+} from '../../mocks/user/learningMockData';
 
 let cachedUserId = null;
 
-function getLoginUserId() {
+async function getLoginUserId() {
   if (cachedUserId) {
     return cachedUserId;
   }
@@ -33,8 +33,8 @@ function getLoginUserId() {
   return cachedUserId;
 }
 
-function getResponseData(res) {
-  return res.data?.data ?? [];
+function extractApiData(res) {
+  return res?.data ?? [];
 }
 
 export const learningService = {
@@ -85,7 +85,7 @@ export const learningService = {
       params: { userId },
     });
 
-    return getResponseData(res);
+    return extractApiData(res);
   },
 
   async getActiveGoals() {
@@ -94,7 +94,7 @@ export const learningService = {
     const res = await axiosInstance.get('/api/learning/goals/active', {
       params: { userId },
     });
-    return getResponseData(res);
+    return extractApiData(res);
   },
 
   async getCompletedGoals() {
@@ -103,7 +103,7 @@ export const learningService = {
     const res = await axiosInstance.get('/api/learning/goals/completed', {
       params: { userId },
     });
-    return getResponseData(res);
+    return extractApiData(res);
   },
 
   async selectGoal(goalMasterId) {
@@ -113,7 +113,7 @@ export const learningService = {
       userId,
       goalMasterId,
     });
-    return res.data?.data;
+    return res?.data;
   },
 
   async deleteGoal(userGoalId) {
@@ -122,6 +122,6 @@ export const learningService = {
     const res = await axiosInstance.delete(`/api/learning/goals/${userGoalId}`, {
       params: { userId },
     });
-    return res.data?.data;
+    return res?.data;
   },
 };

@@ -1,0 +1,162 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { adminSocialService } from "../../api/admin/community/adminSocialService";
+import { includesSearch } from "../../utils/community/search";
+import { statusLabelMap } from "../../utils/community/statusLabels";
+
+export const reportStatusOptions = ['RESOLVED', 'REJECTED'];
+
+function getDefaultReportStatus(status) {
+    if (reportStatusOptions.includes(status)) {
+        return status;
+    }
+
+    return 'RESOLVED';
+}
+
+function normalizeReport(report) {
+    return {
+        id: report.reportId,
+        reporterId: report.reporterId,
+        targetId: report.reportedUserId,
+        reason: report.reason,
+        status: report.status,
+        createdAt: report.createdAt,
+        processedAt: report.processedAt,
+        adminMemo: report.adminMemo ?? '',
+    };
+}
+
+function normalizeFriendship(history) {
+    return {
+        id: history.friendshipId,
+        requesterId: history.requesterId,
+        addresseeId: history.addresseeId,
+        status: history.status,
+        requestedAt: history.requestedAt,
+        respondedAt: history.respondedAt,
+    };
+}
+
+export function useAdminFriend() {
+    const [reports, setReports] = useState([]);
+    const [friendHistories, setFriendHistories] = useState([]);
+    const [friendSearch, setFriendSearch] = useState('');
+    const [selectedReportId, setSelectedReportId] = useState(null);
+    const [reportDrafts, setReportDrafts] = useState({});
+    const [reportError, setReportError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const filteredReports = useMemo(
+        () =>
+            reports.filter((report) =>
+                includesSearch(
+                    [
+                        String(report.id),
+                        String(report.reporterId),
+                        String(report.targetId),
+                        report.reason,
+                        statusLabelMap[report.status] ?? report.status,
+                        report.adminMemo,
+                    ],
+                    friendSearch,
+                ),
+            ),
+        [friendSearch, reports],
+    );
+
+    const selectedReport =
+        reports.find((report) => report.id === selectedReportId) ?? filteredReports[0] ?? null;
+
+    const activeReportDraft = selectedReport
+        ? reportDrafts[selectedReport.id] ?? {
+            status: getDefaultReportStatus(selectedReport.status),
+            adminMemo: selectedReport.adminMemo ?? '',
+        }
+        : {
+            status: 'RESOLVED',
+            adminMemo: '',
+        };
+
+    const fetchFriendData = async () => {
+        try {
+            setLoading(true);
+            setReportError('');
+
+            const [reportData, blockedData, rejectedData] = await Promise.all([
+                adminSocialService.getReports(),
+                adminSocialService.getBlockedFriendships(),
+                adminSocialService.getRejectedFriendships(),
+            ]);
+
+            const normalizedReports = (reportData ?? []).map(normalizeReport);
+            const normalizedBlockedHistories = (blockedData ?? []).map(normalizeFriendship);
+            const normalizedRejectedHistories = (rejectedData ?? []).map(normalizeFriendship);
+
+            setReports(normalizedReports);
+            setFriendHistories([...normalizedBlockedHistories, ...normalizedRejectedHistories]);
+
+            if (normalizedReports.length > 0) {
+                setSelectedReportId((currentId) => currentId ?? normalizedReports[0].id);
+            }
+        } catch (error) {
+            console.error(error);
+            setReportError('친구 관리 데이터를 불러오지 못했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchFriendData();
+    }, []);
+
+    const handleSaveReportStatus = async (reportId) => {
+        const targetReport = reports.find((report) => report.id === reportId);
+
+        if (!targetReport) {
+            return;
+        }
+
+        const draft = reportDrafts[reportId] ?? {
+            status: getDefaultReportStatus(targetReport.status),
+            adminMemo: targetReport.adminMemo ?? '',
+        };
+
+        const trimmedMemo = draft.adminMemo.trim();
+
+        if (!trimmedMemo) {
+            setReportError('상태 변경 시 관리자 메모를 입력해야 합니다.');
+            return;
+        }
+
+        try {
+            await adminSocialService.updateReportStatus(reportId, {
+                status: draft.status,
+                adminMemo: trimmedMemo,
+            });
+
+            alert('신고 상태가 변경되었습니다.');
+            await fetchFriendData();
+            setReportError('');
+        } catch (error) {
+            console.error(error);
+            alert(error.response?.data?.message || '신고 상태 변경 중 오류가 발생했습니다.');
+        }
+    };
+
+    return {
+        filteredReports,
+        friendHistories,
+        friendSearch,
+        setFriendSearch,
+        selectedReport,
+        setSelectedReportId,
+        activeReportDraft,
+        reportDrafts,
+        setReportDrafts,
+        reportError,
+        setReportError,
+        loading,
+        handleSaveReportStatus,
+    };
+}

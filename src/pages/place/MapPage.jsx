@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { placeService } from '../../api/user/placeService';
+import { placeService } from '../../api/place/placeService';
 import { useMapingoStore } from '../../store/user/useMapingoStore';
-import RouteMap from '../../components/user/RouteMap';
+import { toPlaceDetail } from '../../utils/place/placeMapper';
+import RouteMap from '../../components/place/RouteMap';
 import '../../styles/user/mapPage.css';
 
 function buildAiReply(place, userInput, turn) {
@@ -52,8 +53,14 @@ function buildEvaluationMessage(place) {
 
 function MapPage() {
   const navigate = useNavigate();
-  const places = placeService.fetchRoutes();
+  const [places, setPlaces] = useState([]);
+  const [selectedPlaceDetail, setSelectedPlaceDetail] = useState(null);
   const capitals = placeService.fetchPlaceTabs();
+  const [learningSession, setLearningSession] = useState(null);
+  const [activeMissionId, setActiveMissionId] = useState(null);
+  const [completedMissionIds, setCompletedMissionIds] = useState([]);
+  const currentUser = useMapingoStore((state) => state.session.user);
+  const session = useMapingoStore((state) => state.session);
   const activeCapitalId = useMapingoStore((state) => state.mapActiveTab);
   const selectedPlaceId = useMapingoStore((state) => state.selectedRouteId);
   const setActiveCapitalId = useMapingoStore((state) => state.setMapActiveTab);
@@ -65,6 +72,22 @@ function MapPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatCompleted, setChatCompleted] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState('Starter');
+
+  useEffect(() => {
+    const loadPlaceMarkers = async () => {
+      try {
+        const data = await placeService.readPlaceMarkers();
+        setPlaces(data);
+
+        console.log('장소 마커 목록 조회 성공:', data);
+      } catch (error) {
+        console.error('장소 마커 목록 조회 실패:', error);
+        alert('장소 목록을 불러오지 못했습니다.');
+      }
+    };
+
+    loadPlaceMarkers();
+  }, []);
 
   useEffect(() => {
     const pageShell = document.querySelector('.mapingo-page-shell');
@@ -87,13 +110,7 @@ function MapPage() {
     return places.filter((place) => place.capitalId === currentCapitalId);
   }, [currentCapitalId, places]);
 
-  const selectedPlace = useMemo(() => {
-    if (!selectedPlaceId) {
-      return null;
-    }
-
-    return visiblePlaces.find((place) => place.id === selectedPlaceId) ?? null;
-  }, [selectedPlaceId, visiblePlaces]);
+  const selectedPlace = selectedPlaceDetail;
 
   const selectedCapital = useMemo(() => {
     return capitals.find((capital) => capital.id === currentCapitalId) ?? capitals[0];
@@ -115,9 +132,12 @@ function MapPage() {
     resetChatState();
   };
 
-  const handleSelectPlace = (placeId) => {
+  const handleSelectPlace = async (placeId) => {
+    console.log(session);
+    console.log(session.user);
     if (!placeId) {
       setSelectedPlaceId('');
+      setSelectedPlaceDetail(null);
       setPanelVisible(false);
       setPanelMode('guide');
       setSelectedLevel('Starter');
@@ -125,38 +145,117 @@ function MapPage() {
       return;
     }
 
-    setSelectedPlaceId(placeId);
-    setPanelVisible(true);
-    setPanelMode('detail');
-    const nextPlace = places.find((place) => place.id === placeId);
-    setSelectedLevel(nextPlace?.difficulty ?? 'Starter');
-    resetChatState();
+    try {
+      setSelectedPlaceId(placeId);
+
+      const detail = await placeService.readPlaceDetail(placeId);
+
+      console.log('장소 상세 조회:', detail);
+
+      setSelectedPlaceDetail(toPlaceDetail(detail, placeId));
+
+      setPanelVisible(true);
+      setPanelMode('detail');
+      setSelectedLevel('Starter');
+      resetChatState();
+    } catch (error) {
+      console.error('장소 상세 조회 실패:', error);
+      alert('장소 상세 정보를 불러오지 못했습니다.');
+    }
   };
 
-  const handleStartLearning = () => {
+  const handleStartLearning = async () => {
     if (!selectedPlace) {
       return;
     }
 
-    setPanelVisible(true);
-    setPanelMode('chat');
-    setChatInput('');
-    const initialLog = [
-      {
-        role: 'ai',
-        speaker: selectedPlace.chatSteps[0]?.speaker ?? 'AI Coach',
-        text:
-          selectedPlace.chatSteps[0]?.prompt ??
-          `Welcome to ${selectedPlace.title}. Start talking to me as if you are really there.`,
-      },
-    ];
+    if (!currentUser) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
 
-    setChatLog(initialLog);
-    setRecentMapChatLog(initialLog);
+    try {
+
+      const request = {
+        userId: currentUser.userId,
+        level: selectedLevel,
+      };
+
+      const session = await placeService.startLearningSession(
+        selectedPlace.id,
+        request
+      );
+
+      console.log('학습 세션 생성 성공:', session);
+
+      setLearningSession(session);
+
+      setPanelVisible(true);
+      setPanelMode('chat');
+      setChatInput('');
+
+      const initialLog = [
+        {
+          role: 'ai',
+          speaker: 'AI Coach',
+          text: `${selectedPlace.title} 학습 세션이 시작되었습니다. 이제 미션을 선택해서 대화를 시작해보세요.`,
+        },
+      ];
+
+      setChatLog(initialLog);
+      setRecentMapChatLog(initialLog);
+    } catch (error) {
+      console.error('학습 세션 생성 실패:', error);
+      alert('학습 세션을 시작하지 못했습니다.');
+    }
   };
 
-  const handleSendMessage = () => {
-    if (!selectedPlace || chatCompleted) {
+  const findMissionSessionId = (missionId) => {
+    return learningSession?.missionSessions?.find(
+      (missionSession) => missionSession.missionId === missionId
+    )?.missionSessionId;
+  };
+
+  const handleStartMission = async (missionId) => {
+    if (!learningSession) {
+      alert('먼저 학습 세션을 시작해주세요.');
+      return;
+    }
+
+    if (Number(activeMissionId) === Number(missionId)) {
+      return;
+    }
+
+    try {
+      const response = await placeService.startMissionSession(
+        learningSession.learningSessionId,
+        missionId
+      );
+
+      console.log('미션 세션 시작 성공:', response);
+
+      setActiveMissionId(Number(missionId));
+
+      const aiMessage = {
+        role: 'ai',
+        speaker: 'AI Coach',
+        text: response.aiMessage,
+      };
+
+      setPanelVisible(true);
+      setPanelMode('chat');
+      setChatInput('');
+      setChatCompleted(false);
+      setChatLog((prev) => [...prev, aiMessage]);
+      setRecentMapChatLog((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('미션 세션 시작 실패:', error);
+      alert('미션을 시작하지 못했습니다.');
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!learningSession || !activeMissionId || chatCompleted) {
       return;
     }
 
@@ -172,28 +271,60 @@ function MapPage() {
       text: trimmed,
     };
 
-    const userTurnCount = chatLog.filter((message) => message.role === 'user').length;
-    const aiMessage = {
-      role: 'ai',
-      speaker: selectedPlace.chatSteps[Math.min(userTurnCount + 1, selectedPlace.chatSteps.length - 1)]?.speaker ?? 'AI Coach',
-      text: buildAiReply(selectedPlace, trimmed, userTurnCount),
-    };
+    setChatLog((prev) => [...prev, userMessage]);
+    setRecentMapChatLog((prev) => [...prev, userMessage]);
+    setChatInput('');
 
-    const nextLog = [...chatLog, userMessage, aiMessage];
+    try {
+      const response = await placeService.sendChatMessage({
+        sessionId: learningSession.learningSessionId,
+        message: trimmed,
+      });
 
-    if (userTurnCount + 1 >= selectedPlace.chatSteps.length) {
-      nextLog.push({
+      const aiMessage = {
         role: 'ai',
         speaker: 'AI Coach',
-        text: buildEvaluationMessage(selectedPlace),
-        kind: 'evaluation',
-      });
-      setChatCompleted(true);
+        text: response.aiMessage,
+      };
+
+      setChatLog((prev) => [...prev, aiMessage]);
+      setRecentMapChatLog((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('채팅 응답 실패:', error);
+      alert('AI 응답을 불러오지 못했습니다.');
+    }
+  };
+
+  const handleCompleteMission = async () => {
+    if (!learningSession || !activeMissionId) {
+      return;
     }
 
-    setChatLog(nextLog);
-    setRecentMapChatLog(nextLog);
-    setChatInput('');
+    try {
+      const response = await placeService.completeMissionSession(
+        learningSession.learningSessionId,
+        activeMissionId
+      );
+
+      console.log('미션 완료 성공:', response);
+
+      const evaluationMessage = {
+        role: 'ai',
+        speaker: 'AI Coach',
+        text: response.aiFeedback ?? response.evaluation ?? response.aiMessage ?? '미션 평가를 불러오지 못했습니다.',
+        kind: 'evaluation',
+      };
+
+      setChatLog((prev) => [...prev, evaluationMessage]);
+      setRecentMapChatLog((prev) => [...prev, evaluationMessage]);
+
+      setCompletedMissionIds((prev) => [...prev, Number(activeMissionId)]);
+      setActiveMissionId(null);
+      setChatCompleted(true);
+    } catch (error) {
+      console.error('미션 완료 실패:', error);
+      alert('미션 완료 처리에 실패했습니다.');
+    }
   };
 
   const handleBackToDetail = () => {
@@ -225,6 +356,11 @@ function MapPage() {
           onStartLearning={handleStartLearning}
           onBackToDetail={handleBackToDetail}
           onOpenCoaching={() => navigate('/coaching')}
+          learningSession={learningSession}
+          onStartMission={handleStartMission}
+          activeMissionId={activeMissionId}
+          completedMissionIds={completedMissionIds}
+          onCompleteMission={handleCompleteMission}
         />
       </section>
     </div>

@@ -1,3 +1,7 @@
+export const TODAY = '2026-04-21';
+
+export const CURRENT_USER_ID = 1;
+
 export const userDirectory = {
     1: {
         userId: 1,

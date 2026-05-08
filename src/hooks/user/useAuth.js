@@ -59,19 +59,37 @@ export function useAuth() {
     };
 
     // 소셜 로그인 
-    const exchangeOauthCode = async (code) => {
-        try {
-            setIsSubmitting(true);
-            const session = await authService.exchangeOauthCode(code);
-            setSession(session);
-            return session;
-        } catch (error) {
-            setErrorMessage(error.message || '소셜 로그인에 실패했습니다.');
-            throw error;
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+const exchangeOauthCode = async (code) => {
+    try {
+        setIsSubmitting(true);
+        console.log('exchangeOauthCode 시작:', code);  // 로그 추가
+        const session = await authService.exchangeOauthCode(code);
+        console.log('session 받음:', session);  // 로그 추가
+        setSession(session);
+        return session;
+    } catch (error) {
+        console.log('exchangeOauthCode 에러:', error);  // 로그 추가
+        setErrorMessage(error.message || '소셜 로그인에 실패했습니다.');
+        throw error;
+    } finally {
+        setIsSubmitting(false);
+    }
+};
+
+    // 프로필 정보 입력
+    const setupProfile = async (form) => {
+    try {
+        setIsSubmitting(true);
+        setErrorMessage('');
+        await userService.setupProfile(form);
+        navigate('/');
+    } catch (error) {
+        setErrorMessage(error.message || '프로필 입력에 실패했습니다.');
+    } finally {
+        setIsSubmitting(false);
+    }
+};
+
 
     const restoreSession = async () => {
         const token = localStorage.getItem('accessToken');
@@ -107,6 +125,7 @@ export function useAuth() {
         loginWithGoogle,
         restoreSession,
         exchangeOauthCode,
+        setupProfile ,
         isSubmitting,
         errorMessage,
         setErrorMessage,

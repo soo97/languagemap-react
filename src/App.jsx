@@ -31,6 +31,12 @@ import LoginPage from './pages/user/LoginPage';
 import ProtectedRoute from './components/user/ProtectedRoute';
 import GuestRoute from './components/user/GuestRoute';
 import CoachingPage from './pages/coaching/CoachingPage';
+import OAuthSuccessPage from './pages/user/OAuthSuccessPage';
+import ProfileSetupPage from './pages/user/ProfileSetupPage';
+import OAuthFailurePage from './pages/user/OAuthFailurePage';
+
+
+
 
 function App() {
   return (
@@ -57,6 +63,10 @@ function App() {
         <Route path="/settings/learning" element={<SettingsLearningPage />} />
         <Route path="/settings/account" element={<SettingsAccountPage />} />
         <Route path="/settings/account/delete" element={<AccountDeletePage />} />
+        <Route path="/profile/setup" element={<ProfileSetupPage />} />
+        <Route path="/oauth/success" element={<OAuthSuccessPage />} />
+        <Route path="/oauth/failure" element={<OAuthFailurePage />} />
+
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />

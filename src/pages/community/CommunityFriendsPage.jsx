@@ -33,6 +33,7 @@ function CommunityFriendsPage() {
     handleBlock,
     handleUnblock,
     handleSubmitReport,
+    clearFeedbackMessage,
   } = useCommunityFriends();
 
   return (
@@ -52,12 +53,6 @@ function CommunityFriendsPage() {
           </button>
         </div>
       </MapingoPageSection>
-
-      {feedbackMessage ? (
-        <div className="community-friends-feedback-banner">
-          {feedbackMessage}
-        </div>
-      ) : null}
 
       <section className="mapingo-page-section">
         <div className="community-friends-layout">
@@ -265,6 +260,23 @@ function CommunityFriendsPage() {
           </aside>
         </div>
       </section>
+
+      {feedbackMessage ? (
+        <div className="community-friends-popup-backdrop">
+          <div className="community-friends-popup">
+            <h3>알림</h3>
+            <p>{feedbackMessage}</p>
+
+            <button
+              type="button"
+              className="mapingo-submit-button"
+              onClick={clearFeedbackMessage}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      ) : null}F
     </div>
   );
 }

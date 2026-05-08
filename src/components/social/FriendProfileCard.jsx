@@ -8,7 +8,6 @@ import StatusPill from './StatusPill';
 function FriendProfileCard({
     relation,
     currentUserId,
-    userDirectory,
     onAccept,
     onReject,
     onDelete,
@@ -21,11 +20,23 @@ function FriendProfileCard({
             ? relation.addressee_id
             : relation.requester_id;
 
-    const user = userDirectory[otherUserId];
-
-    if (!user) {
-        return null;
-    }
+    const user = {
+        userId: otherUserId,
+        name:
+            relation.requester_id === currentUserId
+                ? relation.addressee_name || '사용자'
+                : relation.requester_name || '사용자',
+        email:
+            relation.requester_id === currentUserId
+                ? relation.addressee_email || '-'
+                : relation.requester_email || '-',
+        levelLabel: 'Lv.1',
+        levelNumber: 1,
+        accountStatus: '정상 이용 중',
+        levelTitle: 'Starter',
+        goalText: '학습 목표 정보가 없어요.',
+        badgeText: '기본 배지',
+    };
 
     const isAccepted = relation.status === 'ACCEPTED';
     const isBlocked = relation.status === 'BLOCKED';

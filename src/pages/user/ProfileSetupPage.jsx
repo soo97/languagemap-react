@@ -10,34 +10,30 @@ function ProfileSetupPage() {
         phoneNumber: '',
     });
 
+    //  전화번호 하이픈 자동 포맷 처리 분리
+    const formatPhoneNumber = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+        if (digits.length < 4) return digits;
+        if (digits.length < 8) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+        return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+    };
+
+    // 전화번호 입력 시 formatPhoneNumber 적용
     const handleChange = (event) => {
         const { name, value } = event.target;
         setForm((current) => ({
             ...current,
-            [name]: value,
+            [name]: name === 'phoneNumber' ? formatPhoneNumber(value) : value,
         }));
     };
 
-const handleSubmit = async () => {
-    if (!form.birthDate || !form.address || !form.phoneNumber) {
-        setErrorMessage('모든 항목을 입력해주세요.');
-        return;
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const birth = new Date(form.birthDate);
-    if (birth > today) {
-        setErrorMessage('생년월일은 미래 날짜를 선택할 수 없습니다.');
-        return;
-    }
-    const phoneClean = form.phoneNumber.replace(/-/g, '');
-    if (!/^010\d{8}$/.test(phoneClean)) {
-        setErrorMessage('올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)');
-        return;
-    }
-    await setupProfile(form);
-};
+    const handleSubmit = async () => {
+        await setupProfile(form);
+    };
 
+
+
+    // 기존 JSX 유지 (변경 없음)
     return (
         <section style={{
             height: 'calc(100vh - 64px)',
@@ -74,9 +70,7 @@ const handleSubmit = async () => {
                 </div>
 
                 <div className="mapingo-field">
-                    <label className="mapingo-field-label" htmlFor="profile-birth">
-                        생년월일
-                    </label>
+                    <label className="mapingo-field-label" htmlFor="profile-birth">생년월일</label>
                     <input
                         id="profile-birth"
                         className="mapingo-input"
@@ -88,9 +82,7 @@ const handleSubmit = async () => {
                 </div>
 
                 <div className="mapingo-field">
-                    <label className="mapingo-field-label" htmlFor="profile-address">
-                        주소
-                    </label>
+                    <label className="mapingo-field-label" htmlFor="profile-address">주소</label>
                     <input
                         id="profile-address"
                         className="mapingo-input"
@@ -103,9 +95,7 @@ const handleSubmit = async () => {
                 </div>
 
                 <div className="mapingo-field">
-                    <label className="mapingo-field-label" htmlFor="profile-phone">
-                        전화번호
-                    </label>
+                    <label className="mapingo-field-label" htmlFor="profile-phone">전화번호</label>
                     <input
                         id="profile-phone"
                         className="mapingo-input"
@@ -113,7 +103,7 @@ const handleSubmit = async () => {
                         name="phoneNumber"
                         value={form.phoneNumber}
                         onChange={handleChange}
-                        placeholder="010-1234-5678"
+                        placeholder="010-1234-5678"  
                     />
                 </div>
 
@@ -133,4 +123,4 @@ const handleSubmit = async () => {
     );
 }
 
-export default ProfileSetupPage;
+export default ProfileSetupPage; 

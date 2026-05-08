@@ -18,13 +18,25 @@ function ProfileSetupPage() {
         }));
     };
 
-    const handleSubmit = async () => {
-        if (!form.birthDate || !form.address || !form.phoneNumber) {
-            setErrorMessage('모든 항목을 입력해주세요.');
-            return;
-        }
-        await setupProfile(form);
-    };
+const handleSubmit = async () => {
+    if (!form.birthDate || !form.address || !form.phoneNumber) {
+        setErrorMessage('모든 항목을 입력해주세요.');
+        return;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const birth = new Date(form.birthDate);
+    if (birth > today) {
+        setErrorMessage('생년월일은 미래 날짜를 선택할 수 없습니다.');
+        return;
+    }
+    const phoneClean = form.phoneNumber.replace(/-/g, '');
+    if (!/^010\d{8}$/.test(phoneClean)) {
+        setErrorMessage('올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)');
+        return;
+    }
+    await setupProfile(form);
+};
 
     return (
         <section style={{

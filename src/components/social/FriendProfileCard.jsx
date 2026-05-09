@@ -2,6 +2,7 @@ import PingPopCharacterImage from '../user/PingPopCharacterImage';
 import {
     formatDate,
     getLevelTone,
+    maskEmail,
 } from '../../utils/community/friendUtils';
 import StatusPill from './StatusPill';
 
@@ -14,21 +15,19 @@ function FriendProfileCard({
     onBlock,
     compact = false,
 }) {
-    const otherUserId =
-        relation.requester_id === currentUserId
-            ? relation.addressee_id
-            : relation.requester_id;
+    const isCurrentUserRequester = Number(relation.requester_id) === Number(currentUserId);
+    const otherUserId = isCurrentUserRequester
+        ? relation.addressee_id
+        : relation.requester_id;
 
     const user = {
         userId: otherUserId,
-        name:
-            relation.requester_id === currentUserId
-                ? relation.addressee_name || '사용자'
-                : relation.requester_name || '사용자',
-        email:
-            relation.requester_id === currentUserId
-                ? relation.addressee_email || '-'
-                : relation.requester_email || '-',
+        name: isCurrentUserRequester
+            ? relation.addressee_name || '사용자'
+            : relation.requester_name || '사용자',
+        email: isCurrentUserRequester
+            ? relation.addressee_email || '-'
+            : relation.requester_email || '-',
         levelLabel: 'Lv.1',
         levelNumber: 1,
         accountStatus: '정상 이용 중',
@@ -39,12 +38,62 @@ function FriendProfileCard({
 
     const isAccepted = relation.status === 'ACCEPTED';
     const isReceivedRequest =
-        relation.status === 'PENDING' && relation.addressee_id === currentUserId;
-
+        relation.status === 'PENDING' && Number(relation.addressee_id) === Number(currentUserId);
     const isSentRequest =
-        relation.status === 'PENDING' && relation.requester_id === currentUserId;
-
+        relation.status === 'PENDING' && Number(relation.requester_id) === Number(currentUserId);
     const levelTone = getLevelTone(user.levelNumber);
+
+    const actionButtons = (
+        <>
+            {isReceivedRequest ? (
+                <>
+                    <button
+                        type="button"
+                        className="mapingo-submit-button"
+                        onClick={() => onAccept(relation.friendship_id)}
+                    >
+                        수락
+                    </button>
+                    <button
+                        type="button"
+                        className="mapingo-ghost-button"
+                        onClick={() => onReject(relation.friendship_id)}
+                    >
+                        거절
+                    </button>
+                </>
+            ) : null}
+
+            {isSentRequest ? (
+                <button
+                    type="button"
+                    className="mapingo-ghost-button"
+                    onClick={() => onDelete(relation.friendship_id)}
+                >
+                    요청 취소
+                </button>
+            ) : null}
+
+            {isAccepted ? (
+                <>
+                    <button
+                        type="button"
+                        className="mapingo-ghost-button community-friends-block-button"
+                        onClick={() => onBlock(relation.friendship_id)}
+                    >
+                        친구 차단
+                    </button>
+                    <button
+                        type="button"
+                        className="mapingo-ghost-button"
+                        onClick={() => onDelete(relation.friendship_id)}
+                    >
+                        친구 삭제
+                    </button>
+                </>
+            ) : null}
+        </>
+    );
 
     if (compact) {
         return (
@@ -74,7 +123,7 @@ function FriendProfileCard({
                             <StatusPill status={relation.status} />
                         </div>
 
-                        <p>{user.email}</p>
+                        <p>{maskEmail(user.email)}</p>
 
                         <span className={`community-friends-badge-pill is-${levelTone}`}>
                             {user.badgeText}
@@ -84,58 +133,9 @@ function FriendProfileCard({
                     </div>
                 </div>
 
-                {isReceivedRequest ? (
-                    <div className="community-friends-compact-actions">
-                        <button
-                            type="button"
-                            className="mapingo-submit-button"
-                            onClick={() => onAccept(relation.friendship_id)}
-                        >
-                            수락
-                        </button>
-
-                        <button
-                            type="button"
-                            className="mapingo-ghost-button"
-                            onClick={() => onReject(relation.friendship_id)}
-                        >
-                            거절
-                        </button>
-                    </div>
-                ) : null}
-
-                {isSentRequest ? (
-                    <div className="community-friends-compact-actions">
-                        <button
-                            type="button"
-                            className="mapingo-ghost-button"
-                            onClick={() => onDelete(relation.friendship_id)}
-                        >
-                            요청 취소
-                        </button>
-                    </div>
-                ) : null}
-
-                {isAccepted ? (
-                    <div className="community-friends-compact-actions">
-                        <button
-                            type="button"
-                            className="mapingo-ghost-button community-friends-block-button"
-                            onClick={() => onBlock(relation.friendship_id)}
-                        >
-                            친구 차단
-                        </button>
-
-                        <button
-                            type="button"
-                            className="mapingo-ghost-button"
-                            onClick={() => onDelete(relation.friendship_id)}
-                        >
-                            친구 삭제
-                        </button>
-                    </div>
-                ) : null}
-
+                <div className="community-friends-compact-actions">
+                    {actionButtons}
+                </div>
             </article>
         );
     }
@@ -164,7 +164,7 @@ function FriendProfileCard({
 
                     <div className="community-friends-copy">
                         <h3>{user.name}</h3>
-                        <p>{user.email}</p>
+                        <p>{maskEmail(user.email)}</p>
 
                         <span className={`community-friends-badge-pill is-${levelTone}`}>
                             {user.badgeText}
@@ -176,26 +176,7 @@ function FriendProfileCard({
 
                 <div className="community-friends-actions">
                     <StatusPill status={relation.status} />
-
-                    {isAccepted ? (
-                        <>
-                            <button
-                                type="button"
-                                className="mapingo-ghost-button community-friends-block-button"
-                                onClick={() => onBlock(relation.friendship_id)}
-                            >
-                                친구 차단
-                            </button>
-
-                            <button
-                                type="button"
-                                className="mapingo-ghost-button"
-                                onClick={() => onDelete(relation.friendship_id)}
-                            >
-                                친구 삭제
-                            </button>
-                        </>
-                    ) : null}
+                    {actionButtons}
                 </div>
             </div>
 

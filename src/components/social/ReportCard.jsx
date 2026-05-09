@@ -1,17 +1,19 @@
-import { formatDate } from '../../utils/community/friendUtils';
+import { formatDate, maskEmail } from '../../utils/community/friendUtils';
 import StatusPill from './StatusPill';
 
 function ReportCard({ report, userDirectory }) {
-    const reportedUser = userDirectory[report.reported_user_id];
-
-    if (!reportedUser) {
-        return null;
-    }
+    const reportedUser = userDirectory[report.reported_user_id] ?? {
+        name: `사용자 ${report.reported_user_id}`,
+        email: '-',
+    };
 
     return (
         <article className="community-friends-report-card">
             <div className="community-friends-title-row">
-                <h4>{reportedUser.name}</h4>
+                <div>
+                    <h4>{reportedUser.name}</h4>
+                    <small>{maskEmail(reportedUser.email)}</small>
+                </div>
                 <StatusPill status={report.status} />
             </div>
 

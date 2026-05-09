@@ -469,6 +469,66 @@
   font-weight: 600;
 }
 
+.community-friends-report-search-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.community-friends-report-search-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid #d8eeea;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #124f54;
+  text-align: left;
+  cursor: pointer;
+}
+
+.community-friends-report-search-item:hover,
+.community-friends-report-search-item.is-selected {
+  border-color: #67c7bd;
+  background: #f1fbf9;
+}
+
+.community-friends-report-search-item strong {
+  font-size: 0.95rem;
+}
+
+.community-friends-report-search-item span {
+  color: #6b7d8d;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.community-friends-selected-user {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #edf9f7;
+  color: #124f54;
+}
+
+.community-friends-selected-user strong {
+  font-size: 0.82rem;
+}
+
+.community-friends-selected-user span {
+  color: #4f6475;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 @media (max-width: 1180px) {
 
   .community-friends-layout,

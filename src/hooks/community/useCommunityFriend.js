@@ -3,6 +3,8 @@ import { friendService } from '../../api/user/friendService';
 import { socialReportService } from '../../api/user/socialReportService';
 import { useMapingoStore } from '../../store/user/useMapingoStore';
 
+const USER_DIRECTORY_KEY = 'communityUserDirectory';
+
 const getResponseData = (response) => {
     if (!response) return [];
     if (Array.isArray(response)) return response;
@@ -10,25 +12,32 @@ const getResponseData = (response) => {
     return [];
 };
 
-const normalizeRelation = (row) => ({
-    friendship_id: row.friendship_id ?? row.friendshipId,
-    requester_id: row.requester_id ?? row.requesterId,
-    addressee_id: row.addressee_id ?? row.addresseeId,
-    requester_name:
-        row.requester_name ?? row.requesterName ?? `사용자 ${row.requesterId}`,
-    requester_email: row.requester_email ?? row.requesterEmail ?? '-',
-    addressee_name:
-        row.addressee_name ?? row.addresseeName ?? `사용자 ${row.addresseeId}`,
-    addressee_email: row.addressee_email ?? row.addresseeEmail ?? '-',
-    status: row.status,
-    requested_at: row.requested_at ?? row.requestedAt,
-    responded_at: row.responded_at ?? row.respondedAt,
-});
+const getUserFallbackName = (userId) => (userId ? `사용자 ${userId}` : '사용자');
+
+const normalizeRelation = (row) => {
+    const requesterId = row.requester_id ?? row.requesterId;
+    const addresseeId = row.addressee_id ?? row.addresseeId;
+
+    return {
+        friendship_id: row.friendship_id ?? row.friendshipId,
+        requester_id: requesterId,
+        addressee_id: addresseeId,
+        requester_name:
+            row.requester_name ?? row.requesterName ?? getUserFallbackName(requesterId),
+        requester_email: row.requester_email ?? row.requesterEmail ?? '-',
+        addressee_name:
+            row.addressee_name ?? row.addresseeName ?? getUserFallbackName(addresseeId),
+        addressee_email: row.addressee_email ?? row.addresseeEmail ?? '-',
+        status: row.status,
+        requested_at: row.requested_at ?? row.requestedAt,
+        responded_at: row.responded_at ?? row.respondedAt,
+    };
+};
 
 const normalizeRecommendUser = (row) => ({
     userId: row.userId ?? row.user_id,
-    name: row.name,
-    email: row.email,
+    name: row.name ?? getUserFallbackName(row.userId ?? row.user_id),
+    email: row.email ?? '-',
     levelLabel: row.levelLabel ?? `Lv.${row.levelNumber ?? row.level ?? 1}`,
     levelNumber: row.levelNumber ?? row.level ?? 1,
     goalText: row.goalText ?? row.goal ?? '학습 목표 정보가 없어요.',
@@ -51,15 +60,29 @@ const normalizeReport = (row, fallback = {}) => ({
 
 const getCachedUserDirectory = () => {
     try {
-        return JSON.parse(sessionStorage.getItem('communityUserDirectory') ?? '{}');
+        return JSON.parse(sessionStorage.getItem(USER_DIRECTORY_KEY) ?? '{}');
     } catch {
         return {};
     }
 };
 
 const setCachedUserDirectory = (directory) => {
-    sessionStorage.setItem('communityUserDirectory', JSON.stringify(directory));
+    sessionStorage.setItem(USER_DIRECTORY_KEY, JSON.stringify(directory));
 };
+
+const mergeUserDirectory = (...directories) =>
+    directories.reduce((merged, directory) => {
+        Object.entries(directory).forEach(([userId, user]) => {
+            if (!user?.userId && !userId) return;
+            merged[userId] = {
+                ...merged[userId],
+                ...user,
+                userId: Number(user.userId ?? userId),
+            };
+        });
+
+        return merged;
+    }, {});
 
 export function useCommunityFriends() {
     const sessionUserId = useMapingoStore((state) => state.session?.user?.userId);
@@ -68,12 +91,76 @@ export function useCommunityFriends() {
     const [userReportRows, setUserReportRows] = useState([]);
 
     const [inviteQuery, setInviteQuery] = useState('');
+    const [reportSearchQuery, setReportSearchQuery] = useState('');
     const [reportTargetId, setReportTargetId] = useState('');
     const [reportReason, setReportReason] = useState('');
     const [feedbackMessage, setFeedbackMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const currentUserId = Number(sessionUserId ?? localStorage.getItem('userId')) || 1;
+
+    const userDirectory = useMemo(() => {
+        const directory = {};
+
+        recommendedFriends.forEach((user) => {
+            if (!user.userId) return;
+            directory[user.userId] = user;
+        });
+
+        friendshipRows.forEach((relation) => {
+            if (relation.requester_id) {
+                directory[relation.requester_id] = {
+                    userId: relation.requester_id,
+                    name: relation.requester_name,
+                    email: relation.requester_email,
+                };
+            }
+
+            if (relation.addressee_id) {
+                directory[relation.addressee_id] = {
+                    userId: relation.addressee_id,
+                    name: relation.addressee_name,
+                    email: relation.addressee_email,
+                };
+            }
+        });
+
+        const mergedDirectory = mergeUserDirectory(getCachedUserDirectory(), directory);
+        setCachedUserDirectory(mergedDirectory);
+
+        return mergedDirectory;
+    }, [friendshipRows, recommendedFriends]);
+
+    const reportCandidates = useMemo(() => {
+        const candidates = Object.values(userDirectory)
+            .filter((user) => user?.userId && Number(user.userId) !== currentUserId)
+            .sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? ''), 'ko'));
+
+        const uniqueCandidates = candidates.filter(
+            (user, index, self) =>
+                index === self.findIndex((item) => Number(item.userId) === Number(user.userId)),
+        );
+
+        return uniqueCandidates;
+    }, [currentUserId, userDirectory]);
+
+    const filteredReportCandidates = useMemo(() => {
+        const query = reportSearchQuery.trim().toLowerCase();
+        if (!query) return reportCandidates.slice(0, 8);
+
+        return reportCandidates
+            .filter((user) => {
+                const name = String(user.name ?? '').toLowerCase();
+                const email = String(user.email ?? '').toLowerCase();
+                return name.includes(query) || email.includes(query);
+            })
+            .slice(0, 8);
+    }, [reportCandidates, reportSearchQuery]);
+
+    const selectedReportTarget = useMemo(
+        () => userDirectory[reportTargetId] ?? null,
+        [reportTargetId, userDirectory],
+    );
 
     const loadFriendData = async () => {
         try {
@@ -95,29 +182,6 @@ export function useCommunityFriends() {
                 ...getResponseData(history),
             ].map(normalizeRelation);
 
-            const uniqueRelationRows = relationRows.filter(
-                (row, index, self) =>
-                    row.friendship_id &&
-                    index === self.findIndex(
-                        (item) => item.friendship_id === row.friendship_id,
-                    ),
-            );
-
-            const relatedUserIds = new Set(
-                relationRows.flatMap((relation) => [
-                    relation.requester_id,
-                    relation.addressee_id,
-                ]),
-            );
-
-            const recommendRows = getResponseData(recommends)
-                .map(normalizeRecommendUser)
-                .filter(
-                    (user) =>
-                        user.userId &&
-                        user.userId !== currentUserId &&
-                        !relatedUserIds.has(user.userId),
-                );
             const cachedDirectory = getCachedUserDirectory();
 
             relationRows.forEach((relation) => {
@@ -135,13 +199,33 @@ export function useCommunityFriends() {
                 }
             });
 
+            const uniqueRelationRows = relationRows.filter(
+                (row, index, self) =>
+                    row.friendship_id &&
+                    index === self.findIndex(
+                        (item) => item.friendship_id === row.friendship_id,
+                    ),
+            );
+
+            const relatedUserIds = new Set(
+                relationRows.flatMap((relation) => [
+                    Number(relation.requester_id),
+                    Number(relation.addressee_id),
+                ]),
+            );
+
+            const recommendRows = getResponseData(recommends)
+                .map(normalizeRecommendUser)
+                .filter(
+                    (user) =>
+                        user.userId &&
+                        Number(user.userId) !== currentUserId &&
+                        !relatedUserIds.has(Number(user.userId)),
+                );
+
             setFriendshipRows(uniqueRelationRows);
             setRecommendedFriends(recommendRows);
             setUserReportRows(getResponseData(reports).map(normalizeReport));
-
-            if (recommendRows.length > 0 && !reportTargetId) {
-                setReportTargetId(String(recommendRows[0].userId));
-            }
         } catch (error) {
             console.error(error);
             setFeedbackMessage('친구 정보를 불러오지 못했어요.');
@@ -172,47 +256,10 @@ export function useCommunityFriends() {
         [friendshipRows],
     );
 
-    const availableUsers = useMemo(() => recommendedFriends, [recommendedFriends]);
-
-    const userDirectory = useMemo(() => {
-        const directory = {};
-
-        recommendedFriends.forEach((user) => {
-            if (!user.userId) return;
-            directory[user.userId] = user;
-        });
-
-        friendshipRows.forEach((relation) => {
-            if (relation.requester_id) {
-                directory[relation.requester_id] = {
-                    userId: relation.requester_id,
-                    name: relation.requester_name,
-                    email: relation.requester_email,
-                };
-            }
-
-            if (relation.addressee_id) {
-                directory[relation.addressee_id] = {
-                    userId: relation.addressee_id,
-                    name: relation.addressee_name,
-                    email: relation.addressee_email,
-                };
-            }
-        });
-
-        const mergedDirectory = {
-            ...getCachedUserDirectory(),
-            ...directory,
-        };
-
-        setCachedUserDirectory(mergedDirectory);
-        return mergedDirectory;
-    }, [friendshipRows, recommendedFriends]);
-
     const sendFriendRequest = async (targetUserId) => {
         try {
             const targetUser = recommendedFriends.find(
-                (user) => user.userId === targetUserId,
+                (user) => Number(user.userId) === Number(targetUserId),
             );
 
             if (targetUser) {
@@ -320,12 +367,21 @@ export function useCommunityFriends() {
         }
     };
 
+    const handleReportSearchChange = (value) => {
+        setReportSearchQuery(value);
+    };
+
+    const handleSelectReportTarget = (user) => {
+        setReportTargetId(String(user.userId));
+        setReportSearchQuery(user.name ?? '');
+    };
+
     const handleSubmitReport = async () => {
         const reportedUserId = Number(reportTargetId);
         const reason = reportReason.trim();
 
         if (!reportedUserId) {
-            setFeedbackMessage('신고할 사용자를 선택해 주세요.');
+            setFeedbackMessage('신고할 사용자를 검색해서 선택해 주세요.');
             return;
         }
 
@@ -351,7 +407,9 @@ export function useCommunityFriends() {
 
             setUserReportRows((prevRows) => [createdReport, ...prevRows]);
             setReportReason('');
-            setFeedbackMessage('신고가 접수됐어요.');
+            setReportSearchQuery('');
+            setReportTargetId('');
+            setFeedbackMessage('신고가 접수되었어요.');
         } catch (error) {
             console.error(error);
             setFeedbackMessage('신고 접수에 실패했어요.');
@@ -364,17 +422,21 @@ export function useCommunityFriends() {
         acceptedFriends,
         pendingRequests,
         archivedRelations,
-        availableUsers,
         recommendedFriends,
         userReportRows,
         inviteQuery,
+        reportSearchQuery,
         reportTargetId,
         reportReason,
         feedbackMessage,
         isLoading,
+        reportCandidates,
+        filteredReportCandidates,
+        selectedReportTarget,
         setInviteQuery,
-        setReportTargetId,
         setReportReason,
+        handleReportSearchChange,
+        handleSelectReportTarget,
         sendFriendRequest,
         handleInvite,
         handleAccept,

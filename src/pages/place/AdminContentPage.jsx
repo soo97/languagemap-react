@@ -4,6 +4,8 @@ import { MapingoPageSection } from '../../components/MapingoPageBlocks';
 import { adminService } from '../../api/admin/adminService';
 import { adminRegionService } from '../../api/place/AdminRegionService';
 import { adminScenarioService } from '../../api/place/AdminScenarioService';
+import { adminMissionService } from '../../api/place/AdminMissionService';
+import { adminPlaceService } from '../../api/place/AdminPlaceService';
 
 
 const EMPTY_PLACE_FORM = {
@@ -70,13 +72,13 @@ function loadGoogleMaps(apiKey) {
 function buildContentItems(places, scenarios, missions) {
   return [
     ...places.map((place) => ({
-      id: `place-${place.id}`,
+      id: `place-${place.placeId}`,
       type: '장소',
       title: place.placeName,
       status: '운영 중',
       difficulty: '-',
       description: place.placeDescription || 'Google Places 요약이 아직 없습니다.',
-      tags: `${place.regionName}, ${place.scenarioTitle}`,
+      tags: `${place.regionCity}, ${place.scenarioTitle}`,
       updatedAt: place.updatedAt,
     })),
     ...scenarios.map((scenario) => ({
@@ -90,13 +92,13 @@ function buildContentItems(places, scenarios, missions) {
       updatedAt: scenario.updatedAt,
     })),
     ...missions.map((mission) => ({
-      id: `mission-${mission.id}`,
+      id: `mission-${mission.missionId}`,
       type: '미션',
       title: mission.missionTitle,
       status: '운영 중',
       difficulty: '-',
       description: mission.missionDescription,
-      tags: mission.scenarioTitle,
+      tags: `시나리오 PK ${mission.scenarioId}`,
       updatedAt: mission.updatedAt,
     })),
   ];
@@ -145,8 +147,8 @@ function AdminContentPage() {
   const searchTypes = adminService.fetchAdminPlaceSearchTypes();
 
   const [regions, setRegions] = useState([]);
-  const [places, setPlaces] = useState(() => adminService.fetchAdminPlaces());
-  const [missions, setMissions] = useState(() => adminService.fetchAdminMissions());
+  const [places, setPlaces] = useState([]);
+  const [missions, setMissions] = useState([]);
   const [placeForm, setPlaceForm] = useState(() => ({
     ...EMPTY_PLACE_FORM,
     scenarioId: '',
@@ -217,9 +219,37 @@ function AdminContentPage() {
     }
   }
 
+  async function loadMissions(keyword = '') {
+    try {
+      const data = await adminMissionService.readMissions(keyword);
+      const missionList = data ?? [];
+
+      console.log('미션 목록', missionList);
+
+      setMissions(missionList);
+    } catch (error) {
+      console.error('미션 목록 조회 실패', error);
+    }
+  }
+
+  async function loadPlaces(keyword = '') {
+    try {
+      const data = await adminPlaceService.readPlaces(keyword);
+      const placeList = data ?? [];
+
+      console.log('장소 목록', placeList);
+
+      setPlaces(placeList);
+    } catch (error) {
+      console.error('장소 목록 조회 실패', error);
+    }
+  }
+
   useEffect(() => {
     loadRegions();
     loadScenarios();
+    loadMissions();
+    loadPlaces();
   }, []);
 
   const selectedRegion = useMemo(() => {
@@ -255,7 +285,7 @@ function AdminContentPage() {
             place.placeAddress,
             place.placeDescription,
             place.googlePlaceId,
-            place.regionName,
+            place.regionCity,
             place.scenarioTitle,
           ],
           resultSearchQuery,
@@ -283,7 +313,7 @@ function AdminContentPage() {
     () =>
       missions.filter((mission) =>
         includesKeyword(
-          [mission.missionTitle, mission.missionDescription, mission.scenarioTitle, mission.scenarioId],
+          [mission.missionTitle, mission.missionDescription, mission.scenarioId],
           resultSearchQuery,
         ),
       ),
@@ -526,47 +556,43 @@ function AdminContentPage() {
     setEditingContent(null);
   };
 
-  const handleSavePlace = (event) => {
+  const handleSavePlace = async (event) => {
     event.preventDefault();
 
-    const region = regions.find((item) => String(item.regionId) === String(placeForm.regionId));
-    const scenario = scenarios.find((item) => String(item.scenarioId) === String(placeForm.scenarioId));
-
-    if (!placeForm.googlePlaceId || !region || !scenario) {
-      setMapStatus('마커를 먼저 선택하고 시나리오와 지역을 확인해 주세요.');
-      return;
-    }
-
-    const nextPlace = {
-      id: Math.max(0, ...places.map((item) => item.id)) + 1,
+    const request = {
       googlePlaceId: placeForm.googlePlaceId,
       placeName: placeForm.placeName,
       placeAddress: placeForm.placeAddress,
       latitude: Number(placeForm.latitude),
       longitude: Number(placeForm.longitude),
       placeDescription: placeForm.placeDescription,
-      scenarioId: scenario.scenarioId,
-      regionId: region.regionId,
-      scenarioTitle: scenario.scenarioDescription,
-      regionName: region.city,
-      updatedAt: '2026-04-24',
+      scenarioId: Number(placeForm.scenarioId),
+      regionId: Number(placeForm.regionId),
     };
 
-    if (editingContent?.type === 'place') {
-      setPlaces((currentPlaces) =>
-        currentPlaces.map((place) => (place.id === editingContent.id ? { ...nextPlace, id: editingContent.id } : place)),
-      );
-      resetPlaceForm();
-      setActiveResultType('place');
-      setMapStatus('장소 정보를 수정했습니다.');
-      return;
-    }
+    try {
+      if (editingContent?.type === 'place') {
+        await adminPlaceService.updatePlace(editingContent.id, request);
+      } else {
+        await adminPlaceService.createPlace(request);
+      }
 
-    setPlaces((currentPlaces) => [nextPlace, ...currentPlaces]);
-    resetPlaceForm();
-    setActivePanel('place');
-    setActiveResultType('place');
-    setMapStatus('장소가 생성되었습니다. 다른 장소를 등록하려면 다시 검색해 주세요.');
+      resetPlaceForm();
+      setEditingContent(null);
+      setActivePanel('place');
+      setActiveResultType('place');
+
+      await loadPlaces();
+
+      setMapStatus(
+        editingContent?.type === 'place'
+          ? '장소 정보를 수정했습니다.'
+          : '장소가 생성되었습니다.'
+      );
+    } catch (error) {
+      console.error('장소 저장 실패', error);
+      window.alert('장소 저장에 실패했습니다.');
+    }
   };
 
   const handleSaveScenario = async (event) => {
@@ -597,38 +623,31 @@ function AdminContentPage() {
     }
   };
 
-  const handleSaveMission = (event) => {
+  const handleSaveMission = async (event) => {
     event.preventDefault();
 
-    const scenario = scenarios.find((item) => String(item.scenarioId) === String(missionForm.scenarioId));
-    if (!scenario) {
-      return;
-    }
-
-    const nextMission = {
-      id: Math.max(0, ...missions.map((item) => item.missionId)) + 1,
+    const request = {
       missionTitle: missionForm.missionTitle,
       missionDescription: missionForm.missionDescription,
-      scenarioId: scenario.scenarioId,
-      scenarioTitle: scenario.scenarioDescription,
-      updatedAt: '2026-04-24',
+      scenarioId: Number(missionForm.scenarioId),
     };
 
-    if (editingContent?.type === 'mission') {
-      setMissions((currentMissions) =>
-        currentMissions.map((mission) =>
-          mission.id === editingContent.id ? { ...nextMission, id: editingContent.id } : mission,
-        ),
-      );
-      resetMissionForm();
-      setActiveResultType('mission');
-      return;
-    }
+    try {
+      if (editingContent?.type === 'mission') {
+        await adminMissionService.updateMission(editingContent.id, request);
+      } else {
+        await adminMissionService.createMission(request);
+      }
 
-    setMissions((currentMissions) => [nextMission, ...currentMissions]);
-    resetMissionForm();
-    setActivePanel('mission');
-    setActiveResultType('mission');
+      resetMissionForm();
+      setEditingContent(null);
+      setActivePanel('mission');
+      setActiveResultType('mission');
+      await loadMissions();
+    } catch (error) {
+      console.error('미션 저장 실패', error);
+      window.alert('미션 저장에 실패했습니다.');
+    }
   };
 
   const handleSaveRegion = async (event) => {
@@ -661,51 +680,69 @@ function AdminContentPage() {
     }
   };
 
-  const handleEditPlace = (place) => {
-    setEditingContent({ type: 'place', id: place.id });
-    setPlaceForm({
-      googlePlaceId: place.googlePlaceId,
-      placeName: place.placeName,
-      placeAddress: place.placeAddress,
-      latitude: String(place.latitude),
-      longitude: String(place.longitude),
-      placeDescription: place.placeDescription,
-      scenarioId: String(place.scenarioId),
-      regionId: String(place.regionId),
-    });
-    setSelectedGooglePlaceId(place.googlePlaceId);
-    setActivePanel('place');
+  const handleEditPlace = async (place) => {
+    try {
+      const detail = await adminPlaceService.readPlaceDetail(place.placeId);
+
+      setEditingContent({ type: 'place', id: place.placeId });
+
+      setPlaceForm({
+        googlePlaceId: detail.googlePlaceId ?? '',
+        placeName: detail.placeName ?? '',
+        placeAddress: detail.placeAddress ?? '',
+        latitude: String(detail.latitude ?? ''),
+        longitude: String(detail.longitude ?? ''),
+        placeDescription: detail.placeDescription ?? '',
+        scenarioId: String(detail.scenarioId ?? ''),
+        regionId: String(detail.regionId ?? ''),
+      });
+
+      setSelectedGooglePlaceId(detail.googlePlaceId ?? '');
+
+      setActivePanel('place');
+    } catch (error) {
+      console.error('장소 상세 조회 실패', error);
+      window.alert('장소 상세 조회에 실패했습니다.');
+    }
   };
 
   const handleEditScenario = async (scenario) => {
-  try {
-    const detail = await adminScenarioService.readScenarioDetail(
-      scenario.scenarioId
-    );
+    try {
+      const detail = await adminScenarioService.readScenarioDetail(
+        scenario.scenarioId
+      );
 
-    setEditingContent({ type: 'scenario', id: scenario.scenarioId });
-    setScenarioForm({
-      prompt: detail.prompt ?? '',
-      scenarioDescription: detail.scenarioDescription ?? '',
-      category: detail.category ?? '',
-      completeExp: String(detail.completeExp ?? ''),
-    });
+      setEditingContent({ type: 'scenario', id: scenario.scenarioId });
+      setScenarioForm({
+        prompt: detail.prompt ?? '',
+        scenarioDescription: detail.scenarioDescription ?? '',
+        category: detail.category ?? '',
+        completeExp: String(detail.completeExp ?? ''),
+      });
 
-    setActivePanel('scenario');
-  } catch (error) {
-    console.error('시나리오 상세 조회 실패', error);
-    window.alert('시나리오 상세 조회에 실패했습니다.');
-  }
-};
+      setActivePanel('scenario');
+    } catch (error) {
+      console.error('시나리오 상세 조회 실패', error);
+      window.alert('시나리오 상세 조회에 실패했습니다.');
+    }
+  };
 
-  const handleEditMission = (mission) => {
-    setEditingContent({ type: 'mission', id: mission.id });
-    setMissionForm({
-      missionTitle: mission.missionTitle,
-      missionDescription: mission.missionDescription,
-      scenarioId: String(mission.scenarioId),
-    });
-    setActivePanel('mission');
+  const handleEditMission = async (mission) => {
+    try {
+      const detail = await adminMissionService.readMissionDetail(mission.missionId);
+
+      setEditingContent({ type: 'mission', id: mission.missionId });
+      setMissionForm({
+        missionTitle: detail.missionTitle ?? '',
+        missionDescription: detail.missionDescription ?? '',
+        scenarioId: String(detail.scenarioId ?? ''),
+      });
+
+      setActivePanel('mission');
+    } catch (error) {
+      console.error('미션 상세 조회 실패', error);
+      window.alert('미션 상세 조회에 실패했습니다.');
+    }
   };
 
   const handleEditRegion = (region) => {
@@ -720,12 +757,23 @@ function AdminContentPage() {
     setActiveResultType('region');
   };
 
-  const handleDeletePlace = (placeId) => {
+  const handleDeletePlace = async (placeId) => {
     if (!window.confirm('이 장소를 삭제할까요?')) return;
 
-    setPlaces((currentPlaces) => currentPlaces.filter((place) => place.id !== placeId));
-    if (editingContent?.type === 'place' && editingContent.id === placeId) {
-      resetPlaceForm();
+    try {
+      await adminPlaceService.deletePlace(placeId);
+
+      if (
+        editingContent?.type === 'place' &&
+        String(editingContent.id) === String(placeId)
+      ) {
+        resetPlaceForm();
+      }
+
+      await loadPlaces();
+    } catch (error) {
+      console.error('장소 삭제 실패', error);
+      window.alert('장소 삭제에 실패했습니다.');
     }
   };
 
@@ -761,12 +809,23 @@ function AdminContentPage() {
       window.alert('시나리오 삭제에 실패했습니다.');
     }
   };
-  const handleDeleteMission = (missionId) => {
+  const handleDeleteMission = async (missionId) => {
     if (!window.confirm('이 미션을 삭제할까요?')) return;
 
-    setMissions((currentMissions) => currentMissions.filter((mission) => mission.id !== missionId));
-    if (editingContent?.type === 'mission' && editingContent.id === missionId) {
-      resetMissionForm();
+    try {
+      await adminMissionService.deleteMission(missionId);
+
+      if (
+        editingContent?.type === 'mission' &&
+        String(editingContent.id) === String(missionId)
+      ) {
+        resetMissionForm();
+      }
+
+      await loadMissions();
+    } catch (error) {
+      console.error('미션 삭제 실패', error);
+      window.alert('미션 삭제에 실패했습니다.');
     }
   };
 
@@ -950,7 +1009,7 @@ function AdminContentPage() {
               <div className="admin-search-result-list">
                 {searchResults.map((place) => (
                   <button
-                    key={place.id}
+                    key={place.placeId}
                     type="button"
                     className={`admin-search-result-item ${selectedGooglePlaceId === place.id ? 'is-selected' : ''}`}
                     onClick={() => handleMarkerPick(place)}
@@ -1279,11 +1338,11 @@ function AdminContentPage() {
                 </div>
                 <div className="mapingo-selectable-list">
                   {filteredPlaces.map((place) => (
-                    <article key={place.id} className="mapingo-post-card admin-content-card">
+                    <article key={place.placeId} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
                         <div>
                           <strong>{place.placeName}</strong>
-                          <p>{`${place.regionName} · 시나리오 PK ${place.scenarioId}`}</p>
+                          <p>{`${place.regionCity} · 시나리오 PK ${place.scenarioId}`}</p>
                         </div>
                         <span className="mapingo-inline-badge">{'장소'}</span>
                       </div>
@@ -1306,7 +1365,7 @@ function AdminContentPage() {
                         <button type="button" className="mapingo-submit-button" onClick={() => handleEditPlace(place)}>
                           {'수정'}
                         </button>
-                        <button type="button" className="mapingo-ghost-button" onClick={() => handleDeletePlace(place.id)}>
+                        <button type="button" className="mapingo-ghost-button" onClick={() => handleDeletePlace(place.placeId)}>
                           {'삭제'}
                         </button>
                       </div>
@@ -1360,7 +1419,7 @@ function AdminContentPage() {
                 </div>
                 <div className="mapingo-selectable-list">
                   {filteredMissions.map((mission) => (
-                    <article key={mission.id} className="mapingo-post-card admin-content-card">
+                    <article key={mission.missionId} className="mapingo-post-card admin-content-card">
                       <div className="mapingo-admin-item-head">
                         <div>
                           <strong>{formatCardText(mission.missionTitle)}</strong>
@@ -1370,13 +1429,13 @@ function AdminContentPage() {
                       </div>
                       <p className="admin-content-description">{formatCardText(mission.missionDescription)}</p>
                       <div className="admin-content-tags">
-                        <span>{mission.scenarioTitle}</span>
+                        <span>{mission.scenarioId}</span>
                       </div>
                       <div className="mapingo-admin-action-row admin-content-card-actions">
                         <button type="button" className="mapingo-submit-button" onClick={() => handleEditMission(mission)}>
                           {'수정'}
                         </button>
-                        <button type="button" className="mapingo-ghost-button" onClick={() => handleDeleteMission(mission.id)}>
+                        <button type="button" className="mapingo-ghost-button" onClick={() => handleDeleteMission(mission.missionId)}>
                           {'삭제'}
                         </button>
                       </div>

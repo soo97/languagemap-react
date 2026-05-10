@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paymentService } from '../../api/user/paymentService';
 import { useMapingoStore } from '../../store/user/useMapingoStore';
-import { PLAN_AMOUNT, PLAN_TYPE } from '../../data/payment/paymentData';
+import { PLAN_AMOUNT, PLAN_TYPE } from '../../data/user/paymentData';
 
 export function usePayment() {
     const navigate = useNavigate();

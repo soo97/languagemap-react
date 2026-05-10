@@ -5,7 +5,7 @@ import {
     PAYMENT_METHOD_MAP,
     PG_MAP,
     PLAN_NAME,
-} from '../../data/payment/paymentData';
+} from '../../data/user/paymentData';
 
 // 포트원 SDK 결제 요청
 // 결제창을 띄우고 완료되면 imp_uid, merchant_uid 반환

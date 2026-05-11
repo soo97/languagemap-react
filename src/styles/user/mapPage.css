@@ -479,6 +479,22 @@ body.map-domain-scroll-lock {
   border-bottom: 1px solid rgba(226, 232, 240, 0.72);
 }
 
+.map-domain-chat-head-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.map-domain-chat-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f766e;
+  background: #ccfbf1;
+  padding: 6px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .map-domain-chat-title {
   margin: 0;
   color: #0f6f72;

@@ -1,6 +1,6 @@
 function PlaceDetailPanel({
     selectedPlace,
-    selectedCapital,
+    selectedRegion,
     selectedLevel,
     onSelectLevel,
     onStartLearning,
@@ -11,7 +11,7 @@ function PlaceDetailPanel({
             <div className="map-domain-panel-top">
                 <div>
                     <h2>{selectedPlace.title}</h2>
-                    <p className="map-domain-panel-address">{selectedCapital.capital}</p>
+                    <p className="map-domain-panel-address">{selectedRegion?.city}</p>
                 </div>
 
                 <button
@@ -26,12 +26,12 @@ function PlaceDetailPanel({
 
             <section className="map-domain-panel-section">
                 <h3>나라</h3>
-                <p>{selectedCapital.country}</p>
+                <p>{selectedRegion?.country}</p>
             </section>
 
             <section className="map-domain-panel-section">
                 <h3>도시</h3>
-                <p>{selectedCapital.capital}</p>
+                <p>{selectedRegion?.city}</p>
             </section>
 
             <section className="map-domain-panel-section">

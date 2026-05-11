@@ -31,6 +31,8 @@ function RouteMap({
   activeMissionId,
   completedMissionIds = [],
   onCompleteMission,
+  remainingChatCount,
+  chatLimit,
 }) {
   const chatLogRef = useRef(null);
 
@@ -102,6 +104,8 @@ function RouteMap({
                   onClosePanel={onClosePanel}
                   onOpenCoaching={onOpenCoaching}
                   chatLogRef={chatLogRef}
+                  remainingChatCount={remainingChatCount}
+                  chatLimit={chatLimit}
                 />
               ) : (
                 <PlaceDetailPanel

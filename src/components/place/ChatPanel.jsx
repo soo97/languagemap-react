@@ -8,14 +8,21 @@ function ChatPanel({
     onClosePanel,
     onOpenCoaching,
     chatLogRef,
+    remainingChatCount,
+    chatLimit,
 }) {
     return (
 
         <div className="map-domain-panel-inner map-domain-panel-chat map-domain-chat-reference">
             <div className="map-domain-panel-top map-domain-chat-head">
-                <div>
+                <div className="map-domain-chat-head-left">
                     <p className="map-domain-panel-kicker map-domain-chat-title">AI Chat Room</p>
+
+                    <div className="map-domain-chat-count">
+                        남은 대화 횟수 {remainingChatCount} / {chatLimit}
+                    </div>
                 </div>
+
                 <div className="map-domain-chat-head-actions">
                     <button
                         type="button"

@@ -77,6 +77,8 @@ function MapPage() {
   const [selectedLevel, setSelectedLevel] = useState('Starter');
   const [regions, setRegions] = useState([]);
   const [activeRegionId, setActiveRegionId] = useState(null);
+  const USER_CHAT_LIMIT = 10;
+  const hasKorean = (text) => /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(text);
 
   useEffect(() => {
     const loadPlaceMarkers = async () => {
@@ -201,6 +203,15 @@ function MapPage() {
   const completedMissionIds = selectedPlace?.id
     ? completedMissionMap[selectedPlace.id] ?? []
     : [];
+
+  const currentMissionUserMessageCount = chatLog.filter(
+    (message) =>
+      message.role === 'user' &&
+      Number(message.missionId) === Number(activeMissionId)
+  ).length;
+
+  const remainingChatCount =
+    USER_CHAT_LIMIT - currentMissionUserMessageCount;
 
   const resetChatState = () => {
     setChatLog([]);
@@ -352,6 +363,7 @@ function MapPage() {
         role: 'ai',
         speaker: 'AI Coach',
         text: response.aiMessage,
+        missionId,
       };
 
       setPanelVisible(true);
@@ -380,10 +392,27 @@ function MapPage() {
       return;
     }
 
-    const USER_CHAT_LIMIT = 10;
+    if (hasKorean(trimmed)) {
+      const warningMessage = {
+        role: 'ai',
+        speaker: 'AI Coach',
+        text: '영어로 입력해주세요.',
+        missionId: activeMissionId,
+      };
+
+      const nextChatLog = [...chatLog, warningMessage];
+
+      setChatLog(nextChatLog);
+      setRecentMapChatLog(nextChatLog);
+      saveCurrentPlaceChatLog(selectedPlace.id, nextChatLog);
+
+      return;
+    }
 
     const currentUserMessageCount = chatLog.filter(
-      (message) => message.role === 'user'
+      (message) =>
+        message.role === 'user' &&
+        Number(message.missionId) === Number(activeMissionId)
     ).length;
 
     const isChatLimitReached =
@@ -398,6 +427,7 @@ function MapPage() {
       role: 'user',
       speaker: 'You',
       text: trimmed,
+      missionId: activeMissionId,
     };
 
     const nextUserChatLog = [...chatLog, userMessage];
@@ -418,6 +448,7 @@ function MapPage() {
         role: 'ai',
         speaker: 'AI Coach',
         text: response.aiMessage,
+        missionId: activeMissionId,
       };
 
       const nextAiChatLog = [...nextUserChatLog, aiMessage];
@@ -552,6 +583,8 @@ function MapPage() {
           activeMissionId={activeMissionId}
           completedMissionIds={completedMissionIds}
           onCompleteMission={handleCompleteMission}
+          remainingChatCount={remainingChatCount}
+          chatLimit={USER_CHAT_LIMIT}
         />
       </section>
     </div>

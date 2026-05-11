@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapingoPageSection } from '../../components/MapingoPageBlocks';
 import { useMapingoStore } from '../../store/user/useMapingoStore';
@@ -12,13 +11,13 @@ function PremiumCheckoutPage() {
     const selectedProduct =
         products.find((product) => product.id === subscriptionProductId) ?? products[0];
 
-    const [paymentMethod, setPaymentMethod] = useState('kakao');
+    // << 변경: 결제 수단 고정 (카카오페이 기본)
     const { checkout, isSubmitting, errorMessage } = usePayment();
 
     const handleCheckout = async () => {
         await checkout({
             productId: subscriptionProductId ?? selectedProduct.id,
-            paymentMethod,
+            paymentMethod: 'kakao', // << 고정
         });
     };
 
@@ -59,31 +58,22 @@ function PremiumCheckoutPage() {
 
                 <article className="mapingo-list-card">
                     <div className="mapingo-card-header-row">
-                        <h3>결제 수단</h3>
+                        <h3>결제</h3>
                     </div>
                     <div className="mapingo-admin-form">
-                        <select
-                            className="mapingo-input"
-                            value={paymentMethod}
-                            onChange={(event) => setPaymentMethod(event.target.value)}
-                        >
-                            <option value="card">신용카드</option>
-                            <option value="kakao">카카오페이</option>
-                            <option value="bank">간편 계좌이체</option>
-                        </select>
-
                         {errorMessage ? (
                             <p className="mapingo-form-error">{errorMessage}</p>
                         ) : null}
 
-                        <div className="mapingo-admin-action-row">
+                        <div className="mapingo-admin-action-row" style={{ justifyContent: 'center' }}>
                             <button
                                 type="button"
                                 className="mapingo-submit-button"
                                 onClick={handleCheckout}
                                 disabled={isSubmitting}
+                                style={{ width: '100%' }}
                             >
-                                {isSubmitting ? '결제 처리 중...' : '결제 완료 처리'}
+                                {isSubmitting ? '결제 처리 중...' : '결제하기'}
                             </button>
                         </div>
                     </div>

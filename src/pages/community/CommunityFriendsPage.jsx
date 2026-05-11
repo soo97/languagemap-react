@@ -4,6 +4,7 @@ import FriendProfileCard from '../../components/social/FriendProfileCard';
 import RecommendFriendCard from '../../components/social/RecommendFriendCard';
 import ReportCard from '../../components/social/ReportCard';
 import { useCommunityFriends } from '../../hooks/community/useCommunityFriend';
+import { maskEmail } from '../../utils/community/friendUtils';
 import '../../styles/user/CommunityFriendsPage.css';
 
 function CommunityFriendsPage() {
@@ -15,16 +16,19 @@ function CommunityFriendsPage() {
     acceptedFriends,
     pendingRequests,
     archivedRelations,
-    availableUsers,
     recommendedFriends,
     userReportRows,
     inviteQuery,
+    reportSearchQuery,
     reportTargetId,
     reportReason,
     feedbackMessage,
+    filteredReportCandidates,
+    selectedReportTarget,
     setInviteQuery,
-    setReportTargetId,
     setReportReason,
+    handleReportSearchChange,
+    handleSelectReportTarget,
     sendFriendRequest,
     handleInvite,
     handleAccept,
@@ -75,7 +79,6 @@ function CommunityFriendsPage() {
                       key={friendship.friendship_id}
                       relation={friendship}
                       currentUserId={currentUserId}
-                      userDirectory={userDirectory}
                       onAccept={handleAccept}
                       onReject={handleReject}
                       onDelete={handleDelete}
@@ -91,7 +94,7 @@ function CommunityFriendsPage() {
                 <div className="mapingo-card-header-row">
                   <h3>대기 중인 요청</h3>
                   <span className="mapingo-muted-copy">
-                    받은 요청은 수락/거절, 보낸 요청은 취소할 수 있어요
+                    받은 요청은 수락/거절, 보낸 요청은 취소할 수 있어요.
                   </span>
                 </div>
 
@@ -106,7 +109,6 @@ function CommunityFriendsPage() {
                         key={friendship.friendship_id}
                         relation={friendship}
                         currentUserId={currentUserId}
-                        userDirectory={userDirectory}
                         onAccept={handleAccept}
                         onReject={handleReject}
                         onDelete={handleDelete}
@@ -137,7 +139,6 @@ function CommunityFriendsPage() {
                         key={friendship.friendship_id}
                         relation={friendship}
                         currentUserId={currentUserId}
-                        userDirectory={userDirectory}
                         onAccept={handleAccept}
                         onReject={handleReject}
                         onDelete={handleDelete}
@@ -202,8 +203,7 @@ function CommunityFriendsPage() {
             <div className="mapingo-form-card community-friends-panel">
               <h3>검색으로 친구 추가</h3>
               <p>
-                닉네임이나 이메일로 사용자를 찾아 직접 친구 요청을 보낼 수
-                있어요.
+                닉네임이나 이메일로 사용자를 찾아 직접 친구 요청을 보낼 수 있어요.
               </p>
 
               <input
@@ -224,19 +224,47 @@ function CommunityFriendsPage() {
 
             <div className="mapingo-form-card community-friends-panel">
               <h3>사용자 신고</h3>
-              <p>문제가 있는 사용자를 선택하고 신고 사유를 남겨주세요.</p>
+              <p>문제가 있는 사용자를 이름이나 이메일로 검색한 뒤 신고 사유를 남겨주세요.</p>
 
-              <select
-                className="mapingo-select"
-                value={reportTargetId}
-                onChange={(event) => setReportTargetId(event.target.value)}
-              >
-                {availableUsers.map((user) => (
-                  <option key={user.userId} value={user.userId}>
-                    {user.name}
-                  </option>
-                ))}
-              </select>
+              <input
+                className="mapingo-input"
+                value={reportSearchQuery}
+                onChange={(event) => handleReportSearchChange(event.target.value)}
+                placeholder="신고할 사용자 검색"
+              />
+
+              <div className="community-friends-report-search-list">
+                {filteredReportCandidates.length === 0 ? (
+                  <div className="community-friends-empty-card">
+                    검색 가능한 사용자가 없어요.
+                  </div>
+                ) : (
+                  filteredReportCandidates.map((user) => (
+                    <button
+                      key={user.userId}
+                      type="button"
+                      className={`community-friends-report-search-item${
+                        Number(reportTargetId) === Number(user.userId)
+                          ? ' is-selected'
+                          : ''
+                      }`}
+                      onClick={() => handleSelectReportTarget(user)}
+                    >
+                      <strong>{user.name}</strong>
+                      <span>{maskEmail(user.email)}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {selectedReportTarget ? (
+                <div className="community-friends-selected-user">
+                  <strong>신고 대상</strong>
+                  <span>
+                    {selectedReportTarget.name} · {maskEmail(selectedReportTarget.email)}
+                  </span>
+                </div>
+              ) : null}
 
               <textarea
                 className="mapingo-textarea"
@@ -272,7 +300,7 @@ function CommunityFriendsPage() {
             </button>
           </div>
         </div>
-      ) : null}F
+      ) : null}
     </div>
   );
 }

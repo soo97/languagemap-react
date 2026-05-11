@@ -1,5 +1,5 @@
 import PingPopCharacterImage from '../user/PingPopCharacterImage';
-import { getLevelTone } from '../../utils/community/friendUtils';
+import { getLevelTone, maskEmail } from '../../utils/community/friendUtils';
 
 function RecommendFriendCard({ user, recommendation, onAdd }) {
     const levelNumber = user?.levelNumber ?? 1;
@@ -32,7 +32,7 @@ function RecommendFriendCard({ user, recommendation, onAdd }) {
                             </span>
                         </div>
 
-                        <p>{user?.goalText ?? '학습 목표 정보가 없어요.'}</p>
+                        <p>{maskEmail(user?.email)}</p>
 
                         <span className={`community-friends-badge-pill is-${levelTone}`}>
                             {user?.badgeText ?? '기본 배지'}

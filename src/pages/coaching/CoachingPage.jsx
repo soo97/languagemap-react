@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMapingoStore } from '../../store/user/useMapingoStore';
+import { useCoachingEntryQuery } from '../../queries/user/coachingQueries';
 import CoachingChatSection from '../../components/user/coaching/CoachingChatSection';
 import CoachingSummaryCard from '../../components/user/coaching/CoachingSummaryCard';
 import CoachingAccessDenied from '../../components/user/coaching/CoachingAccessDenied';
+import CoachingPageState from '../../components/user/coaching/CoachingPageState';
 import PronunciationPracticeSection from '../../components/user/coaching/PronunciationPracticeSection';
 import YoutubeRecommendationSection from '../../components/user/coaching/YoutubeRecommendationSection';
-import { previousLearningSummary } from '../../mocks/user/coachingMockData';
 import '../../styles/user/coaching/coachingPage.css';
 import '../../styles/user/coaching/coachingChatSection.css';
 import '../../styles/user/coaching/pronunciationPractice.css';
@@ -18,69 +19,97 @@ const coachingModes = [
   { id: 'DIALOGUE', label: '더 많은 대화' },
 ];
 
-// 발표/시연용 임시 권한 설정
-// 백엔드 AiUsageLimitPolicy와 동일하게 맞춰야 함
+// 시연용 임시 권한 설정
 const TEST_USER_IDS = [1];
-const VIP_USER_IDS = [2];
+
+function toNumberOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
+
+  const numberValue = Number(value);
+
+  return Number.isNaN(numberValue) ? null : numberValue;
+}
 
 function CoachingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [phase, setPhase] = useState('intro');
   const [selectedModeId, setSelectedModeId] = useState('');
   const [finalResult, setFinalResult] = useState(null);
-  const isAuthenticated = useMapingoStore((state) => state.isAuthenticated);
-  const user = useMapingoStore((state) => state.user);
-  const userId = user?.userId;
-  const recentMapChatLog = useMapingoStore((state) => state.recentMapChatLog);
+  const session = useMapingoStore((state) => state.session);
   const recentMapLearningSummary = useMapingoStore((state) => state.recentMapLearningSummary);
-  const hasAiCoachingAccess = TEST_USER_IDS.includes(userId) || VIP_USER_IDS.includes(userId);
+  const recentMapChatLog = useMapingoStore((state) => state.recentMapChatLog);
+  const userId = session?.user?.userId;
+  const hasAiCoachingAccess = TEST_USER_IDS.includes(userId);
+
+  const sessionId = useMemo(() => {
+    return (
+      toNumberOrNull(searchParams.get('sessionId')) ??
+      toNumberOrNull(location.state?.sessionId) ??
+      toNumberOrNull(location.state?.learningSessionId) ??
+      toNumberOrNull(location.state?.session?.sessionId) ??
+      toNumberOrNull(recentMapLearningSummary?.sessionId) ??
+      toNumberOrNull(recentMapLearningSummary?.learningSessionId) ??
+      toNumberOrNull(recentMapLearningSummary?.id) ??
+      toNumberOrNull(recentMapLearningSummary?.session?.sessionId) ??
+      toNumberOrNull(recentMapLearningSummary?.data?.sessionId) ??
+      toNumberOrNull(recentMapChatLog?.[0]?.sessionId) ??
+      null
+    );
+  }, [location.state, recentMapChatLog, recentMapLearningSummary, searchParams]);
+
+  const {
+    data: coachingEntry,
+    isLoading,
+    isError,
+    error,
+  } = useCoachingEntryQuery(sessionId);
 
   const learningSummary = useMemo(() => {
-    const baseSummary = recentMapLearningSummary
-      ? {
-          ...previousLearningSummary,
-          ...recentMapLearningSummary,
-          mapArea: {
-            ...previousLearningSummary.mapArea,
-            ...recentMapLearningSummary.mapArea,
-            conversationLog:
-              recentMapLearningSummary.mapArea?.conversationLog ??
-              previousLearningSummary.mapArea.conversationLog,
-          },
-          previousEvaluation: {
-            ...previousLearningSummary.previousEvaluation,
-            ...recentMapLearningSummary.previousEvaluation,
-          },
-        }
-      : !recentMapChatLog?.length
-        ? previousLearningSummary
-        : {
-            ...previousLearningSummary,
-            mapArea: {
-              ...previousLearningSummary.mapArea,
-              conversationLog: recentMapChatLog.map((message) => ({
-                speaker: message.speaker,
-                text: message.text,
-                role: message.role,
-              })),
-            },
-          };
+    if (!coachingEntry) return null;
+
+    const sessionMessages = coachingEntry.sessionMessages ?? [];
+    const userName =
+      session?.user?.name ??
+      session?.user?.nickname ??
+      session?.user?.email ??
+      'You';
 
     return {
-      ...baseSummary,
-      sessionId:
-        baseSummary.sessionId ??
-        baseSummary.learningSessionId ??
-        (!isAuthenticated ? previousLearningSummary.sessionId : null),
-      country: baseSummary.country ?? previousLearningSummary.country,
-      city: baseSummary.city ?? previousLearningSummary.city,
-      placeAddress: baseSummary.placeAddress ?? baseSummary.mapArea?.address ?? previousLearningSummary.placeAddress,
-      evaluation:
-        typeof baseSummary.evaluation === 'string'
-          ? baseSummary.evaluation
-          : baseSummary.previousEvaluation?.content ?? previousLearningSummary.previousEvaluation.content,
+      sessionId: coachingEntry.sessionId,
+      learningSessionId: coachingEntry.sessionId,
+      placeId: coachingEntry.placeId,
+      placeName: coachingEntry.placeName,
+      country: coachingEntry.country,
+      city: coachingEntry.city,
+      placeAddress: coachingEntry.placeAddress,
+      evaluation: coachingEntry.evaluation,
+      sessionMessages,
+
+      mapArea: {
+        title: coachingEntry.placeName ?? '학습 장소',
+        subtitle: '현재 학습 장소',
+        address: [coachingEntry.city, coachingEntry.placeAddress].filter(Boolean).join(' · '),
+        lat: coachingEntry.latitude ?? 37.5665,
+        lng: coachingEntry.longitude ?? 126.978,
+        zoom: 16,
+        conversationLog: sessionMessages.map((message) => ({
+          speaker:
+            message.role === 'ASSISTANT'
+              ? 'AI Coach'
+              : userName,
+          text: message.message,
+          role: message.role,
+        })),
+      },
+
+      previousEvaluation: {
+        title: '이전 평가 내용',
+        content: coachingEntry.evaluation || '이전 평가 내용이 없습니다.',
+      },
     };
-  }, [isAuthenticated, recentMapChatLog, recentMapLearningSummary]);
+  }, [coachingEntry, session]);
 
   const handleRetry = () => {
     setSelectedModeId('');

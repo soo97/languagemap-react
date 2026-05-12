@@ -20,7 +20,7 @@ export function useAuth() {
             setSession(session);
             navigate('/');
         } catch (error) {
-            setErrorMessage(error.message || '로그인에 실패했습니다.');
+            setErrorMessage('이메일 또는 비밀번호를 확인해주세요.');
         } finally {
             setIsSubmitting(false);
         }

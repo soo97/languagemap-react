@@ -30,6 +30,13 @@ function PremiumCheckoutPage() {
     };
     if (!isAuthenticated) return null;
 
+    // 선택된 플랜 없으면 플랜 선택 페이지로 이동
+    useEffect(() => {
+    if (!subscriptionProductId) {
+        navigate('/premium/plans');
+        }
+    }, [subscriptionProductId, navigate]);
+
     return (
         <div className="mapingo-dashboard">
             <MapingoPageSection

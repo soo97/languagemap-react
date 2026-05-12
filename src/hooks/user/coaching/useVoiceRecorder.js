@@ -141,7 +141,7 @@ export function useVoiceRecorder({ onRecorded, onError } = {}) {
             }
 
             if (error.name === 'SecurityError') {
-                onError?.('보안 문제로 마이크에 접근할 수 없습니다. HTTPS 또는 localhost 환경에서 실행해주세요.');
+                onError?.('보안 문제로 마이크에 접근할 수 없습니다.');
                 return;
             }
 

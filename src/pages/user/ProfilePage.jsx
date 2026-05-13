@@ -322,7 +322,7 @@ function ProfilePage() {
             <div className="mapingo-profile-card-head">
               <div className="mapingo-profile-identity">
                 <div className="mapingo-profile-avatar-column">
-                  <div className="mapingo-profile-level-pill">{`Lv.${profileLevelNumber}`}</div>
+                  {/* <div className="mapingo-profile-level-pill">{`Lv.${profileLevelNumber}`}</div> */}
                   <div className="mapingo-profile-avatar-frame">
                     <div className="mapingo-profile-avatar" aria-hidden="true">
                       <PingPopCharacterImage
@@ -338,20 +338,20 @@ function ProfilePage() {
                   <h2>{profileName}</h2>
                   <p>회원 기본 정보를 확인하고 관리할 수 있어요.</p>
                   <div className="mapingo-profile-level-summary">
-                    <div className="mapingo-profile-level-summary-head">
+                    {/* <div className="mapingo-profile-level-summary-head">
                       <span>Level Progress</span>
                       <strong>{levelProgressPercent}%</strong>
-                    </div>
-                    <div className="mapingo-profile-level-progress">
+                    </div> */}
+                    {/* <div className="mapingo-profile-level-progress">
                       <div
                         className="mapingo-profile-level-progress-fill"
                         style={{ width: `${levelProgressPercent}%` }}
                       />
-                    </div>
-                    <div className="mapingo-profile-level-summary-foot">
+                    </div> */}
+                    {/* <div className="mapingo-profile-level-summary-foot">
                       <span>누적 경험치 (Cumulative XP)</span>
                       <strong>{`${cumulativeExperience.toLocaleString()} XP`}</strong>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>
@@ -450,14 +450,14 @@ function ProfilePage() {
             <div className="mapingo-profile-side-divider" />
 
             <div className="mapingo-profile-side-section">
-              <div className="mapingo-profile-side-head">
+              {/* <div className="mapingo-profile-side-head">
                 <div>
                   <p className="mapingo-profile-kicker">Current Goals</p>
                   <h3>현재 진행중인 학습 목표</h3>
                 </div>
-              </div>
+              </div> */}
 
-              <div className="mapingo-profile-goal-list">
+              {/* <div className="mapingo-profile-goal-list">
                 {currentGoalItems.map((goal) => (
                   <article key={goal.title} className="mapingo-profile-goal-item">
                     <strong>{goal.title}</strong>
@@ -465,7 +465,7 @@ function ProfilePage() {
                     <span>{goal.description}</span>
                   </article>
                 ))}
-              </div>
+              </div> */}
             </div>
           </article>
         </section>

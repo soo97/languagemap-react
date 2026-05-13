@@ -16,7 +16,9 @@ function MapingoHeader({
     subscriptionPlan === 'Premium'
       ? subscriptionProductId === 'monthly' || subscriptionProductId === 'MONTHLY'
         ? 'Premium Monthly'
-        : 'Premium Yearly'
+        : subscriptionProductId === 'yearly' || subscriptionProductId === 'YEARLY'
+        ? 'Premium Yearly'
+        : 'Premium'
       : subscriptionPlan === 'Free'
       ? 'Free Plan'
       : ''; // sessionRestored 전엔 빈 문자열 → 아무것도 안 보임
@@ -37,14 +39,40 @@ function MapingoHeader({
         </button>
 
         <nav className="mapingo-nav">
-          <NavButton active={currentPage === 'home'} onClick={() => onNavigate('home')}>홈</NavButton>
-          <NavButton active={currentPage === 'map'} onClick={() => onNavigate('map')}>지도 학습</NavButton>
-          <NavButton active={currentPage === 'coaching'} onClick={() => onNavigate('coaching')}>AI 코칭</NavButton>
-          <NavButton active={currentPage === 'growth'} onClick={() => alert('성장 리포트 페이지는 현재 준비 중입니다.')}>성장 리포트</NavButton>
-          <NavButton active={currentPage === 'community'} onClick={() => onNavigate('community')}>커뮤니티</NavButton>
-          <NavButton active={currentPage === 'support'} onClick={() => alert('고객지원 페이지는 현재 준비 중입니다.')}>고객지원</NavButton>
-          <NavButton active={currentPage === 'premium'} onClick={() => onNavigate('premium')}>프리미엄</NavButton>
-          <NavButton active={currentPage === 'settings'} onClick={() => alert('환경설정 페이지는 현재 준비 중입니다.')}>환경설정</NavButton>
+          <NavButton active={currentPage === 'home'} onClick={() => onNavigate('home')}>
+            홈
+          </NavButton>
+          <NavButton
+            active={currentPage === 'map'}
+            onClick={() => {
+              if (!isLoggedIn) {
+                alert('지도 학습은 로그인 후 이용할 수 있습니다.');
+                onNavigate('login');
+                return;
+              }
+              onNavigate('map');
+            }}
+          >
+            지도 학습
+          </NavButton>
+          <NavButton active={currentPage === 'coaching'} onClick={() => onNavigate('coaching')}>
+            AI 코칭
+          </NavButton>
+          {/* <NavButton active={currentPage === 'growth'} onClick={() => alert('성장 리포트 페이지는 현재 준비 중입니다.')}>
+            성장 리포트
+          </NavButton> */}
+          <NavButton active={currentPage === 'community'} onClick={() => onNavigate('community')}>
+            커뮤니티
+          </NavButton>
+          <NavButton active={currentPage === 'support'} onClick={() => alert('고객지원 페이지는 현재 준비 중입니다.')}>
+            고객지원
+          </NavButton>
+          <NavButton active={currentPage === 'premium'} onClick={() => onNavigate('premium')}>
+            프리미엄
+          </NavButton>
+          {/* <NavButton active={currentPage === 'settings'} onClick={() => alert('환경설정 페이지는 현재 준비 중입니다.')}>
+            환경설정
+          </NavButton> */}
         </nav>
 
         <div className="mapingo-auth">

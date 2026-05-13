@@ -12,13 +12,13 @@ function MapingoHeader({
   subscriptionPlan,
   subscriptionProductId,
 }) {
-const subscriptionLabel =
+  const subscriptionLabel =
     subscriptionPlan === 'Premium'
       ? subscriptionProductId === 'monthly' || subscriptionProductId === 'MONTHLY'
         ? 'Premium Monthly'
         : subscriptionProductId === 'yearly' || subscriptionProductId === 'YEARLY'
-        ? 'Premium Yearly'
-        : 'Premium' 
+          ? 'Premium Yearly'
+          : 'Premium'
       : 'Free Plan';
 
   return (
@@ -40,7 +40,18 @@ const subscriptionLabel =
           <NavButton active={currentPage === 'home'} onClick={() => onNavigate('home')}>
             홈
           </NavButton>
-          <NavButton active={currentPage === 'map'} onClick={() => onNavigate('map')}>
+          <NavButton
+            active={currentPage === 'map'}
+            onClick={() => {
+              if (!isLoggedIn) {
+                alert('지도 학습은 로그인 후 이용할 수 있습니다.');
+                onNavigate('login');
+                return;
+              }
+
+              onNavigate('map');
+            }}
+          >
             지도 학습
           </NavButton>
           <NavButton active={currentPage === 'coaching'} onClick={() => onNavigate('coaching')}>

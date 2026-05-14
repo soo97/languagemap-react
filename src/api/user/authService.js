@@ -74,7 +74,7 @@ async function signupWithEmail({ email, password, passwordConfirm, name, birthDa
     }
 
     // 회원가입 성공 후 자동 로그인
-    return loginWithEmail({ email, password, rememberMe: true });
+    return loginWithEmail({ success: true });
 }
 
 // 로그아웃

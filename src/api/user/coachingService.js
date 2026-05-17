@@ -1,46 +1,19 @@
-async function parseJsonSafe(response) {
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
+import axiosInstance from '../axiosInstance';
+
+export async function getCoachingEntry(sessionId) {
+  const response = await axiosInstance.get(`/api/coaching/entry/${sessionId}`);
+  return response.data;
 }
 
-async function request(url, options = {}) {
-  const response = await fetch(url, {
-    headers: {
-      ...(options.body && !(options.body instanceof FormData)
-        ? { 'Content-Type': 'application/json' }
-        : {}),
-      ...(options.headers ?? {}),
-    },
-    ...options,
+export async function startCoachingFlow({ sessionId, optionType }) {
+  const response = await axiosInstance.post('/api/coaching/flow/start', {
+    sessionId,
+    optionType,
   });
-
-  const payload = await parseJsonSafe(response);
-
-  if (!response.ok) {
-    const error = new Error(payload?.message ?? 'AI Coaching 요청에 실패했습니다.');
-    error.status = response.status;
-    error.payload = payload;
-    throw error;
-  }
-
-  return payload?.data ?? payload;
+  return response.data;
 }
 
-export function getCoachingEntry(sessionId) {
-  return request(`/api/coaching/entry/${sessionId}`);
-}
-
-export function startCoachingFlow({ sessionId, optionType }) {
-  return request('/api/coaching/flow/start', {
-    method: 'POST',
-    body: JSON.stringify({ sessionId, optionType }),
-  });
-}
-
-export function prepareCoachingScript({
+export async function prepareCoachingScript({
   sessionId,
   optionType,
   placeName,
@@ -50,45 +23,59 @@ export function prepareCoachingScript({
   evaluation,
   previousMessages,
 }) {
-  return request('/api/coaching/conversation/script', {
-    method: 'POST',
-    body: JSON.stringify({
-      sessionId,
-      optionType,
-      placeName,
-      country,
-      city,
-      placeAddress,
-      evaluation,
-      previousMessages,
-    }),
+  const response = await axiosInstance.post('/api/coaching/conversation/script', {
+    sessionId,
+    optionType,
+    placeName,
+    country,
+    city,
+    placeAddress,
+    evaluation,
+    previousMessages,
   });
+
+  return response.data;
 }
 
-export function startConversation(coachingSessionId) {
-  return request(`/api/coaching/conversation/${coachingSessionId}/start`, {
-    method: 'POST',
-  });
+export async function startConversation(coachingSessionId) {
+  const response = await axiosInstance.post(
+    `/api/coaching/conversation/${coachingSessionId}/start`
+  );
+
+  return response.data;
 }
 
 export async function processUserSpeech(coachingSessionId, audioFile) {
   const formData = new FormData();
   formData.append('audioFile', audioFile, audioFile.name ?? 'speech.webm');
 
-  return request(`/api/coaching/conversation/${coachingSessionId}/speech`, {
-    method: 'POST',
-    body: formData,
-  });
+  const response = await axiosInstance.post(
+    `/api/coaching/conversation/${coachingSessionId}/speech`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+
+  return response.data;
 }
 
-export function finishConversation(coachingSessionId) {
-  return request(`/api/coaching/conversation/${coachingSessionId}/finish`, {
-    method: 'POST',
-  });
+export async function finishConversation(coachingSessionId) {
+  const response = await axiosInstance.post(
+    `/api/coaching/conversation/${coachingSessionId}/finish`
+  );
+
+  return response.data;
 }
 
-export function getCoachingMessages(coachingSessionId) {
-  return request(`/api/coaching/messages/${coachingSessionId}`);
+export async function getCoachingMessages(coachingSessionId) {
+  const response = await axiosInstance.get(
+    `/api/coaching/messages/${coachingSessionId}`
+  );
+
+  return response.data;
 }
 
 export const coachingService = {

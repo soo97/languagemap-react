@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useMapingoStore } from '../../store/user/useMapingoStore';
 import { useCoachingEntryQuery } from '../../queries/user/coachingQueries';
+import { paymentService } from '../../api/user/paymentService';
 import CoachingChatSection from '../../components/user/coaching/CoachingChatSection';
 import CoachingSummaryCard from '../../components/user/coaching/CoachingSummaryCard';
 import CoachingAccessDenied from '../../components/user/coaching/CoachingAccessDenied';
@@ -18,8 +20,6 @@ const coachingModes = [
   { id: 'GRAMMAR', label: '더 어려운 문법' },
   { id: 'DIALOGUE', label: '더 많은 대화' },
 ];
-
-const TEST_USER_IDS = [1];
 
 const LAST_COACHING_SESSION_STORAGE_KEY = 'lastCoachingLearningSessionId';
 
@@ -44,9 +44,25 @@ function CoachingPage() {
   const recentMapLearningSummary = useMapingoStore((state) => state.recentMapLearningSummary);
   const recentMapChatLog = useMapingoStore((state) => state.recentMapChatLog);
 
-  const userId = session?.user?.userId;
   const isSessionReady = Boolean(session?.user);
-  const hasAiCoachingAccess = isSessionReady && TEST_USER_IDS.includes(userId);
+
+  const {
+    data: subscriptionData,
+    isLoading: isSubscriptionLoading,
+  } = useQuery({
+    queryKey: ['subscription', session?.user?.userId],
+    queryFn: async () => {
+      try {
+        return await paymentService.getSubscription();
+      } catch {
+        return null;
+      }
+    },
+    enabled: isSessionReady,
+    retry: false,
+  });
+
+  const hasAiCoachingAccess = Boolean(subscriptionData);
 
   const sessionId = useMemo(() => {
     const foundSessionId =
@@ -75,7 +91,7 @@ function CoachingPage() {
     isLoading,
     isError,
   } = useCoachingEntryQuery(sessionId, {
-    enabled: Boolean(sessionId),
+    enabled: Boolean(sessionId) && hasAiCoachingAccess,
   });
 
   const learningSummary = useMemo(() => {
@@ -127,7 +143,7 @@ function CoachingPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (!isSessionReady) {
+  if (!isSessionReady || isSubscriptionLoading) {
     return (
       <div className="coaching-page">
         <CoachingPageState
